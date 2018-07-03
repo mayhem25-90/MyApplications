@@ -1,0 +1,34 @@
+<resources>
+    <string name="app_name">drebedengi_my</string>
+    <string name="title_activity_main2">MainActivity2</string>
+    <string name="title_home">Home</string>
+    <string name="title_dashboard">Dashboard</string>
+    <string name="title_notifications">Notifications</string>
+
+    <string name="operations_tab">Ввод операций</string>
+    <string name="history_tab">Журнал операций</string>
+    <string name="balance_tab">Баланс</string>
+
+    <string name="radio_1">Расходы</string>
+    <string name="radio_2">Доходы</string>
+    <string name="radio_3">Перемещ</string>
+    <string name="radio_4">Обмены</string>
+
+    <!--<string name="dateLeft">"<"</string>-->
+
+    <string name="sum">Сумма</string>
+    <string name="sell">Продали</string>
+    <string name="buy">Купили</string>
+    <string name="currency">Валюта</string>
+    <string name="wallet">Место хранения</string>
+    <string name="category">Категория затрат</string>
+    <string name="source">Источник дохода</string>
+    <string name="comment">Комментарий</string>
+    <string name="tag">Ещё</string>
+    <string name="confirmButton">Сохранить</string>
+
+    <string name="currencies">Валюты</string>
+    <string name="wallets">Места хранения</string>
+    <string name="categories">Категории затрат</string>
+    <string name="tags">Ещё</string>
+</resources>

@@ -1,0 +1,294 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+    android:id="@+id/operationsTab"
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context="ru.myandroid.drebedengi_my.MainActivity"
+    android:orientation="vertical">
+
+    <!--<TextView-->
+        <!--android:id="@+id/tvHello"-->
+        <!--android:layout_width="wrap_content"-->
+        <!--android:layout_height="wrap_content"-->
+        <!--android:text="Hello World!" />-->
+
+    <!-- Заполнение полей    === === === === === === === === === === === === -->
+    <TableLayout
+        android:id="@+id/linearLayout1"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+
+        <!--<EditText android:id="@+id/etDate"-->
+            <!--android:layout_width="wrap_content"-->
+            <!--android:layout_height="wrap_content"-->
+            <!--android:layout_weight="1"-->
+            <!--android:inputType="date"-->
+            <!--android:layout_marginLeft="15dp"-->
+            <!--android:layout_marginRight="15dp">-->
+        <!--</EditText>-->
+
+        <TableRow>
+            <!--<Button-->
+                <!--android:id="@+id/btnDateLeft"-->
+                <!--android:layout_width="wrap_content"-->
+                <!--android:layout_height="wrap_content"-->
+
+                <!--android:textAllCaps="false"-->
+                <!--android:layout_marginLeft="15dp"-->
+                <!--android:layout_marginRight="15dp"-->
+                <!--android:onClick="onButtonClick" />-->
+            <Button
+                android:id="@+id/btnDate"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_weight="5"
+                android:textAllCaps="false"
+                android:background="@null"
+                android:layout_marginLeft="15dp"
+                android:layout_marginRight="15dp"
+                android:onClick="onButtonClick" />
+            <!--<Button-->
+                <!--android:id="@+id/btnDateRight"-->
+                <!--android:layout_width="wrap_content"-->
+                <!--android:layout_height="wrap_content"-->
+
+                <!--android:layout_weight="1"-->
+                <!--android:textAllCaps="false"-->
+                <!--android:layout_marginLeft="15dp"-->
+                <!--android:layout_marginRight="15dp"-->
+                <!--android:onClick="onButtonClick" />-->
+        </TableRow>
+
+        <TableRow
+            android:id="@+id/etSumRow"
+            android:layout_marginLeft="10dp"
+            android:layout_marginRight="10dp" >
+            <EditText
+                android:id="@+id/etSum"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="@string/sum"
+                android:textColor="@color/colorHint"
+                android:inputType="numberDecimal"
+                android:layout_marginLeft="5dp"
+                android:layout_marginRight="5dp"
+                android:onClick="onEditTextClick" />
+            <Spinner
+                android:id="@+id/spinCurrency"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginLeft="15dp"
+                android:layout_marginRight="15dp"
+                android:layout_marginTop="10dp"
+                android:layout_marginBottom="10dp"
+                android:spinnerMode="dialog" />
+            <!--<Button-->
+                <!--android:id="@+id/btnCurrency"-->
+                <!--android:layout_width="wrap_content"-->
+                <!--android:layout_height="wrap_content"-->
+                <!--android:text="@string/currency"-->
+                <!--android:textAllCaps="false"-->
+                <!--android:background="@null"-->
+                <!--android:layout_marginLeft="5dp"-->
+                <!--android:layout_marginRight="5dp"-->
+                <!--android:onClick="onButtonClick"/>-->
+        </TableRow>
+
+        <TableRow
+            android:id="@+id/etSumDestRow"
+            android:layout_marginLeft="10dp"
+            android:layout_marginRight="10dp" >
+            <EditText
+                android:id="@+id/etSumDest"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="@string/buy"
+                android:textColor="@color/colorHint"
+                android:inputType="numberDecimal"
+                android:layout_marginLeft="5dp"
+                android:layout_marginRight="5dp"
+                android:onClick="onEditTextClick" />
+            <Spinner
+                android:id="@+id/spinCurrencyDest"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginLeft="15dp"
+                android:layout_marginRight="15dp"
+                android:layout_marginTop="10dp"
+                android:layout_marginBottom="10dp"
+                android:spinnerMode="dialog" />
+            <!--<Button-->
+            <!--android:id="@+id/btnCurrency"-->
+            <!--android:layout_width="wrap_content"-->
+            <!--android:layout_height="wrap_content"-->
+            <!--android:text="@string/currency"-->
+            <!--android:textAllCaps="false"-->
+            <!--android:background="@null"-->
+            <!--android:layout_marginLeft="5dp"-->
+            <!--android:layout_marginRight="5dp"-->
+            <!--android:onClick="onButtonClick"/>-->
+        </TableRow>
+
+        <Spinner
+            android:id="@+id/spinWallet"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginLeft="25dp"
+            android:layout_marginRight="25dp"
+            android:layout_marginTop="10dp"
+            android:layout_marginBottom="10dp"
+            android:spinnerMode="dialog" />
+
+        <Spinner
+            android:id="@+id/spinWalletDest"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginLeft="25dp"
+            android:layout_marginRight="25dp"
+            android:layout_marginTop="10dp"
+            android:layout_marginBottom="10dp"
+            android:spinnerMode="dialog" />
+
+        <!--<TableRow>-->
+            <!--<Button-->
+                <!--android:id="@+id/btnWallet"-->
+                <!--android:layout_width="wrap_content"-->
+                <!--android:layout_height="wrap_content"-->
+                <!--android:layout_weight="1"-->
+                <!--android:text="@string/wallet"-->
+                <!--android:textAllCaps="false"-->
+                <!--android:background="@null"-->
+                <!--android:layout_marginLeft="5dp"-->
+                <!--android:layout_marginRight="5dp"-->
+                <!--android:onClick="onButtonClick"/>-->
+        <!--</TableRow>-->
+
+        <Spinner
+            android:id="@+id/spinCategory"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginLeft="25dp"
+            android:layout_marginRight="25dp"
+            android:layout_marginTop="10dp"
+            android:layout_marginBottom="10dp"
+            android:spinnerMode="dialog" />
+
+        <!--<TableRow>-->
+            <!--<Button-->
+                <!--android:id="@+id/btnCategory"-->
+                <!--android:layout_width="wrap_content"-->
+                <!--android:layout_height="wrap_content"-->
+                <!--android:layout_weight="1"-->
+                <!--android:text="@string/category"-->
+                <!--android:textAllCaps="false"-->
+                <!--android:background="@null"-->
+                <!--android:layout_marginLeft="5dp"-->
+                <!--android:layout_marginRight="5dp"-->
+                <!--android:onClick="onButtonClick"/>-->
+        <!--</TableRow>-->
+
+        <Spinner
+            android:id="@+id/spinSource"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginLeft="25dp"
+            android:layout_marginRight="25dp"
+            android:layout_marginTop="10dp"
+            android:layout_marginBottom="10dp"
+            android:spinnerMode="dialog" />
+
+        <!--<TableRow>-->
+            <!--<Button-->
+                <!--android:id="@+id/btnSource"-->
+                <!--android:layout_width="wrap_content"-->
+                <!--android:layout_height="wrap_content"-->
+                <!--android:layout_weight="1"-->
+                <!--android:text="@string/source"-->
+                <!--android:textAllCaps="false"-->
+                <!--android:background="@null"-->
+                <!--android:layout_marginLeft="5dp"-->
+                <!--android:layout_marginRight="5dp"-->
+                <!--android:onClick="onButtonClick"/>-->
+        <!--</TableRow>-->
+
+        <TableRow>
+            <EditText android:id="@+id/etComment"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="@string/comment"
+                android:textColor="@color/colorHint"
+                android:layout_marginLeft="15dp"
+                android:layout_marginRight="15dp"
+                android:onClick="onEditTextClick" />
+            <Button
+                android:id="@+id/btnTag"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/tag"
+                android:textAllCaps="false"
+                android:background="@null"
+                android:layout_marginLeft="15dp"
+                android:layout_marginRight="15dp"
+                android:onClick="onButtonClick"/>
+        </TableRow>
+
+        <Button
+            android:id="@+id/btnConfirm"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/confirmButton"
+            android:textAllCaps="false"
+            android:layout_marginLeft="100dp"
+            android:layout_marginRight="100dp"
+            android:onClick="onButtonClick" />
+
+    </TableLayout>
+
+    <!-- Пустое пространство === === === === === === === === === === === === -->
+    <Space
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+    />
+
+    <!-- Выбор категории === === === === === === === === === === === === === -->
+    <RadioGroup
+        android:id="@+id/rgOperationChoice"
+        android:layout_height="wrap_content"
+        android:layout_width="wrap_content"
+        android:layout_gravity="center_horizontal"
+        android:orientation="horizontal" >
+        <RadioButton
+            android:id="@+id/rbSpend"
+            android:layout_height="wrap_content"
+            android:layout_width="wrap_content"
+            android:checked="true"
+            android:text="@string/radio_1"
+            android:onClick="onButtonClick" />
+        <RadioButton
+            android:id="@+id/rbGain"
+            android:layout_height="wrap_content"
+            android:layout_width="wrap_content"
+            android:text="@string/radio_2"
+            android:onClick="onButtonClick" />
+        <RadioButton
+            android:id="@+id/rbMove"
+            android:layout_height="wrap_content"
+            android:layout_width="wrap_content"
+            android:text="@string/radio_3"
+            android:onClick="onButtonClick" />
+        <RadioButton
+            android:id="@+id/rbChange"
+            android:layout_height="wrap_content"
+            android:layout_width="wrap_content"
+            android:text="@string/radio_4"
+            android:layout_marginRight="4dp"
+            android:onClick="onButtonClick" />
+    </RadioGroup>
+
+</LinearLayout>
