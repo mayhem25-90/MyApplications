@@ -8,7 +8,6 @@ import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
-import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.DatePicker;
 import android.widget.EditText;
@@ -41,28 +40,11 @@ public class MainActivity extends AppCompatActivity {
     final int DIALOG_TAGS = 5;
     final int DIALOG_CONFIRM = 6;
 
-    final int SPENDING = 1, GAIN = 2, MOVE = 3, CHANGE = 4;
-
     final String ATTRIBUTE_NAME_IMAGE = "image";
     final String ATTRIBUTE_NAME_TEXT = "text";
 
     DB db;
     Cursor cursor;
-
-//    TabOperationsActivity tabOperationsActivity;
-//    = new TabOperationsActivity(db);
-//    tabOperationsActivity.onConfirmOperation();
-
-    // виджеты 1-го блока
-    TableRow etSumRow, etSumDestRow;
-//    TextView tvHello;
-//    EditText etDate;
-    EditText etSum, etSumDest, etComment;
-    Button btnDate, btnConfirm;
-//    btnCategory, btnSource;
-    Spinner spinCurrency, spinCurrencyDest, spinWallet, spinWalletDest, spinCategory, spinSource;
-    RadioGroup rgOperationChoice;
-    TabHost tabHost;
 
     SimpleDateFormat currentDateFormat = new SimpleDateFormat("dd-MM-yyyy", Locale.US);
 
@@ -74,11 +56,6 @@ public class MainActivity extends AppCompatActivity {
         // открываем подключение к БД
         db = new DB(this);
         db.open();
-//        stopManagingCursor(cursor);
-//        cursor = db.getAllData(DB.WALLET_TABLE);
-
-//        tabOperationsActivity = new TabOperationsActivity(this, db);
-//        tabOperationsActivity.onCreate(savedInstanceState);
 
         // Инициализация вкладок
         tabHost = (TabHost) findViewById(android.R.id.tabhost);
@@ -97,14 +74,6 @@ public class MainActivity extends AppCompatActivity {
         initHistoryTabContent();
         initBalanceTabContent();
     }
-
-
-//        // обработчик переключения вкладок
-//        tabHost.setOnTabChangedListener(new TabHost.OnTabChangeListener() {
-//            public void onTabChanged(String tabId) {
-//                Toast.makeText(getBaseContext(), "tabId = " + tabId, Toast.LENGTH_SHORT).show();
-//            }
-//        });
 
 
     private void setupTab(String title, int id) {
@@ -126,6 +95,18 @@ public class MainActivity extends AppCompatActivity {
 // 1. Вкладка введения операций
 // == ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ====
 
+    // виджеты 1-го блока
+    TableRow etSumRow, etSumDestRow;
+    //    TextView tvHello;
+//    EditText etDate;
+    EditText etSum, etSumDest, etComment;
+    Button btnDate, btnConfirm;
+    //    btnCategory, btnSource;
+    Spinner spinCurrency, spinCurrencyDest, spinWallet, spinWalletDest, spinCategory, spinSource;
+    RadioGroup rgOperationChoice;
+    TabHost tabHost;
+
+
     private void initOperationsTabContent() {
         etSumRow = (TableRow) findViewById(R.id.etSumRow);
         etSumRow.setBackgroundColor(getResources().getColor(R.color.colorSpend));
@@ -136,7 +117,6 @@ public class MainActivity extends AppCompatActivity {
 
         // Первоначальное заполнение даты
         btnDate = (Button) findViewById(R.id.btnDate);
-//        SimpleDateFormat currentDateFormat = new SimpleDateFormat("dd-MM-yyyy", Locale.US);
         String currDate = currentDateFormat.format(new Date(System.currentTimeMillis()));
         btnDate.setText(currDate);
 
@@ -151,23 +131,17 @@ public class MainActivity extends AppCompatActivity {
         loadDataForSpinner(DB.CURRENCY_TABLE, spinCurrencyDest, R.string.currency);
 
         spinWallet = (Spinner) findViewById(R.id.spinWallet);
-//        loadDataForSpinWallet();
         loadDataForSpinner(DB.WALLET_TABLE, spinWallet, R.string.wallet);
 
         spinWalletDest = (Spinner) findViewById(R.id.spinWalletDest);
         spinWalletDest.setVisibility(View.GONE);
         loadDataForSpinner(DB.WALLET_TABLE, spinWalletDest, R.string.wallet);
 
-//        btnCategory = (Button) findViewById(R.id.btnCategory);
         spinCategory = (Spinner) findViewById(R.id.spinCategory);
-//        loadDataForSpinCategory();
         loadDataForSpinner(DB.SPENDING_TABLE, spinCategory, R.string.category);
 
-//        btnSource = (Button) findViewById(R.id.btnSource);
-//        btnSource.setVisibility(View.GONE);
         spinSource = (Spinner) findViewById(R.id.spinSource);
         spinSource.setVisibility(View.GONE);
-//        loadDataForSpinSource();
         loadDataForSpinner(DB.SOURCES_TABLE, spinSource, R.string.source);
 
         etComment = (EditText) findViewById(R.id.etComment);
@@ -175,7 +149,6 @@ public class MainActivity extends AppCompatActivity {
         btnConfirm = (Button) findViewById(R.id.btnConfirm);
 
         rgOperationChoice = (RadioGroup) findViewById(R.id.rgOperationChoice);
-//        rgExerciseChoice.check(R.id.rb1st);
     }
 
 
@@ -225,16 +198,9 @@ public class MainActivity extends AppCompatActivity {
         switch (v.getId()) {
             case R.id.btnDate: showDialog(DIALOG_DATE); break;
 
-//            case R.id.btnCurrency: showDialog(DIALOG_CURRENCIES); break;
-//            case R.id.spinCurrency: showDialog(DIALOG_CURRENCIES); break;
-//            case R.id.btnWallet: showDialog(DIALOG_WALLETS); break;
-//            case R.id.spinWallet: showDialog(DIALOG_WALLETS); break;
-//            case R.id.btnCategory: showDialog(DIALOG_CATEGORIES); break;
-//            case R.id.btnSource: showDialog(DIALOG_SOURCES); break;
             case R.id.btnTag: showDialog(DIALOG_TAGS); break;
 
             case R.id.btnConfirm:
-//                showDialog(DIALOG_CONFIRM);
                 onConfirmOperation();
                 break;
 
@@ -242,22 +208,16 @@ public class MainActivity extends AppCompatActivity {
                 etSumRow.setBackgroundColor(getResources().getColor(R.color.colorSpend));
                 etSumDestRow.setVisibility(View.GONE);
                 spinWalletDest.setVisibility(View.GONE);
-//                btnCategory.setVisibility(View.VISIBLE);
                 spinCategory.setVisibility(View.VISIBLE);
-//                btnSource.setVisibility(View.GONE);
                 spinSource.setVisibility(View.GONE);
-//                showDialog(RADIO_SPENDING);
                 break;
 
             case R.id.rbGain:
                 etSumRow.setBackgroundColor(getResources().getColor(R.color.colorGain));
                 etSumDestRow.setVisibility(View.GONE);
                 spinWalletDest.setVisibility(View.GONE);
-//                btnCategory.setVisibility(View.GONE);
                 spinCategory.setVisibility(View.GONE);
-//                btnSource.setVisibility(View.VISIBLE);
                 spinSource.setVisibility(View.VISIBLE);
-//                showDialog(DIALOG_GAINS);
                 break;
 
             case R.id.rbMove:
@@ -274,16 +234,7 @@ public class MainActivity extends AppCompatActivity {
                 spinWalletDest.setVisibility(View.VISIBLE);
                 spinCategory.setVisibility(View.GONE);
                 spinSource.setVisibility(View.GONE);
-//                showDialog(DIALOG_CHANGES);
                 break;
-
-//            case R.id.etSum:
-//                if (etSum.getText().toString().equals(getResources().getString(R.string.sum))) {
-////                    Log.d(LOG_TAG, "etSum: строки совпадают");
-////                    etSum.setText("");
-//                    etSum.setSelection(0);
-//                }
-//                break;
 
             default: break;
         }
@@ -292,13 +243,7 @@ public class MainActivity extends AppCompatActivity {
 
     DatePickerDialog.OnDateSetListener dateDialogCallBack = new DatePickerDialog.OnDateSetListener() {
         public void onDateSet(DatePicker view, int year, int monthOfYear, int dayOfMonth) {
-//            myYear = year - 1900;
-//            myMonth = monthOfYear;
-//            myDay = dayOfMonth;
             Date chosenDate = new Date(year - 1900, monthOfYear, dayOfMonth);
-//            SimpleDateFormat currentDateFormat = new SimpleDateFormat("dd-MM-yyyy", Locale.US);
-//            tvDate.setText("Today is " + myDay + "." + myMonth + "." + myYear);
-//            btnDate.setText(myDay + "-" + myMonth + "-" + myYear);
             btnDate.setText(currentDateFormat.format(chosenDate));
         }
     };
@@ -326,28 +271,28 @@ public class MainActivity extends AppCompatActivity {
             String confirmText = "";
             switch (rgOperationChoice.getCheckedRadioButtonId()) {
                 case R.id.rbSpend:
-                    operation_type = SPENDING;
+                    operation_type = db.SPENDING;
                     confirmText = "Трата сохранена";
                     category_id = spinCategory.getSelectedItemPosition();
                     sum = - Double.parseDouble(etSum.getText().toString());
                     break;
 
                 case R.id.rbGain:
-                    operation_type = GAIN;
+                    operation_type = db.GAIN;
                     confirmText = "Доход сохранён";
                     category_id = spinSource.getSelectedItemPosition();
                     sum = Double.parseDouble(etSum.getText().toString());
                     break;
 
                 case R.id.rbMove:
-                    operation_type = MOVE;
+                    operation_type = db.MOVE;
                     confirmText = "Перемещение сохранено";
                     wallet_id_dest = spinWalletDest.getSelectedItemPosition();
                     sum = Double.parseDouble(etSum.getText().toString());
                     break;
 
                 case R.id.rbChange:
-                    operation_type = CHANGE;
+                    operation_type = db.CHANGE;
                     confirmText = "Обмен валют сохранён";
                     currency_id_dest = spinCurrencyDest.getSelectedItemPosition();
                     sum = Double.parseDouble(etSum.getText().toString());
@@ -370,20 +315,20 @@ public class MainActivity extends AppCompatActivity {
 
             // Добаляем запись в базу
             try {
-                if (operation_type == SPENDING || operation_type == GAIN) {
+                if (operation_type == db.SPENDING || operation_type == db.GAIN) {
                     db.addTransaction(operation_type, currency_id, wallet_id, category_id,
                             sum, currentDate, comment);
                 }
-                else if (operation_type == MOVE) {
-                    db.addTransaction(SPENDING, currency_id, wallet_id, category_id,
+                else if (operation_type == db.MOVE) {
+                    db.addTransaction(db.SPENDING, currency_id, wallet_id, category_id,
                             -sum, currentDate, comment);
-                    db.addTransaction(GAIN, currency_id, wallet_id_dest, category_id,
+                    db.addTransaction(db.GAIN, currency_id, wallet_id_dest, category_id,
                             sum, currentDate, comment);
                 }
-                else if (operation_type == CHANGE) {
-                    db.addTransaction(SPENDING, currency_id, wallet_id, category_id,
+                else if (operation_type == db.CHANGE) {
+                    db.addTransaction(db.SPENDING, currency_id, wallet_id, category_id,
                             -sum, currentDate, comment);
-                    db.addTransaction(GAIN, currency_id_dest, wallet_id_dest, category_id,
+                    db.addTransaction(db.GAIN, currency_id_dest, wallet_id_dest, category_id,
                             sumDest, currentDate, comment);
                 }
             }
@@ -410,94 +355,13 @@ public class MainActivity extends AppCompatActivity {
     protected Dialog onCreateDialog(int id) {
         AlertDialog.Builder adb = new AlertDialog.Builder(this);
         switch (id) {
-            // Дата
-            case DIALOG_DATE:
-//                DatePickerDialog tpd = new DatePickerDialog(this, myCallBack, myYear, myMonth, myDay);
-//                return tpd;
-//                String currDate = btnDate.getText().toString();
-//                String[] date = currDate.split("-");
+            case DIALOG_DATE: // Дата
                 String[] date = btnDate.getText().toString().split("-");
-//                String currD = "123";
-//                java.sql.date currentDate = currentDateFormat.parse(currD);
-//                Log.d(LOG_TAG, "date = " + date[0] + " " + date[1] + " " + date[2]);
-//                return new DatePickerDialog(this, dateDialogCallBack, myYear, myMonth, myDay);
                 return new DatePickerDialog(this, dateDialogCallBack, Integer.parseInt(date[2]), Integer.parseInt(date[1]) - 1, Integer.parseInt(date[0]));
-
-            // Валюты
-//            case DIALOG_CURRENCIES:
-//                adb.setTitle(R.string.currencies);
-////                adb.setMultiChoiceItems(data, chkd, myItemsMultiClickListener);
-////                adb.setMultiChoiceItems(cursor, DB.COLUMN_CHK, DB.WALLET_COLUMN_NAME, myCursorMultiClickListener);
-//                adb.setCursor(cursor, myClickListener, DB.CURRENCY_COLUMN_NAME);
-//                break;
-
-            // Кошельки
-//            case DIALOG_WALLETS:
-//                adb.setTitle(R.string.wallets);
-////                adb.setMultiChoiceItems(cursor, DB.COLUMN_CHK, DB.WALLET_COLUMN_NAME, myCursorMultiClickListener);
-//
-//                // упаковываем данные в понятную для адаптера структуру
-//                ArrayList<Map<String, Object>> data = new ArrayList<Map<String, Object>>(cursor.getCount());
-//                Map<String, Object> m;
-//                if (cursor.moveToFirst()) {
-//                    for (int i = 0; i < cursor.getCount(); i++) {
-//                        m = new HashMap<String, Object>();
-////                        Log.d(LOG_TAG, "cursor.getString(i) = " + cursor.getString(cursor.getColumnIndex(DB.WALLET_COLUMN_NAME)));
-////                        m.put(ATTRIBUTE_NAME_TEXT, "test");
-//                        m.put(ATTRIBUTE_NAME_TEXT, cursor.getString(cursor.getColumnIndex(DB.WALLET_COLUMN_NAME)));
-////                        m.put(ATTRIBUTE_NAME_IMAGE, cursor.getString(i));
-//                        m.put(ATTRIBUTE_NAME_IMAGE, R.mipmap.olm);
-//
-//                        data.add(m);
-//                        cursor.moveToNext();
-//                    }
-//                }
-//
-//                // массив имен атрибутов, из которых будут читаться данные
-//                String[] from = { ATTRIBUTE_NAME_IMAGE, ATTRIBUTE_NAME_TEXT };
-//                // массив ID View-компонентов, в которые будут вставлять данные
-//                int[] to = { R.id.ivImg, R.id.tvText };
-//
-//                SimpleAdapter sAdapter = new SimpleAdapter(this, data, R.layout.item, from, to);
-//                adb.setAdapter(sAdapter, myClickListener);
-//                spinWallet.setAdapter(sAdapter);
-//                break;
 
             default: return adb.create();
         }
-//        adb.setPositiveButton(R.string.ok, myBtnClickListener);
-//        return adb.create();
     }
-
-
-    // обработчик нажатия на пункт списка диалога
-//    DialogInterface.OnClickListener myClickListener = new DialogInterface.OnClickListener() {
-//        public void onClick(DialogInterface dialog, int which) {
-//            // выводим в лог позицию нажатого элемента
-//            Log.d(LOG_TAG, "which = " + which);
-//        }
-//    };
-
-
-    // обработчик для списка массива
-//    DialogInterface.OnMultiChoiceClickListener myItemsMultiClickListener = new DialogInterface.OnMultiChoiceClickListener() {
-//        @Override
-//        public void onClick(DialogInterface dialog, int which, boolean isChecked) {
-//            Log.d(LOG_TAG, "which = " + which + ", isChecked = " + isChecked);
-//        }
-//    };
-//
-//
-//    // обработчик для списка курсора
-//    DialogInterface.OnMultiChoiceClickListener myCursorMultiClickListener = new DialogInterface.OnMultiChoiceClickListener() {
-//        @Override
-//        public void onClick(DialogInterface dialog, int which, boolean isChecked) {
-//            ListView lv = ((AlertDialog) dialog).getListView();
-//            Log.d(LOG_TAG, "which = " + which + ", isChecked = " + isChecked);
-//            db.changeRec(which, isChecked);
-//            cursor.requery();
-//        }
-//    };
 
 
     // Загрузка данных в спиннеры из БД
@@ -525,101 +389,13 @@ public class MainActivity extends AppCompatActivity {
     }
 
 
-//    public void loadDataForSpinWallet() {
-//
-////        final int test[] = {R.mipmap.ic_launcher, R.mipmap.olm, R.mipmap.ic_launcher, R.mipmap.ic_launcher};
-//        cursor = db.getAllData(DB.WALLET_TABLE);
-//
-//        // упаковываем данные в понятную для адаптера структуру
-//        ArrayList<Map<String, Object>> data = new ArrayList<Map<String, Object>>(cursor.getCount());
-//        Map<String, Object> m;
-//        if (cursor.moveToFirst()) {
-//            for (int i = 0; i < cursor.getCount(); i++) {
-//                m = new HashMap<String, Object>();
-////                        Log.d(LOG_TAG, "cursor.getString(i) = " + cursor.getString(cursor.getColumnIndex(DB.WALLET_COLUMN_NAME)));
-////                        m.put(ATTRIBUTE_NAME_TEXT, "test");
-//                m.put(ATTRIBUTE_NAME_TEXT, cursor.getString(cursor.getColumnIndex(DB.WALLET_COLUMN_NAME)));
-////                        m.put(ATTRIBUTE_NAME_IMAGE, cursor.getString(i));
-////                m.put(ATTRIBUTE_NAME_IMAGE, test[i]);
-//                m.put(ATTRIBUTE_NAME_IMAGE, cursor.getString(cursor.getColumnIndex(DB.WALLET_COLUMN_IMAGE)));
-//
-//                data.add(m);
-//                cursor.moveToNext();
-//            }
-//        }
-//
-//        // массив имен атрибутов, из которых будут читаться данные
-//        String[] from = { ATTRIBUTE_NAME_IMAGE, ATTRIBUTE_NAME_TEXT };
-//        // массив ID View-компонентов, в которые будут вставлять данные
-//        int[] to = { R.id.ivImg, R.id.tvText };
-//
-//        SimpleAdapter sAdapter = new SimpleAdapter(this, data, R.layout.item, from, to);
-//        spinWallet.setAdapter(sAdapter);
-//        spinWallet.setPrompt(getResources().getString(R.string.wallet));
-//    }
-//
-//
-//    public void loadDataForSpinCategory() {
-//        cursor = db.getAllData(DB.SPENDING_TABLE);
-//        ArrayList<Map<String, Object>> data = new ArrayList<Map<String, Object>>(cursor.getCount());
-//        Map<String, Object> m;
-//        if (cursor.moveToFirst()) {
-//            for (int i = 0; i < cursor.getCount(); i++) {
-//                m = new HashMap<String, Object>();
-//                m.put(ATTRIBUTE_NAME_TEXT, cursor.getString(cursor.getColumnIndex(DB.SPENDING_COLUMN_NAME)));
-//                m.put(ATTRIBUTE_NAME_IMAGE, cursor.getString(cursor.getColumnIndex(DB.SPENDING_COLUMN_IMAGE)));
-//
-//                data.add(m);
-//                cursor.moveToNext();
-//            }
-//        }
-//
-//        String[] from = { ATTRIBUTE_NAME_IMAGE, ATTRIBUTE_NAME_TEXT };
-//        int[] to = { R.id.ivImg, R.id.tvText };
-//
-//        SimpleAdapter sAdapter = new SimpleAdapter(this, data, R.layout.item, from, to);
-//        spinCategory.setAdapter(sAdapter);
-//        spinCategory.setPrompt(getResources().getString(R.string.category));
-//    }
-//
-//
-//    public void loadDataForSpinSource() {
-//        cursor = db.getAllData(DB.SOURCES_TABLE);
-//        ArrayList<Map<String, Object>> data = new ArrayList<Map<String, Object>>(cursor.getCount());
-//        Map<String, Object> m;
-//        if (cursor.moveToFirst()) {
-//            for (int i = 0; i < cursor.getCount(); i++) {
-//                m = new HashMap<String, Object>();
-//                m.put(ATTRIBUTE_NAME_TEXT, cursor.getString(cursor.getColumnIndex(DB.SOURCES_COLUMN_NAME)));
-//                m.put(ATTRIBUTE_NAME_IMAGE, cursor.getString(cursor.getColumnIndex(DB.SOURCES_COLUMN_IMAGE)));
-//
-//                data.add(m);
-//                cursor.moveToNext();
-//            }
-//        }
-//
-//        String[] from = { ATTRIBUTE_NAME_IMAGE, ATTRIBUTE_NAME_TEXT };
-//        int[] to = { R.id.ivImg, R.id.tvText };
-//
-//        SimpleAdapter sAdapter = new SimpleAdapter(this, data, R.layout.item, from, to);
-//        spinSource.setAdapter(sAdapter);
-//        spinSource.setPrompt(getResources().getString(R.string.source));
-//    }
-
-
 // == ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ====
 // 2. Вкладка истории операций
 // == ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ====
 
-//    final String ATTRIBUTE_NAME_IMAGE = "image";
-//    final String ATTRIBUTE_NAME_TEXT = "text";
-
-//    Spinner spinTest;
     ListView lvHistory;
 
     private void initHistoryTabContent() {
-//        spinTest = (Spinner) findViewById(R.id.spinTest);
-//        loadDataForSpinner(DB.CURRENCY_TABLE, spinTest, R.string.currency);
         lvHistory = (ListView) findViewById(R.id.lvHistory);
 
         loadDataForOperationHistory();
@@ -650,11 +426,6 @@ public class MainActivity extends AppCompatActivity {
 
         String[] from = { DB.WALLET_COLUMN_IMAGE, DB.SPENDING_COLUMN_NAME, DB.RECORD_COLUMN_DATE, DB.RECORD_COLUMN_SUM, DB.CURRENCY_COLUMN_TITLE };
         int[] to = { R.id.ivImg, R.id.tvCategory, R.id.tvDate, R.id.tvSum, R.id.tvCurrency };
-
-//        SimpleAdapter sAdapter = new SimpleAdapter(this, data, R.layout.item_history, from, to);
-//        currentSpinner.setAdapter(sAdapter);
-//        currentSpinner.setAdapter(new SimpleAdapter(this, data, R.layout.item_history, from, to));
-//        currentSpinner.setPrompt(getResources().getString(string_id));
 
         lvHistory.setAdapter(new SimpleAdapter(this, data, R.layout.item_history, from, to));
     }
