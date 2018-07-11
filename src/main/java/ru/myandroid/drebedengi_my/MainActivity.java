@@ -8,12 +8,14 @@ import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
+import android.widget.AdapterView;
 import android.widget.Button;
 import android.widget.DatePicker;
 import android.widget.EditText;
 import android.widget.ListView;
 import android.widget.RadioGroup;
 import android.widget.SimpleAdapter;
+import android.widget.SimpleCursorAdapter;
 import android.widget.Spinner;
 import android.widget.TabHost;
 import android.widget.TableRow;
@@ -45,6 +47,8 @@ public class MainActivity extends AppCompatActivity {
 
     DB db;
     Cursor cursor;
+
+    TabHost tabHost;
 
     SimpleDateFormat currentDateFormat = new SimpleDateFormat("dd-MM-yyyy", Locale.US);
 
@@ -95,19 +99,28 @@ public class MainActivity extends AppCompatActivity {
 // 1. Вкладка введения операций
 // == ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ====
 
+    public static final int spin_currency = 0,
+                            spin_currency_dest = 1,
+                            spin_wallet = 2,
+                            spin_wallet_dest = 3,
+                            spin_spending = 4,
+                            spin_source = 5;
+
     // виджеты 1-го блока
     TableRow etSumRow, etSumDestRow;
-    //    TextView tvHello;
+//    TextView tvHello;
 //    EditText etDate;
     EditText etSum, etSumDest, etComment;
     Button btnDate, btnConfirm;
-    //    btnCategory, btnSource;
+//    btnCategory, btnSource;
     Spinner spinCurrency, spinCurrencyDest, spinWallet, spinWalletDest, spinCategory, spinSource;
     RadioGroup rgOperationChoice;
-    TabHost tabHost;
+//    ListView lvTestData;
 
 
     private void initOperationsTabContent() {
+        Log.d(LOG_TAG, "initOperationsTabContent");
+
         etSumRow = (TableRow) findViewById(R.id.etSumRow);
         etSumRow.setBackgroundColor(getResources().getColor(R.color.colorSpend));
 
@@ -122,31 +135,35 @@ public class MainActivity extends AppCompatActivity {
 
         etSum = (EditText) findViewById(R.id.etSum);
 
-        spinCurrency = (Spinner) findViewById(R.id.spinCurrency);
-        loadDataForSpinner(DB.CURRENCY_TABLE, spinCurrency, R.string.currency);
-
         etSumDest = (EditText) findViewById(R.id.etSumDest);
 
+        spinCurrency = (Spinner) findViewById(R.id.spinCurrency);
+
         spinCurrencyDest = (Spinner) findViewById(R.id.spinCurrencyDest);
-        loadDataForSpinner(DB.CURRENCY_TABLE, spinCurrencyDest, R.string.currency);
 
         spinWallet = (Spinner) findViewById(R.id.spinWallet);
-        loadDataForSpinner(DB.WALLET_TABLE, spinWallet, R.string.wallet);
 
         spinWalletDest = (Spinner) findViewById(R.id.spinWalletDest);
         spinWalletDest.setVisibility(View.GONE);
-        loadDataForSpinner(DB.WALLET_TABLE, spinWalletDest, R.string.wallet);
 
         spinCategory = (Spinner) findViewById(R.id.spinCategory);
-        loadDataForSpinner(DB.SPENDING_TABLE, spinCategory, R.string.category);
 
         spinSource = (Spinner) findViewById(R.id.spinSource);
         spinSource.setVisibility(View.GONE);
-        loadDataForSpinner(DB.SOURCES_TABLE, spinSource, R.string.source);
+
+        loadDataForSpinner(DB.CURRENCY_TABLE, spinCurrency,     R.string.currency, spin_currency);
+        loadDataForSpinner(DB.CURRENCY_TABLE, spinCurrencyDest, R.string.currency, spin_currency_dest);
+        loadDataForSpinner(DB.WALLET_TABLE,   spinWallet,       R.string.wallet,   spin_wallet);
+        loadDataForSpinner(DB.WALLET_TABLE,   spinWalletDest,   R.string.wallet,   spin_wallet_dest);
+        loadDataForSpinner(DB.CATEGORY_TABLE, spinCategory,     R.string.category, spin_spending);
+        loadDataForSpinner(DB.CATEGORY_TABLE, spinSource,       R.string.source,   spin_source);
 
         etComment = (EditText) findViewById(R.id.etComment);
 
         btnConfirm = (Button) findViewById(R.id.btnConfirm);
+
+//        lvTestData = (ListView) findViewById(R.id.lvTestData);
+//        loadDataForTestList();
 
         rgOperationChoice = (RadioGroup) findViewById(R.id.rgOperationChoice);
     }
@@ -249,6 +266,14 @@ public class MainActivity extends AppCompatActivity {
     };
 
 
+    long m_spending_category_id = -1;
+    long m_gain_category_id = -1;
+    long m_currency_id = -1;
+    long m_wallet_id = -1;
+    long m_currency_id_dest = -1;
+    long m_wallet_id_dest = -1;
+
+
     public void onConfirmOperation() {
         if ( !etSum.getText().toString().equals(getResources().getString(R.string.sum))
                 && !etSum.getText().toString().equals("")
@@ -257,15 +282,15 @@ public class MainActivity extends AppCompatActivity {
             String[] date = btnDate.getText().toString().split("-");
             String currentDate = date[2] + "-" + date[1] + "-" + date[0];
 //            double sum = Double.parseDouble(etSum.getText().toString());
-            int currency_id = spinCurrency.getSelectedItemPosition();
-            int wallet_id = spinWallet.getSelectedItemPosition();
+//            int currency_id = spinCurrency.getSelectedItemPosition();
+//            int wallet_id = spinWallet.getSelectedItemPosition();
             String comment = !etComment.getText().toString().equals(getResources().getString(R.string.comment)) ?
                     etComment.getText().toString() : "";
 
-            int wallet_id_dest = -1;
-            int category_id = -1;
+//            int wallet_id_dest = -1;
+            long category_id = -1;
             int operation_type = -1;
-            int currency_id_dest = -1;
+//            int currency_id_dest = -1;
             double sum = 0.0;
             double sumDest = 0.0;
             String confirmText = "";
@@ -273,28 +298,30 @@ public class MainActivity extends AppCompatActivity {
                 case R.id.rbSpend:
                     operation_type = db.SPENDING;
                     confirmText = "Трата сохранена";
-                    category_id = spinCategory.getSelectedItemPosition();
+//                    category_id = spinCategory.getSelectedItemPosition();
+                    category_id = m_spending_category_id;
                     sum = - Double.parseDouble(etSum.getText().toString());
                     break;
 
                 case R.id.rbGain:
                     operation_type = db.GAIN;
                     confirmText = "Доход сохранён";
-                    category_id = spinSource.getSelectedItemPosition();
+//                    category_id = spinSource.getSelectedItemPosition();
+                    category_id = m_gain_category_id;
                     sum = Double.parseDouble(etSum.getText().toString());
                     break;
 
                 case R.id.rbMove:
                     operation_type = db.MOVE;
                     confirmText = "Перемещение сохранено";
-                    wallet_id_dest = spinWalletDest.getSelectedItemPosition();
+//                    wallet_id_dest = spinWalletDest.getSelectedItemPosition();
                     sum = Double.parseDouble(etSum.getText().toString());
                     break;
 
                 case R.id.rbChange:
                     operation_type = db.CHANGE;
                     confirmText = "Обмен валют сохранён";
-                    currency_id_dest = spinCurrencyDest.getSelectedItemPosition();
+//                    currency_id_dest = spinCurrencyDest.getSelectedItemPosition();
                     sum = Double.parseDouble(etSum.getText().toString());
                     sumDest = Double.parseDouble(etSumDest.getText().toString());
                     break;
@@ -305,30 +332,35 @@ public class MainActivity extends AppCompatActivity {
             Log.d(LOG_TAG, "currentDate = " + currentDate);
             Log.d(LOG_TAG, "sum = " + sum);
             Log.d(LOG_TAG, "sum_dest = " + sumDest);
-            Log.d(LOG_TAG, "currency_id = " + currency_id);
-            Log.d(LOG_TAG, "currency_id_dest = " + currency_id_dest);
-            Log.d(LOG_TAG, "wallet_id = " + wallet_id);
-            Log.d(LOG_TAG, "wallet_id_dest = " + wallet_id_dest);
+//            Log.d(LOG_TAG, "currency_id = " + currency_id);
+//            Log.d(LOG_TAG, "currency_id_dest = " + currency_id_dest);
+//            Log.d(LOG_TAG, "wallet_id = " + wallet_id);
+//            Log.d(LOG_TAG, "wallet_id_dest = " + wallet_id_dest);
+            Log.d(LOG_TAG, "currency_id = " + m_currency_id);
+            Log.d(LOG_TAG, "currency_id_dest = " + m_currency_id_dest);
+            Log.d(LOG_TAG, "wallet_id = " + m_wallet_id);
+            Log.d(LOG_TAG, "wallet_id_dest = " + m_wallet_id_dest);
             Log.d(LOG_TAG, "category_id = " + category_id);
             Log.d(LOG_TAG, "comment = " + comment);
             Log.d(LOG_TAG, "operation_type = " + operation_type);
+//            Log.d(LOG_TAG, "# m_spending_category_id = " + m_spending_category_id);
 
             // Добаляем запись в базу
             try {
                 if (operation_type == db.SPENDING || operation_type == db.GAIN) {
-                    db.addTransaction(operation_type, currency_id, wallet_id, category_id,
+                    db.addTransaction(operation_type, m_currency_id, m_wallet_id, category_id,
                             sum, currentDate, comment);
                 }
                 else if (operation_type == db.MOVE) {
-                    db.addTransaction(db.SPENDING, currency_id, wallet_id, category_id,
+                    db.addTransaction(db.SPENDING, m_currency_id, m_wallet_id, category_id,
                             -sum, currentDate, comment);
-                    db.addTransaction(db.GAIN, currency_id, wallet_id_dest, category_id,
+                    db.addTransaction(db.GAIN, m_currency_id, m_wallet_id_dest, category_id,
                             sum, currentDate, comment);
                 }
                 else if (operation_type == db.CHANGE) {
-                    db.addTransaction(db.SPENDING, currency_id, wallet_id, category_id,
+                    db.addTransaction(db.SPENDING, m_currency_id, m_wallet_id, category_id,
                             -sum, currentDate, comment);
-                    db.addTransaction(db.GAIN, currency_id_dest, wallet_id_dest, category_id,
+                    db.addTransaction(db.GAIN, m_currency_id_dest, m_wallet_id_dest, category_id,
                             sumDest, currentDate, comment);
                 }
             }
@@ -365,28 +397,90 @@ public class MainActivity extends AppCompatActivity {
 
 
     // Загрузка данных в спиннеры из БД
-    public void loadDataForSpinner(String TABLE_NAME, Spinner currentSpinner, int string_id) {
-        cursor = db.getAllData(TABLE_NAME);
-        ArrayList<Map<String, Object>> data = new ArrayList<Map<String, Object>>(cursor.getCount());
-        Map<String, Object> m;
-        if (cursor.moveToFirst()) {
-            for (int i = 0; i < cursor.getCount(); i++) {
-                m = new HashMap<String, Object>();
-                m.put(ATTRIBUTE_NAME_TEXT, cursor.getString(cursor.getColumnIndex(DB.TABLE_COLUMN_NAME)));
-                m.put(ATTRIBUTE_NAME_IMAGE, cursor.getString(cursor.getColumnIndex(DB.TABLE_COLUMN_IMAGE)));
-
-                data.add(m);
-                cursor.moveToNext();
-            }
+    public void loadDataForSpinner(final String TABLE_NAME, Spinner currentSpinner, int string_id, final int type) {
+//        Log.d(LOG_TAG, "load data for spinner: " + type);
+        if (TABLE_NAME.equals(DB.CATEGORY_TABLE)) {
+            cursor = db.getAllData(TABLE_NAME, string_id);
         }
+        else
+            cursor = db.getAllData(TABLE_NAME);
+//        db.logCursor(cursor);
 
-        String[] from = { ATTRIBUTE_NAME_IMAGE, ATTRIBUTE_NAME_TEXT };
+        // формируем столбцы сопоставления
+        String[] from = { DB.TABLE_COLUMN_IMAGE, DB.TABLE_COLUMN_NAME };
         int[] to = { R.id.ivImg, R.id.tvText };
 
-        SimpleAdapter sAdapter = new SimpleAdapter(this, data, R.layout.item, from, to);
-        currentSpinner.setAdapter(sAdapter);
+        // создааем адаптер и настраиваем список
+        SimpleCursorAdapter scAdapter = new SimpleCursorAdapter(this, R.layout.item, cursor, from, to);
+//        SimpleAdapter sAdapter = new SimpleAdapter(this, data, R.layout.item, from, to);
+        currentSpinner.setAdapter(scAdapter);
         currentSpinner.setPrompt(getResources().getString(string_id));
+
+        // устанавливаем обработчик нажатия
+        currentSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+                // показываем позицию нажатого элемента
+//                Toast.makeText(getBaseContext(), "Position = " + position, Toast.LENGTH_SHORT).show();
+//                Cursor localCursor = (Cursor) currentSpinner.getSelectedItem();
+//                int id = Integer.valueOf(localCursor.getString(localCursor.getColumnIndexOrThrow(DB.TABLE_COLUMN_ID)));
+//                Toast.makeText(getBaseContext(), "id = " + id, Toast.LENGTH_SHORT).show();
+//                Toast.makeText(getBaseContext(), "TABLE_NAME = " + TABLE_NAME, Toast.LENGTH_SHORT).show();
+                switch (type) {
+                    case spin_currency:      m_currency_id = id;          break;
+                    case spin_currency_dest: m_currency_id_dest = id;     break;
+                    case spin_wallet:        m_wallet_id = id;            break;
+                    case spin_wallet_dest:   m_wallet_id_dest = id;       break;
+                    case spin_spending:      m_spending_category_id = id; break;
+                    case spin_source:        m_gain_category_id = id;     break;
+                    default: break;
+                }
+            }
+
+            @Override
+            public void onNothingSelected(AdapterView<?> arg0) {}
+        });
     }
+
+//    SimpleCursorAdapter scAdapter;
+
+    // тест
+//    public void loadDataForTestList() {
+//        cursor = db.getAllData(DB.CATEGORY_TABLE);
+//        db.logCursor(cursor);
+//
+//        String[] from = { ATTRIBUTE_NAME_IMAGE, ATTRIBUTE_NAME_TEXT };
+//        String[] from = { DB.TABLE_COLUMN_IMAGE, DB.TABLE_COLUMN_NAME };
+//        int[] to = { R.id.ivImg, R.id.tvText };
+//
+//        SimpleCursorAdapter scAdapter = new SimpleCursorAdapter(this, R.layout.item, cursor, from, to);
+//        scAdapter = new SimpleCursorAdapter(this, R.layout.item, cursor, from, to);
+//        lvTestData.setAdapter(scAdapter);
+//    }
+
+    // Загрузка данных в спиннеры из БД
+//    public void loadDataForSpinner(String TABLE_NAME, Spinner currentSpinner, int string_id) {
+//        cursor = db.getAllData(TABLE_NAME);
+//        ArrayList<Map<String, Object>> data = new ArrayList<>(cursor.getCount());
+//        Map<String, Object> m;
+//        if (cursor.moveToFirst()) {
+//            for (int i = 0; i < cursor.getCount(); i++) {
+//                m = new HashMap<>();
+//                m.put(ATTRIBUTE_NAME_TEXT, cursor.getString(cursor.getColumnIndex(DB.TABLE_COLUMN_NAME)));
+//                m.put(ATTRIBUTE_NAME_IMAGE, cursor.getString(cursor.getColumnIndex(DB.TABLE_COLUMN_IMAGE)));
+//
+//                data.add(m);
+//                cursor.moveToNext();
+//            }
+//        }
+//
+//        String[] from = { ATTRIBUTE_NAME_IMAGE, ATTRIBUTE_NAME_TEXT };
+//        int[] to = { R.id.ivImg, R.id.tvText };
+//
+//        SimpleAdapter sAdapter = new SimpleAdapter(this, data, R.layout.item, from, to);
+//        currentSpinner.setAdapter(sAdapter);
+//        currentSpinner.setPrompt(getResources().getString(string_id));
+//    }
 
 
 // == ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ====
@@ -396,8 +490,8 @@ public class MainActivity extends AppCompatActivity {
     ListView lvHistory;
 
     private void initHistoryTabContent() {
+        Log.d(LOG_TAG, "initHistoryTabContent");
         lvHistory = (ListView) findViewById(R.id.lvHistory);
-
         loadDataForOperationHistory();
     }
 
@@ -405,7 +499,7 @@ public class MainActivity extends AppCompatActivity {
     // Загрузка истории операций из БД
     public void loadDataForOperationHistory() {
         cursor = db.getAllHistoryData();
-        db.logCursor(cursor);
+//        db.logCursor(cursor);
 
         ArrayList<Map<String, Object>> data = new ArrayList<Map<String, Object>>(cursor.getCount());
         Map<String, Object> m;
@@ -414,7 +508,7 @@ public class MainActivity extends AppCompatActivity {
                 m = new HashMap<String, Object>();
                 m.put(DB.WALLET_COLUMN_IMAGE, cursor.getString(cursor.getColumnIndex(DB.WALLET_COLUMN_IMAGE)));
 //                m.put(DB.RECORD_COLUMN_CATEGORY_ID, cursor.getString(cursor.getColumnIndex(DB.RECORD_COLUMN_CATEGORY_ID)));
-                m.put(DB.SPENDING_COLUMN_NAME, cursor.getString(cursor.getColumnIndex(DB.SPENDING_COLUMN_NAME)));
+                m.put(DB.CATEGORY_COLUMN_NAME, cursor.getString(cursor.getColumnIndex(DB.CATEGORY_COLUMN_NAME)));
                 m.put(DB.CURRENCY_COLUMN_TITLE, cursor.getString(cursor.getColumnIndex(DB.CURRENCY_COLUMN_TITLE)));
                 m.put(DB.RECORD_COLUMN_SUM, cursor.getString(cursor.getColumnIndex(DB.RECORD_COLUMN_SUM)));
                 m.put(DB.RECORD_COLUMN_DATE, cursor.getString(cursor.getColumnIndex(DB.RECORD_COLUMN_DATE)));
@@ -424,7 +518,7 @@ public class MainActivity extends AppCompatActivity {
             }
         }
 
-        String[] from = { DB.WALLET_COLUMN_IMAGE, DB.SPENDING_COLUMN_NAME, DB.RECORD_COLUMN_DATE, DB.RECORD_COLUMN_SUM, DB.CURRENCY_COLUMN_TITLE };
+        String[] from = { DB.WALLET_COLUMN_IMAGE, DB.CATEGORY_COLUMN_NAME, DB.RECORD_COLUMN_DATE, DB.RECORD_COLUMN_SUM, DB.CURRENCY_COLUMN_TITLE };
         int[] to = { R.id.ivImg, R.id.tvCategory, R.id.tvDate, R.id.tvSum, R.id.tvCurrency };
 
         lvHistory.setAdapter(new SimpleAdapter(this, data, R.layout.item_history, from, to));
@@ -438,6 +532,7 @@ public class MainActivity extends AppCompatActivity {
     ListView lvBalance;
 
     private void initBalanceTabContent() {
+        Log.d(LOG_TAG, "initBalanceTabContent");
         lvBalance = (ListView) findViewById(R.id.lvBalance);
         loadDataForBalance();
     }
@@ -445,7 +540,7 @@ public class MainActivity extends AppCompatActivity {
     // Загрузка баланса из БД
     public void loadDataForBalance() {
         cursor = db.getAllBalanceData();
-        db.logCursor(cursor);
+//        db.logCursor(cursor);
 
         ArrayList<Map<String, Object>> data = new ArrayList<Map<String, Object>>(cursor.getCount());
         Map<String, Object> m;

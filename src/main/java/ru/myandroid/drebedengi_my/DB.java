@@ -9,12 +9,16 @@ import android.util.Log;
 
 public class DB {
 
-    final String LOG_TAG = "myLogs";
+    private final String LOG_TAG = "myLogs";
+
+    final int SPENDING = 1, GAIN = 2, MOVE = 3, CHANGE = 4;
+
+    private final int div_category_gain = 100000;
 
     // Данные для первоначального заполнения БД
     private String[] currencyData = new String[] { "руб", "USD", "EUR" };
     private String[] walletData = new String[] { "Кошелёк", "Карта ТКС", "Яндекс", "Что-то ещё" };
-    private String[] spendingData = new String[] { "Еда", "Бухло", "Тёлки", "Наркота", "Фуфло", "Понты" };
+    private String[] categoryData = new String[] { "Еда", "Бухло", "Тёлки", "Наркота", "Фуфло", "Понты" };
     private String[] sourcesData = new String[] { "Работа", "Дилерство", "Лафа", "Халявка" };
     private final int imageWalletData[] = {R.mipmap.wallet42, R.mipmap.tcs42, R.mipmap.yandex42, R.mipmap.advcash42};
 
@@ -23,16 +27,13 @@ public class DB {
     private static final String DB_NAME = "database";
     private static final int DB_VERSION = 1;
 
-//    final String walletData[] = { "Кошелёк", "Карта", "Яндекс", "Что-то ещё" };
-//    String walletData[] = { "Abc", "Def", "Ghi", "Jkl" };
-
     // Общие названия для полей таблиц
     public static final String TABLE_COLUMN_ID = "_id";
     public static final String TABLE_COLUMN_IMAGE = "image";
     public static final String TABLE_COLUMN_NAME = "name";
 
 
-    // Таблица с местами хранения средств
+    // Таблица валют
     public static final String CURRENCY_TABLE = "currency";
     public static final String CURRENCY_COLUMN_ID = "_id";
     public static final String CURRENCY_COLUMN_IMAGE = "image";
@@ -55,26 +56,29 @@ public class DB {
             WALLET_COLUMN_NAME + " text" + ");";
 
 
-    // Таблица с категориями затрат
-    public static final String SPENDING_TABLE = "spending";
-    public static final String SPENDING_COLUMN_ID = "_id";
-    public static final String SPENDING_COLUMN_IMAGE = "image";
-    public static final String SPENDING_COLUMN_NAME = "name";
+    // Таблица с категориями затрат и доходов
+    public static final String CATEGORY_TABLE = "category";
+    public static final String CATEGORY_COLUMN_ID = "_id";
+    public static final String CATEGORY_COLUMN_IMAGE = "image";
+    public static final String CATEGORY_COLUMN_NAME = "name";
+//    public static final String CATEGORY_COLUMN_CATEGORY_ID = "category_id";
+//    public static final String CATEGORY_COLUMN_TYPE = "type";
 
-    private static final String SPENDING_TABLE_CREATE = "create table " + SPENDING_TABLE + "(" +
-            SPENDING_COLUMN_ID + " integer primary key, " + SPENDING_COLUMN_IMAGE + " integer, " +
-            SPENDING_COLUMN_NAME + " text" + ");";
+    private static final String CATEGORY_TABLE_CREATE = "create table " + CATEGORY_TABLE + "(" +
+            CATEGORY_COLUMN_ID + " integer primary key, " + CATEGORY_COLUMN_IMAGE + " integer, " +
+//            CATEGORY_COLUMN_TYPE + " integer, " + CATEGORY_COLUMN_CATEGORY_ID + " integer, " +
+            CATEGORY_COLUMN_NAME + " text" + ");";
 
 
     // Таблица с категориями доходов
-    public static final String SOURCES_TABLE = "sources";
-    public static final String SOURCES_COLUMN_ID = "_id";
-    public static final String SOURCES_COLUMN_IMAGE = "image";
-    public static final String SOURCES_COLUMN_NAME = "name";
+//    public static final String SOURCES_TABLE = "sources";
+//    public static final String SOURCES_COLUMN_ID = "_id";
+//    public static final String SOURCES_COLUMN_IMAGE = "image";
+//    public static final String SOURCES_COLUMN_NAME = "name";
 
-    private static final String SOURCES_TABLE_CREATE = "create table " + SOURCES_TABLE + "(" +
-            SOURCES_COLUMN_ID + " integer primary key, " + SOURCES_COLUMN_IMAGE + " integer, " +
-            SOURCES_COLUMN_NAME + " text" + ");";
+//    private static final String SOURCES_TABLE_CREATE = "create table " + SOURCES_TABLE + "(" +
+//            SOURCES_COLUMN_ID + " integer primary key, " + SOURCES_COLUMN_IMAGE + " integer, " +
+//            SOURCES_COLUMN_NAME + " text" + ");";
 
 
     // Таблица операций (транзакций) - расходы, доходы, перемещения и обмены
@@ -128,25 +132,73 @@ public class DB {
         return mDB.query(TABLE_NAME, null, null, null, null, null, null);
     }
 
+    // тест - перегрузка
+    public Cursor getAllData(final String TABLE_NAME, int string_id) {
+//        Log.d(LOG_TAG, "--- string_id " + string_id + " ---");
+        String selection = "";
+        String[] selectionArgs = new String[] { String.valueOf(div_category_gain) };
+        if (string_id == R.string.category) {
+//            Log.d(LOG_TAG, "--- R.string.category ---");
+            selection = "_id < ?";
+        }
+        else if (string_id == R.string.source) {
+//            Log.d(LOG_TAG, "--- R.string.source ---");
+            selection = "_id >= ?";
+        }
+        return mDB.query(TABLE_NAME, null, selection, selectionArgs, null, null, null);
+//        return mDB.query(TABLE_NAME, null, null, null, null, null, null);
+    }
+
     // получить данные из таблицы для вывода истории операций
     public Cursor getAllHistoryData() {
 //        return mDB.query(TABLE_NAME, null, null, null, null, null, null);
         String sqlQuery = "select "
-                + WALLET_TABLE + "." + WALLET_COLUMN_IMAGE + ", "
-                + SPENDING_TABLE + "." + SPENDING_COLUMN_NAME + ", "
+//                + "case " + RECORD_TABLE + "." + RECORD_COLUMN_OPERATION_TYPE
+//                + " when " + SPENDING
+//                + " then " + CATEGORY_TABLE + "." + CATEGORY_COLUMN_NAME
+//                + " else " + SOURCES_TABLE + "." + SOURCES_COLUMN_NAME
+//                + " end"
+//                + "if (" + RECORD_TABLE + "." + RECORD_COLUMN_OPERATION_TYPE + " = " + SPENDING + ", "
+                + CATEGORY_TABLE + "." + CATEGORY_COLUMN_NAME //+ " as " + TABLE_COLUMN_NAME //+ SPENDING
+//                + RECORD_TABLE + "." + RECORD_COLUMN_DATE
+                + ", "
+//                + SOURCES_TABLE + "." + SOURCES_COLUMN_NAME + " as " + TABLE_COLUMN_NAME + GAIN
+//                + RECORD_TABLE + "." + RECORD_COLUMN_SUM
+//                + ") as anme"
+//                + ", "
                 + CURRENCY_TABLE + "." + CURRENCY_COLUMN_TITLE + ", "
+                + WALLET_TABLE + "." + WALLET_COLUMN_IMAGE + ", "
                 + RECORD_TABLE + "." + RECORD_COLUMN_DATE + ", "
-                + RECORD_TABLE + "." + RECORD_COLUMN_SUM
+                + RECORD_TABLE + "." + RECORD_COLUMN_SUM + ", "
+                + RECORD_TABLE + "." + RECORD_COLUMN_OPERATION_TYPE
                 + " from " + RECORD_TABLE
-                + " inner join " + SPENDING_TABLE
+                + " inner join " + CATEGORY_TABLE
                 + " on " + RECORD_TABLE + "." + RECORD_COLUMN_CATEGORY_ID
-                + " = " + SPENDING_TABLE + "." + SPENDING_COLUMN_ID
+                + " = " + CATEGORY_TABLE + "." + CATEGORY_COLUMN_ID
+//                + " inner join " + SOURCES_TABLE
+//                + " on " + RECORD_TABLE + "." + RECORD_COLUMN_CATEGORY_ID
+//                + " = " + SOURCES_TABLE + "." + SOURCES_COLUMN_ID
                 + " inner join " + WALLET_TABLE
                 + " on " + RECORD_TABLE + "." + RECORD_COLUMN_WALLET_ID
                 + " = " + WALLET_TABLE + "." + WALLET_COLUMN_ID
                 + " inner join " + CURRENCY_TABLE
                 + " on " + RECORD_TABLE + "." + RECORD_COLUMN_CURRENCY_ID
                 + " = " + CURRENCY_TABLE + "." + CURRENCY_COLUMN_ID;
+//        String sqlQuery = "select "
+//        sqlQuery += " if "
+//        String sqlQuery = "select "
+//                + CURRENCY_COLUMN_TITLE + ", "
+//                + WALLET_COLUMN_IMAGE + ", "
+//                + RECORD_COLUMN_DATE + ", "
+//                + RECORD_COLUMN_SUM + ", "
+//                + RECORD_COLUMN_OPERATION_TYPE + ", "
+//                + TABLE_COLUMN_NAME + SPENDING + " from (" + sqlQuery2 + ") as " + TABLE_COLUMN_NAME
+//                + " where " + RECORD_COLUMN_OPERATION_TYPE + " = " + SPENDING
+//                + " union all "
+//                + "select "
+//                + TABLE_COLUMN_NAME + GAIN + " from (" + sqlQuery2 + ") as " + TABLE_COLUMN_NAME
+//                + " where " + RECORD_COLUMN_OPERATION_TYPE + " = " + GAIN;
+        Log.d(LOG_TAG, sqlQuery);
         return mDB.rawQuery(sqlQuery, null);
     }
 
@@ -171,7 +223,7 @@ public class DB {
                 + " = " + CURRENCY_TABLE + "." + CURRENCY_COLUMN_ID
                 + " where " + RECORD_TABLE + "." + RECORD_COLUMN_WALLET_ID + " = " + wallet
                 + " and " + RECORD_TABLE + "." + RECORD_COLUMN_CURRENCY_ID + " = " + currency;
-        Log.d(LOG_TAG, sqlQuery);
+//        Log.d(LOG_TAG, sqlQuery);
 //        return mDB.rawQuery(sqlQuery, null);
         return sqlQuery;
     }
@@ -200,7 +252,7 @@ public class DB {
     // operation_type,
     // currency_id, currency_id_dest, wallet_id, wallet_id_dest, category_id,
     // sum, sumDest, currentDate, comment
-    public void addTransaction(int operation_type, int currency_id, int wallet_id, int category_id,
+    public void addTransaction(int operation_type, long currency_id, long wallet_id, long category_id,
                                double sum, String currentDate, String comment) {
         ContentValues cv = new ContentValues();
         cv.put(RECORD_COLUMN_OPERATION_TYPE, operation_type);
@@ -218,6 +270,12 @@ public class DB {
     }
 
 
+    // удалить запись из DB_TABLE
+//    public void delRec(long id) {
+//        mDB.delete(RECORD_TABLE, COLUMN_ID + " = " + id, null);
+//    }
+
+
     // вывод в лог данных из курсора
     public void logCursor(Cursor c) {
         if (c != null) {
@@ -233,6 +291,7 @@ public class DB {
             }
         } else
             Log.d(LOG_TAG, "Cursor is null");
+        Log.d(LOG_TAG, "\n");
     }
 
 
@@ -266,21 +325,25 @@ public class DB {
             }
 
 
-            db.execSQL(SPENDING_TABLE_CREATE);
+            db.execSQL(CATEGORY_TABLE_CREATE);
             cv.clear();
-            for (int i = 0; i < spendingData.length; i++) {
-                cv.put(SPENDING_COLUMN_ID, i);
-                cv.put(SPENDING_COLUMN_NAME, spendingData[i]);
-                db.insert(SPENDING_TABLE, null, cv);
+            for (int i = 0; i < categoryData.length; i++) {
+                cv.put(CATEGORY_COLUMN_ID, i);
+                cv.put(CATEGORY_COLUMN_NAME, categoryData[i]);
+//                cv.put(CATEGORY_COLUMN_TYPE, categoryTypeData[i]);
+                db.insert(CATEGORY_TABLE, null, cv);
             }
 
 
-            db.execSQL(SOURCES_TABLE_CREATE);
-            cv.clear();
+//            db.execSQL(SOURCES_TABLE_CREATE);
+//            cv.clear();
             for (int i = 0; i < sourcesData.length; i++) {
-                cv.put(SOURCES_COLUMN_ID, i);
-                cv.put(SOURCES_COLUMN_NAME, sourcesData[i]);
-                db.insert(SOURCES_TABLE, null, cv);
+//                cv.put(SOURCES_COLUMN_ID, i + 100000);
+//                cv.put(SOURCES_COLUMN_NAME, sourcesData[i]);
+                cv.put(CATEGORY_COLUMN_ID, i + div_category_gain);
+                cv.put(CATEGORY_COLUMN_NAME, sourcesData[i]);
+//                db.insert(SOURCES_TABLE, null, cv);
+                db.insert(CATEGORY_TABLE, null, cv);
             }
 
 
