@@ -70,12 +70,15 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:text="@string/sum"
-                android:textColor="@color/colorHint"
+                android:text=""
+                android:hint="@string/sum_hint"
+                android:textSize="@dimen/number_size"
+                android:textColor="@color/colorPrimaryDark"
+                android:textColorHint="@color/colorHint"
                 android:inputType="numberDecimal"
                 android:layout_marginLeft="5dp"
-                android:layout_marginRight="5dp"
-                android:onClick="onEditTextClick" />
+                android:layout_marginRight="5dp" />
+                <!--android:onClick="onEditTextClick" />-->
             <Spinner
                 android:id="@+id/spinCurrency"
                 android:layout_width="wrap_content"
@@ -106,12 +109,15 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:text="@string/buy"
-                android:textColor="@color/colorHint"
+                android:text=""
+                android:hint="@string/buy_hint"
+                android:textSize="@dimen/number_size"
+                android:textColor="@color/colorPrimaryDark"
+                android:textColorHint="@color/colorHint"
                 android:inputType="numberDecimal"
                 android:layout_marginLeft="5dp"
-                android:layout_marginRight="5dp"
-                android:onClick="onEditTextClick" />
+                android:layout_marginRight="5dp" />
+                <!--android:onClick="onEditTextClick" />-->
             <Spinner
                 android:id="@+id/spinCurrencyDest"
                 android:layout_width="wrap_content"
@@ -220,11 +226,13 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:text="@string/comment"
-                android:textColor="@color/colorHint"
+                android:text=""
+                android:hint="@string/comment_hint"
+                android:textColor="@color/colorPrimaryDark"
+                android:textColorHint="@color/colorHint"
                 android:layout_marginLeft="15dp"
-                android:layout_marginRight="15dp"
-                android:onClick="onEditTextClick" />
+                android:layout_marginRight="15dp" />
+                <!--android:onClick="onEditTextClick" />-->
             <Button
                 android:id="@+id/btnTag"
                 android:layout_width="wrap_content"

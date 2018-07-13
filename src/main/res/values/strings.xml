@@ -16,19 +16,20 @@
 
     <!--<string name="dateLeft">"<"</string>-->
 
-    <string name="sum">Сумма</string>
-    <string name="sell">Продали</string>
-    <string name="buy">Купили</string>
+    <string name="sum_hint"><font size = "18">Сумма</font></string>
+    <string name="sell_hint"><font size = "18">Продали</font></string>
+    <string name="buy_hint"><font size = "18">Купили</font></string>
+    <string name="comment_hint">Комментарий</string>
+
     <string name="currency">Валюта</string>
     <string name="wallet">Место хранения</string>
     <string name="category">Категория затрат</string>
     <string name="source">Источник дохода</string>
-    <string name="comment">Комментарий</string>
     <string name="tag">Ещё</string>
     <string name="confirmButton">Сохранить</string>
 
-    <string name="currencies">Валюты</string>
-    <string name="wallets">Места хранения</string>
-    <string name="categories">Категории затрат</string>
-    <string name="tags">Ещё</string>
+    <!--<string name="currencies">Валюты</string>-->
+    <!--<string name="wallets">Места хранения</string>-->
+    <!--<string name="categories">Категории затрат</string>-->
+    <!--<string name="tags">Ещё</string>-->
 </resources>
