@@ -18,7 +18,7 @@ public class DB {
     // Данные для первоначального заполнения БД
     private String[] currencyData = new String[] { "руб", "USD", "EUR" };
     private String[] walletData = new String[] { "Кошелёк", "Карта ТКС", "Яндекс", "Что-то ещё" };
-    private String[] categoryData = new String[] { "Еда", "Бухло", "Тёлки", "Наркота", "Фуфло", "Понты" };
+    private String[] categoryData = new String[] { "Еда", "Бухло", "Ништяки", "Наркота", "Фуфло", "Понты" };
     private String[] sourcesData = new String[] { "Работа", "Дилерство", "Лафа", "Халявка" };
     private final int imageWalletData[] = {R.mipmap.wallet42, R.mipmap.tcs42, R.mipmap.yandex42, R.mipmap.advcash42};
 
@@ -61,24 +61,10 @@ public class DB {
     public static final String CATEGORY_COLUMN_ID = "_id";
     public static final String CATEGORY_COLUMN_IMAGE = "image";
     public static final String CATEGORY_COLUMN_NAME = "name";
-//    public static final String CATEGORY_COLUMN_CATEGORY_ID = "category_id";
-//    public static final String CATEGORY_COLUMN_TYPE = "type";
 
     private static final String CATEGORY_TABLE_CREATE = "create table " + CATEGORY_TABLE + "(" +
             CATEGORY_COLUMN_ID + " integer primary key, " + CATEGORY_COLUMN_IMAGE + " integer, " +
-//            CATEGORY_COLUMN_TYPE + " integer, " + CATEGORY_COLUMN_CATEGORY_ID + " integer, " +
             CATEGORY_COLUMN_NAME + " text" + ");";
-
-
-    // Таблица с категориями доходов
-//    public static final String SOURCES_TABLE = "sources";
-//    public static final String SOURCES_COLUMN_ID = "_id";
-//    public static final String SOURCES_COLUMN_IMAGE = "image";
-//    public static final String SOURCES_COLUMN_NAME = "name";
-
-//    private static final String SOURCES_TABLE_CREATE = "create table " + SOURCES_TABLE + "(" +
-//            SOURCES_COLUMN_ID + " integer primary key, " + SOURCES_COLUMN_IMAGE + " integer, " +
-//            SOURCES_COLUMN_NAME + " text" + ");";
 
 
     // Таблица операций (транзакций) - расходы, доходы, перемещения и обмены
@@ -128,7 +114,6 @@ public class DB {
 
     // получить все данные из таблицы
     public Cursor getAllData(final String TABLE_NAME) {
-//        return mDB.query(WALLET_TABLE, null, null, null, null, null, null);
         return mDB.query(TABLE_NAME, null, null, null, null, null, null);
     }
 
@@ -139,7 +124,7 @@ public class DB {
         String[] selectionArgs = new String[] { String.valueOf(div_category_gain) };
         if (string_id == R.string.category) {
 //            Log.d(LOG_TAG, "--- R.string.category ---");
-            selection = "_id < ?";
+            selection = "_id < ? and _id > -1";
         }
         else if (string_id == R.string.source) {
 //            Log.d(LOG_TAG, "--- R.string.source ---");
@@ -153,51 +138,25 @@ public class DB {
     public Cursor getAllHistoryData() {
 //        return mDB.query(TABLE_NAME, null, null, null, null, null, null);
         String sqlQuery = "select "
-//                + "case " + RECORD_TABLE + "." + RECORD_COLUMN_OPERATION_TYPE
-//                + " when " + SPENDING
-//                + " then " + CATEGORY_TABLE + "." + CATEGORY_COLUMN_NAME
-//                + " else " + SOURCES_TABLE + "." + SOURCES_COLUMN_NAME
-//                + " end"
-//                + "if (" + RECORD_TABLE + "." + RECORD_COLUMN_OPERATION_TYPE + " = " + SPENDING + ", "
-                + CATEGORY_TABLE + "." + CATEGORY_COLUMN_NAME //+ " as " + TABLE_COLUMN_NAME //+ SPENDING
-//                + RECORD_TABLE + "." + RECORD_COLUMN_DATE
-                + ", "
-//                + SOURCES_TABLE + "." + SOURCES_COLUMN_NAME + " as " + TABLE_COLUMN_NAME + GAIN
-//                + RECORD_TABLE + "." + RECORD_COLUMN_SUM
-//                + ") as anme"
-//                + ", "
+                + RECORD_TABLE + "." + RECORD_COLUMN_ID + ", "
                 + CURRENCY_TABLE + "." + CURRENCY_COLUMN_TITLE + ", "
                 + WALLET_TABLE + "." + WALLET_COLUMN_IMAGE + ", "
+                + CATEGORY_TABLE + "." + CATEGORY_COLUMN_NAME + ", "
                 + RECORD_TABLE + "." + RECORD_COLUMN_DATE + ", "
                 + RECORD_TABLE + "." + RECORD_COLUMN_SUM + ", "
+                + RECORD_TABLE + "." + RECORD_COLUMN_COMMENT + ", "
                 + RECORD_TABLE + "." + RECORD_COLUMN_OPERATION_TYPE
                 + " from " + RECORD_TABLE
                 + " inner join " + CATEGORY_TABLE
                 + " on " + RECORD_TABLE + "." + RECORD_COLUMN_CATEGORY_ID
                 + " = " + CATEGORY_TABLE + "." + CATEGORY_COLUMN_ID
-//                + " inner join " + SOURCES_TABLE
-//                + " on " + RECORD_TABLE + "." + RECORD_COLUMN_CATEGORY_ID
-//                + " = " + SOURCES_TABLE + "." + SOURCES_COLUMN_ID
                 + " inner join " + WALLET_TABLE
                 + " on " + RECORD_TABLE + "." + RECORD_COLUMN_WALLET_ID
                 + " = " + WALLET_TABLE + "." + WALLET_COLUMN_ID
                 + " inner join " + CURRENCY_TABLE
                 + " on " + RECORD_TABLE + "." + RECORD_COLUMN_CURRENCY_ID
-                + " = " + CURRENCY_TABLE + "." + CURRENCY_COLUMN_ID;
-//        String sqlQuery = "select "
-//        sqlQuery += " if "
-//        String sqlQuery = "select "
-//                + CURRENCY_COLUMN_TITLE + ", "
-//                + WALLET_COLUMN_IMAGE + ", "
-//                + RECORD_COLUMN_DATE + ", "
-//                + RECORD_COLUMN_SUM + ", "
-//                + RECORD_COLUMN_OPERATION_TYPE + ", "
-//                + TABLE_COLUMN_NAME + SPENDING + " from (" + sqlQuery2 + ") as " + TABLE_COLUMN_NAME
-//                + " where " + RECORD_COLUMN_OPERATION_TYPE + " = " + SPENDING
-//                + " union all "
-//                + "select "
-//                + TABLE_COLUMN_NAME + GAIN + " from (" + sqlQuery2 + ") as " + TABLE_COLUMN_NAME
-//                + " where " + RECORD_COLUMN_OPERATION_TYPE + " = " + GAIN;
+                + " = " + CURRENCY_TABLE + "." + CURRENCY_COLUMN_ID
+                + " order by " + RECORD_TABLE + "." + RECORD_COLUMN_DATE + " desc";
         Log.d(LOG_TAG, sqlQuery);
         return mDB.rawQuery(sqlQuery, null);
     }
@@ -249,8 +208,7 @@ public class DB {
 
 
     // Добавление записи об операции
-    // operation_type,
-    // currency_id, currency_id_dest, wallet_id, wallet_id_dest, category_id,
+    // operation_type, currency_id, currency_id_dest, wallet_id, wallet_id_dest, category_id,
     // sum, sumDest, currentDate, comment
     public void addTransaction(int operation_type, long currency_id, long wallet_id, long category_id,
                                double sum, String currentDate, String comment) {
@@ -318,7 +276,6 @@ public class DB {
             cv.clear();
             for (int i = 0; i < walletData.length; i++) {
                 cv.put(WALLET_COLUMN_ID, i);
-//                cv.put(WALLET_COLUMN_NAME, "Some text " + i);
                 cv.put(WALLET_COLUMN_NAME, walletData[i]);
                 cv.put(WALLET_COLUMN_IMAGE, imageWalletData[i]);
                 db.insert(WALLET_TABLE, null, cv);
@@ -327,22 +284,18 @@ public class DB {
 
             db.execSQL(CATEGORY_TABLE_CREATE);
             cv.clear();
+            cv.put(CATEGORY_COLUMN_ID, -1);
+            cv.put(CATEGORY_COLUMN_NAME, "<->");
+            db.insert(CATEGORY_TABLE, null, cv);
+            cv.clear();
             for (int i = 0; i < categoryData.length; i++) {
                 cv.put(CATEGORY_COLUMN_ID, i);
                 cv.put(CATEGORY_COLUMN_NAME, categoryData[i]);
-//                cv.put(CATEGORY_COLUMN_TYPE, categoryTypeData[i]);
                 db.insert(CATEGORY_TABLE, null, cv);
             }
-
-
-//            db.execSQL(SOURCES_TABLE_CREATE);
-//            cv.clear();
             for (int i = 0; i < sourcesData.length; i++) {
-//                cv.put(SOURCES_COLUMN_ID, i + 100000);
-//                cv.put(SOURCES_COLUMN_NAME, sourcesData[i]);
                 cv.put(CATEGORY_COLUMN_ID, i + div_category_gain);
                 cv.put(CATEGORY_COLUMN_NAME, sourcesData[i]);
-//                db.insert(SOURCES_TABLE, null, cv);
                 db.insert(CATEGORY_TABLE, null, cv);
             }
 

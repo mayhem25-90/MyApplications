@@ -32,7 +32,7 @@ import java.util.Locale;
 import java.util.Map;
 
 
-public class MainActivity extends AppCompatActivity implements View.OnTouchListener {
+public class MainActivity extends AppCompatActivity {
 
     final String LOG_TAG = "myLogs";
 
@@ -186,10 +186,6 @@ public class MainActivity extends AppCompatActivity implements View.OnTouchListe
 
         etComment = (EditText) findViewById(R.id.etComment);
 
-        etSum.setOnTouchListener(this);
-        etSumDest.setOnTouchListener(this);
-        etComment.setOnTouchListener(this);
-
         btnConfirm = (Button) findViewById(R.id.btnConfirm);
 
 //        lvTestData = (ListView) findViewById(R.id.lvTestData);
@@ -197,19 +193,6 @@ public class MainActivity extends AppCompatActivity implements View.OnTouchListe
 
         rgOperationChoice = (RadioGroup) findViewById(R.id.rgOperationChoice);
         rgOperationChoice.check(radioButtons[currentRadioButton]);
-    }
-
-
-    @Override
-    public boolean onTouch(View view, MotionEvent event) {
-//        Toast.makeText(MainActivity.this, "Touch " + view.getId(), Toast.LENGTH_SHORT).show();
-        switch (view.getId()) {
-            case R.id.etSum: etSum.requestFocus(); break;
-            case R.id.etSumDest: etSumDest.requestFocus(); break;
-            case R.id.etComment: etComment.requestFocus(); break;
-            default: break;
-        }
-        return true;
     }
 
 
@@ -402,7 +385,7 @@ public class MainActivity extends AppCompatActivity implements View.OnTouchListe
         int[] to = { R.id.ivImg, R.id.tvText };
 
         // создааем адаптер и настраиваем список
-        SimpleCursorAdapter scAdapter = new SimpleCursorAdapter(this, R.layout.item, cursor, from, to);
+        SimpleCursorAdapter scAdapter = new SimpleCursorAdapter(this, R.layout.item_spinner, cursor, from, to);
         currentSpinner.setAdapter(scAdapter);
         currentSpinner.setPrompt(getResources().getString(string_id));
 
@@ -445,27 +428,10 @@ public class MainActivity extends AppCompatActivity implements View.OnTouchListe
         cursor = db.getAllHistoryData();
 //        db.logCursor(cursor);
 
-        ArrayList<Map<String, Object>> data = new ArrayList<Map<String, Object>>(cursor.getCount());
-        Map<String, Object> m;
-        if (cursor.moveToFirst()) {
-            for (int i = 0; i < cursor.getCount(); i++) {
-                m = new HashMap<String, Object>();
-                m.put(DB.WALLET_COLUMN_IMAGE, cursor.getString(cursor.getColumnIndex(DB.WALLET_COLUMN_IMAGE)));
-//                m.put(DB.RECORD_COLUMN_CATEGORY_ID, cursor.getString(cursor.getColumnIndex(DB.RECORD_COLUMN_CATEGORY_ID)));
-                m.put(DB.CATEGORY_COLUMN_NAME, cursor.getString(cursor.getColumnIndex(DB.CATEGORY_COLUMN_NAME)));
-                m.put(DB.CURRENCY_COLUMN_TITLE, cursor.getString(cursor.getColumnIndex(DB.CURRENCY_COLUMN_TITLE)));
-                m.put(DB.RECORD_COLUMN_SUM, cursor.getString(cursor.getColumnIndex(DB.RECORD_COLUMN_SUM)));
-                m.put(DB.RECORD_COLUMN_DATE, cursor.getString(cursor.getColumnIndex(DB.RECORD_COLUMN_DATE)));
+        String[] from = { DB.WALLET_COLUMN_IMAGE, DB.CATEGORY_COLUMN_NAME, DB.RECORD_COLUMN_COMMENT, DB.RECORD_COLUMN_DATE, DB.RECORD_COLUMN_SUM, DB.CURRENCY_COLUMN_TITLE };
+        int[] to = { R.id.ivImg, R.id.tvCategory, R.id.tvComment, R.id.tvDate, R.id.tvSum, R.id.tvCurrency };
 
-                data.add(m);
-                cursor.moveToNext();
-            }
-        }
-
-        String[] from = { DB.WALLET_COLUMN_IMAGE, DB.CATEGORY_COLUMN_NAME, DB.RECORD_COLUMN_DATE, DB.RECORD_COLUMN_SUM, DB.CURRENCY_COLUMN_TITLE };
-        int[] to = { R.id.ivImg, R.id.tvCategory, R.id.tvDate, R.id.tvSum, R.id.tvCurrency };
-
-        lvHistory.setAdapter(new SimpleAdapter(this, data, R.layout.item_history, from, to));
+        lvHistory.setAdapter(new HistoryCursorAdapter(this, R.layout.item_history, cursor, from, to));
     }
 
 

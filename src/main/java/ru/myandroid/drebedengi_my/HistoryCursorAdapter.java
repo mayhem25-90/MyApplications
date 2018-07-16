@@ -1,0 +1,71 @@
+package ru.myandroid.drebedengi_my;
+
+import android.content.Context;
+import android.database.Cursor;
+import android.graphics.Color;
+import android.util.Log;
+import android.widget.SimpleCursorAdapter;
+import android.widget.TextView;
+
+import java.text.DecimalFormat;
+import java.text.DecimalFormatSymbols;
+import java.text.SimpleDateFormat;
+import java.util.Calendar;
+import java.util.Locale;
+
+public class HistoryCursorAdapter extends SimpleCursorAdapter
+{
+    private SimpleDateFormat dbDateFormat = new SimpleDateFormat("yyyy-MM-dd", Locale.US);
+    private SimpleDateFormat historyDateFormat = new SimpleDateFormat("dd MMM", Locale.US);
+    private DecimalFormat sumFormat;
+
+    HistoryCursorAdapter(Context context, int resource, Cursor cursor, String[] from, int[] to) {
+        super(context, resource, cursor, from, to);
+
+        DecimalFormatSymbols sumFormatSymbols = new DecimalFormatSymbols();
+        sumFormatSymbols.setGroupingSeparator(' ');
+        sumFormat = new DecimalFormat("#,###", sumFormatSymbols); // отделяем тысячные разряды
+    }
+
+    @Override
+    public void setViewText(TextView v, String text) { // метод супер-класса, который вставляет текст
+        super.setViewText(v, text);
+
+        switch (v.getId()) {
+            case R.id.tvSum:
+                double sum = Double.parseDouble(text);
+                if (sum < 0) v.setTextColor(Color.RED);
+                else if (sum > 0) v.setTextColor(Color.rgb(0, 127, 0));
+                v.setText(sumFormat.format(sum));
+                break;
+
+            case R.id.tvCategory:
+                v.setTextColor(Color.BLACK);
+                break;
+
+            case R.id.tvDate:
+                final Calendar calendar = Calendar.getInstance();
+                String today = dbDateFormat.format(calendar.getTime());
+                calendar.add(Calendar.DATE, -1);
+                String yesterday = dbDateFormat.format(calendar.getTime());
+
+                if (text.equals(today)) {
+                    v.setText("Сегодня");
+                }
+                else if (text.equals(yesterday)) {
+                    v.setText("Вчера");
+                }
+                else {
+                    try {
+                        v.setText(historyDateFormat.format(dbDateFormat.parse(text)));
+                    }
+                    catch (Exception exception) {
+                        Log.d("myLogs", exception.toString());
+                    }
+                }
+                break;
+
+            default: break;
+        }
+    }
+}
