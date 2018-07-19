@@ -10,4 +10,6 @@
     <color name="colorSpend">#54FF8C00</color>
     <color name="colorGain">#5499FF99</color>
     <color name="colorMove">#54888888</color>
+
+    <color name="colorTextViewBack">#DDDDDD</color>
 </resources>

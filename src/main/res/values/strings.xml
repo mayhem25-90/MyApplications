@@ -28,6 +28,12 @@
     <string name="tag">Ещё</string>
     <string name="confirmButton">Сохранить</string>
 
+    <string name="deleteButton">Удалить</string>
+    <string name="delete_message">Вы действительно хотите удалить запись?</string>
+    <string name="yes">Да</string>
+    <string name="no">Нет</string>
+    <string name="record_deleted">Запись удалена</string>
+
     <!--<string name="currencies">Валюты</string>-->
     <!--<string name="wallets">Места хранения</string>-->
     <!--<string name="categories">Категории затрат</string>-->

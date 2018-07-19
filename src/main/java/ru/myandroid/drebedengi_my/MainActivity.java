@@ -3,12 +3,14 @@ package ru.myandroid.drebedengi_my;
 import android.app.AlertDialog;
 import android.app.DatePickerDialog;
 import android.app.Dialog;
+import android.content.DialogInterface;
 import android.database.Cursor;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
+import android.widget.Adapter;
 import android.widget.AdapterView;
 import android.widget.Button;
 import android.widget.DatePicker;
@@ -78,6 +80,13 @@ public class MainActivity extends AppCompatActivity {
 
 
     @Override
+    protected void onStop() {
+        super.onStop();
+        db.setSelectedParameter(history_item_selected_id, db.NOT_SELECTED);
+        loadDataForOperationHistory();
+    }
+
+    @Override
     protected void onDestroy() {
         super.onDestroy();
         db.close();
@@ -95,6 +104,7 @@ public class MainActivity extends AppCompatActivity {
     final int DIALOG_SOURCES = 4;
     final int DIALOG_TAGS = 5;
     final int DIALOG_CONFIRM = 6;
+    final int DIALOG_DELETE = 7;
 
     public static final int spin_currency = 0,
                             spin_currency_dest = 1,
@@ -198,6 +208,8 @@ public class MainActivity extends AppCompatActivity {
 
     public void onButtonClick(View v) {
         switch (v.getId()) {
+            case R.id.tvDelete: showDialog(DIALOG_DELETE); break;
+
             case R.id.btnDate: showDialog(DIALOG_DATE); break;
 
             case R.id.btnTag: showDialog(DIALOG_TAGS); break;
@@ -365,9 +377,33 @@ public class MainActivity extends AppCompatActivity {
                 String[] date = btnDate.getText().toString().split("-");
                 return new DatePickerDialog(this, dateDialogCallBack, Integer.parseInt(date[2]), Integer.parseInt(date[1]) - 1, Integer.parseInt(date[0]));
 
+            case DIALOG_DELETE: // Удаление операции
+                adb.setMessage(R.string.delete_message);
+                adb.setPositiveButton(R.string.yes, deleteButtonClickListener);
+                adb.setNeutralButton(R.string.no, deleteButtonClickListener);
+
             default: return adb.create();
         }
     }
+
+
+    DialogInterface.OnClickListener deleteButtonClickListener = new DialogInterface.OnClickListener() {
+        public void onClick(DialogInterface dialog, int which) {
+            switch (which) {
+                case Dialog.BUTTON_POSITIVE: // Положительная кнопка
+                    db.deleteTransaction(history_item_selected_id);
+                    Toast.makeText(MainActivity.this, R.string.record_deleted, Toast.LENGTH_SHORT).show();
+
+                    // А ещё обновим историю операций и баланс
+                    loadDataForOperationHistory();
+                    loadDataForBalance();
+                    break;
+
+                case Dialog.BUTTON_NEUTRAL: // Нейтральная кнопка
+                    break;
+            }
+        }
+    };
 
 
     // Загрузка данных в спиннеры из БД
@@ -414,12 +450,30 @@ public class MainActivity extends AppCompatActivity {
 // 2. Вкладка истории операций
 // == ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ====
 
+    long history_item_selected_id = -1;
+
     ListView lvHistory;
 
     private void initHistoryTabContent() {
         Log.d(LOG_TAG, "initHistoryTabContent");
         lvHistory = (ListView) findViewById(R.id.lvHistory);
         loadDataForOperationHistory();
+
+        lvHistory.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+//                Log.d(LOG_TAG, "itemClick: position = " + position + ", id = " + id);
+                db.setSelectedParameter(id, db.AUTO_SELECT);
+                if (history_item_selected_id != id) { // Убираем меню со старого элемента
+                    db.setSelectedParameter(history_item_selected_id, db.NOT_SELECTED);
+                    history_item_selected_id = id;
+                }
+
+                // А ещё обновим историю операций и баланс
+                loadDataForOperationHistory();
+//                loadDataForBalance();
+            }
+        });
     }
 
 
@@ -428,8 +482,10 @@ public class MainActivity extends AppCompatActivity {
         cursor = db.getAllHistoryData();
 //        db.logCursor(cursor);
 
-        String[] from = { DB.WALLET_COLUMN_IMAGE, DB.CATEGORY_COLUMN_NAME, DB.RECORD_COLUMN_COMMENT, DB.RECORD_COLUMN_DATE, DB.RECORD_COLUMN_SUM, DB.CURRENCY_COLUMN_TITLE };
-        int[] to = { R.id.ivImg, R.id.tvCategory, R.id.tvComment, R.id.tvDate, R.id.tvSum, R.id.tvCurrency };
+        String[] from = { DB.WALLET_COLUMN_IMAGE, DB.CATEGORY_COLUMN_NAME, DB.RECORD_COLUMN_COMMENT, DB.RECORD_COLUMN_DATE, DB.RECORD_COLUMN_SUM, DB.CURRENCY_COLUMN_TITLE,
+                DB.RECORD_COLUMN_SELECTED };
+        int[] to = { R.id.ivImg, R.id.tvCategory, R.id.tvComment, R.id.tvDate, R.id.tvSum, R.id.tvCurrency,
+                R.id.tvDelete };
 
         lvHistory.setAdapter(new HistoryCursorAdapter(this, R.layout.item_history, cursor, from, to));
     }

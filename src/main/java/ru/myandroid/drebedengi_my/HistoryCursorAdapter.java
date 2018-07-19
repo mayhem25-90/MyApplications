@@ -4,6 +4,8 @@ import android.content.Context;
 import android.database.Cursor;
 import android.graphics.Color;
 import android.util.Log;
+import android.view.View;
+import android.widget.Button;
 import android.widget.SimpleCursorAdapter;
 import android.widget.TextView;
 
@@ -65,7 +67,23 @@ public class HistoryCursorAdapter extends SimpleCursorAdapter
                 }
                 break;
 
+            case R.id.tvDelete:
+                int select = Integer.parseInt(text);
+                if (select == 1) {
+                    v.setPadding(0, 11, 0, 11);
+                    v.setTextSize(16);
+                    v.setText("Удалить");
+                }
+                else if (select == 0) {
+                    v.setPadding(0, 0, 0, 0);
+                    v.setTextSize(0);
+                }
+                break;
+
             default: break;
         }
+
+//        Button btnDelete = (Button) findViewById(R.id.btnDelete);
+//        btnDelete.setVisibility(View.GONE);
     }
 }

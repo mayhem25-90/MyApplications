@@ -12,6 +12,7 @@ public class DB {
     private final String LOG_TAG = "myLogs";
 
     final int SPENDING = 1, GAIN = 2, MOVE = 3, CHANGE = 4;
+    final int AUTO_SELECT = -1, NOT_SELECTED = 0, SELECTED = 1;
 
     private final int div_category_gain = 100000;
 
@@ -79,6 +80,7 @@ public class DB {
     public static final String RECORD_COLUMN_DATE = "operation_date";
     public static final String RECORD_COLUMN_COMMENT = "comment";
     public static final String RECORD_COLUMN_OPERATION_TYPE = "operation_type";
+    public static final String RECORD_COLUMN_SELECTED = "selected";
 
     private static final String RECORD_TABLE_CREATE = "create table " + RECORD_TABLE + "(" +
             RECORD_COLUMN_ID + " integer primary key, " +
@@ -88,7 +90,8 @@ public class DB {
             RECORD_COLUMN_SUM + " real, " +
             RECORD_COLUMN_DATE + " text, " +
             RECORD_COLUMN_COMMENT + " text, " +
-            RECORD_COLUMN_OPERATION_TYPE + " integer" +
+            RECORD_COLUMN_OPERATION_TYPE + " integer, " +
+            RECORD_COLUMN_SELECTED + " integer" +
             ");";
 
 
@@ -134,6 +137,10 @@ public class DB {
 //        return mDB.query(TABLE_NAME, null, null, null, null, null, null);
     }
 
+// == ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ====
+// 2. Журнал операций
+// == ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ====
+
     // получить данные из таблицы для вывода истории операций
     public Cursor getAllHistoryData() {
 //        return mDB.query(TABLE_NAME, null, null, null, null, null, null);
@@ -145,6 +152,7 @@ public class DB {
                 + RECORD_TABLE + "." + RECORD_COLUMN_DATE + ", "
                 + RECORD_TABLE + "." + RECORD_COLUMN_SUM + ", "
                 + RECORD_TABLE + "." + RECORD_COLUMN_COMMENT + ", "
+                + RECORD_TABLE + "." + RECORD_COLUMN_SELECTED + ", "
                 + RECORD_TABLE + "." + RECORD_COLUMN_OPERATION_TYPE
                 + " from " + RECORD_TABLE
                 + " inner join " + CATEGORY_TABLE
@@ -157,7 +165,7 @@ public class DB {
                 + " on " + RECORD_TABLE + "." + RECORD_COLUMN_CURRENCY_ID
                 + " = " + CURRENCY_TABLE + "." + CURRENCY_COLUMN_ID
                 + " order by " + RECORD_TABLE + "." + RECORD_COLUMN_DATE + " desc";
-        Log.d(LOG_TAG, sqlQuery);
+//        Log.d(LOG_TAG, sqlQuery);
         return mDB.rawQuery(sqlQuery, null);
     }
 
@@ -194,7 +202,7 @@ public class DB {
                 + getBalanceData(1, 0) + " union all " + getBalanceData(1, 1) + " union all "
                 + getBalanceData(2, 0) + " union all " + getBalanceData(2, 1) + " union all "
                 + getBalanceData(3, 0) + " union all " + getBalanceData(3, 1);
-        Log.d(LOG_TAG, sqlQuery);
+//        Log.d(LOG_TAG, sqlQuery);
         return mDB.rawQuery(sqlQuery, null);
     }
 
@@ -223,15 +231,35 @@ public class DB {
 //        cv.put(RECORD_COLUMN_SUM_DEST, sumDest);
         cv.put(RECORD_COLUMN_DATE, currentDate);
         cv.put(RECORD_COLUMN_COMMENT, comment);
+        cv.put(RECORD_COLUMN_SELECTED, 0);
 
         mDB.insert(RECORD_TABLE, null, cv);
     }
 
 
+    // Добавление параметра отображения "контекстного" меню в журнале операций
+    void setSelectedParameter(long id, int setParameter) {
+        ContentValues cv = new ContentValues();
+        if (setParameter == AUTO_SELECT) {
+            Cursor cursor = mDB.rawQuery("select " + RECORD_COLUMN_SELECTED + " from " + RECORD_TABLE
+                    + " where " + RECORD_COLUMN_ID + " = " + id, null);
+            if (cursor.moveToFirst()) {
+//            Log.d(LOG_TAG, "id " + id + ": now selected = " + cursor.getInt(cursor.getColumnIndex(RECORD_COLUMN_SELECTED)));
+                int dbParameter = cursor.getInt(cursor.getColumnIndex(RECORD_COLUMN_SELECTED));
+                setParameter = (dbParameter == NOT_SELECTED) ? SELECTED : NOT_SELECTED;
+            }
+        }
+
+//        Log.d(LOG_TAG, "id " + id + ": set " + setParameter);
+        cv.put(RECORD_COLUMN_SELECTED, setParameter);
+        mDB.update(RECORD_TABLE, cv, RECORD_COLUMN_ID + " = " + id, null);
+    }
+
+
     // удалить запись из DB_TABLE
-//    public void delRec(long id) {
-//        mDB.delete(RECORD_TABLE, COLUMN_ID + " = " + id, null);
-//    }
+    public void deleteTransaction(long id) {
+        mDB.delete(RECORD_TABLE, RECORD_COLUMN_ID + " = " + id, null);
+    }
 
 
     // вывод в лог данных из курсора
