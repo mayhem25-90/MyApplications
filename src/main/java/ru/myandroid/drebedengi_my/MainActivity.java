@@ -32,6 +32,9 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Vector;
+
+import static java.lang.Math.abs;
 
 
 public class MainActivity extends AppCompatActivity {
@@ -41,6 +44,9 @@ public class MainActivity extends AppCompatActivity {
     DB db;
     Cursor cursor;
 
+    int tabCount = 3;
+    int[] tabName = { R.string.operations_tab, R.string.balance_tab, R.string.history_tab };
+    int[] tabID = { R.id.operationsTab, R.id.balanceTab, R.id.historyTab };
     TabHost tabHost;
 
     @Override
@@ -55,10 +61,13 @@ public class MainActivity extends AppCompatActivity {
         // Инициализация вкладок
         tabHost = (TabHost) findViewById(android.R.id.tabhost);
         tabHost.setup();
-        setupTab(getString(R.string.operations_tab), R.id.operationsTab);
-        setupTab(getString(R.string.balance_tab), R.id.balanceTab);
-        setupTab(getString(R.string.history_tab), R.id.historyTab);
-        for (int i = 0; i < tabHost.getTabWidget().getChildCount(); i++) {
+//        setupTab(getString(R.string.operations_tab), R.id.operationsTab);
+//        setupTab(getString(R.string.balance_tab), R.id.balanceTab);
+//        setupTab(getString(R.string.history_tab), R.id.historyTab);
+//        for (int i = 0; i < tabHost.getTabWidget().getChildCount(); i++) {
+        for (int i = 0; i < tabCount; i++) {
+//            Log.d(LOG_TAG, "setupTab " + tabName[i] + " " + tabID[i]);
+            setupTab(getString(tabName[i]), tabID[i]);
             TextView tv = (TextView) tabHost.getTabWidget().getChildAt(i).findViewById(android.R.id.title);
             tv.setTextColor(getResources().getColor(R.color.colorTextTab));
         }
@@ -121,12 +130,20 @@ public class MainActivity extends AppCompatActivity {
     LinearLayout operationsTab;
     TableRow etSumRow, etSumDestRow;
     EditText etSum, etSumDest, etComment;
-    Button btnDate, btnConfirm;
+    Button btnDate, btnConfirm, btnEdit, btnCancel;
     Spinner spinCurrency, spinCurrencyDest, spinWallet, spinWalletDest, spinCategory, spinSource;
     RadioGroup rgOperationChoice;
 //    ListView lvTestData;
 
+    SimpleDateFormat dbDateFormat = new SimpleDateFormat("yyyy-MM-dd", Locale.US);
     SimpleDateFormat currentDateFormat = new SimpleDateFormat("dd-MM-yyyy", Locale.US);
+
+    Vector<Integer> spinCurrencyBind = new Vector<>();
+    Vector<Integer> spinCurrencyDestBind = new Vector<>();
+    Vector<Integer> spinWalletBind = new Vector<>();
+    Vector<Integer> spinWalletDestBind = new Vector<>();
+    Vector<Integer> spinCategoryBind = new Vector<>();
+    Vector<Integer> spinSourceBind = new Vector<>();
 
 
     private void initOperationsTabContent() {
@@ -157,17 +174,17 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
+        // Первоначальное заполнение даты
+        btnDate = (Button) findViewById(R.id.btnDate);
+        String currDate = currentDateFormat.format(new Date(System.currentTimeMillis()));
+        btnDate.setText(currDate);
+
         etSumRow = (TableRow) findViewById(R.id.etSumRow);
         etSumRow.setBackgroundColor(getResources().getColor(R.color.colorSpend));
 
         etSumDestRow = (TableRow) findViewById(R.id.etSumDestRow);
         etSumDestRow.setBackgroundColor(getResources().getColor(R.color.colorMove));
         etSumDestRow.setVisibility(View.GONE);
-
-        // Первоначальное заполнение даты
-        btnDate = (Button) findViewById(R.id.btnDate);
-        String currDate = currentDateFormat.format(new Date(System.currentTimeMillis()));
-        btnDate.setText(currDate);
 
         etSum = (EditText) findViewById(R.id.etSum);
 
@@ -187,22 +204,44 @@ public class MainActivity extends AppCompatActivity {
         spinSource = (Spinner) findViewById(R.id.spinSource);
         spinSource.setVisibility(View.GONE);
 
-        loadDataForSpinner(DB.CURRENCY_TABLE, spinCurrency,     R.string.currency, spin_currency);
-        loadDataForSpinner(DB.CURRENCY_TABLE, spinCurrencyDest, R.string.currency, spin_currency_dest);
-        loadDataForSpinner(DB.WALLET_TABLE,   spinWallet,       R.string.wallet,   spin_wallet);
-        loadDataForSpinner(DB.WALLET_TABLE,   spinWalletDest,   R.string.wallet,   spin_wallet_dest);
-        loadDataForSpinner(DB.CATEGORY_TABLE, spinCategory,     R.string.category, spin_spending);
-        loadDataForSpinner(DB.CATEGORY_TABLE, spinSource,       R.string.source,   spin_source);
+        loadDataForSpinner(DB.CURRENCY_TABLE, spinCurrency,     spinCurrencyBind,     R.string.currency, spin_currency);
+        loadDataForSpinner(DB.CURRENCY_TABLE, spinCurrencyDest, spinCurrencyDestBind, R.string.currency, spin_currency_dest);
+        loadDataForSpinner(DB.WALLET_TABLE,   spinWallet,       spinWalletBind,       R.string.wallet,   spin_wallet);
+        loadDataForSpinner(DB.WALLET_TABLE,   spinWalletDest,   spinWalletDestBind,   R.string.wallet,   spin_wallet_dest);
+        loadDataForSpinner(DB.CATEGORY_TABLE, spinCategory,     spinCategoryBind,     R.string.category, spin_spending);
+        loadDataForSpinner(DB.CATEGORY_TABLE, spinSource,       spinSourceBind,       R.string.source,   spin_source);
 
         etComment = (EditText) findViewById(R.id.etComment);
 
         btnConfirm = (Button) findViewById(R.id.btnConfirm);
+        btnEdit = (Button) findViewById(R.id.btnEdit);
+        btnEdit.setVisibility(View.GONE);
+        btnCancel = (Button) findViewById(R.id.btnCancel);
+        btnCancel.setVisibility(View.GONE);
 
 //        lvTestData = (ListView) findViewById(R.id.lvTestData);
 //        loadDataForTestList();
 
         rgOperationChoice = (RadioGroup) findViewById(R.id.rgOperationChoice);
         rgOperationChoice.check(radioButtons[currentRadioButton]);
+
+
+//        Log.d(LOG_TAG, "spinCurrencyBind:");
+//        for (int i = 0; i < spinCurrencyBind.size(); ++i) {
+//            Log.d(LOG_TAG, i + ": " + spinCurrencyBind.get(i));
+//        }
+//        Log.d(LOG_TAG, "spinWalletBind:");
+//        for (int i = 0; i < spinWalletBind.size(); ++i) {
+//            Log.d(LOG_TAG, i + ": " + spinWalletBind.get(i));
+//        }
+//        Log.d(LOG_TAG, "spinCategoryBind:");
+//        for (int i = 0; i < spinCategoryBind.size(); ++i) {
+//            Log.d(LOG_TAG, i + ": " + spinCategoryBind.get(i));
+//        }
+//        Log.d(LOG_TAG, "spinSourceBind:");
+//        for (int i = 0; i < spinSourceBind.size(); ++i) {
+//            Log.d(LOG_TAG, i + ": " + spinSourceBind.get(i));
+//        }
     }
 
 
@@ -210,11 +249,20 @@ public class MainActivity extends AppCompatActivity {
         switch (v.getId()) {
             case R.id.tvDelete: showDialog(DIALOG_DELETE); break;
 
+            case R.id.tvEdit:
+                tabHost.setCurrentTabByTag(getString(R.string.operations_tab));
+                loadOperationDataToOperationTab();
+                break;
+
             case R.id.btnDate: showDialog(DIALOG_DATE); break;
 
             case R.id.btnTag: showDialog(DIALOG_TAGS); break;
 
-            case R.id.btnConfirm: onConfirmOperation(); break;
+            case R.id.btnConfirm: onConfirmOperation(db.CONFIRM_SAVE); break;
+
+            case R.id.btnEdit: onConfirmOperation(db.CONFIRM_EDIT); break;
+
+            case R.id.btnCancel: onCancelEdit(); break;
 
             case R.id.rbSpend:
                 etSumRow.setBackgroundColor(getResources().getColor(R.color.colorSpend));
@@ -273,7 +321,7 @@ public class MainActivity extends AppCompatActivity {
     long m_wallet_id_dest = -1;
 
 
-    public void onConfirmOperation() {
+    public void onConfirmOperation(int mode) {
         if ( !etSum.getText().toString().equals(getResources().getString(R.string.sum_hint))
                 && !etSum.getText().toString().equals("")
                 && Double.parseDouble(etSum.getText().toString()) > 0 ) {
@@ -329,24 +377,25 @@ public class MainActivity extends AppCompatActivity {
             Log.d(LOG_TAG, "category_id = " + category_id);
             Log.d(LOG_TAG, "comment = " + comment);
             Log.d(LOG_TAG, "operation_type = " + operation_type);
+            Log.d(LOG_TAG, "history_item_selected_id = " + history_item_selected_id);
 
             // Добаляем запись в базу
             try {
                 if (operation_type == db.SPENDING || operation_type == db.GAIN) {
-                    db.addTransaction(operation_type, m_currency_id, m_wallet_id, category_id,
-                            sum, currentDate, comment);
+                    db.addTransaction(history_item_selected_id, operation_type, m_currency_id, m_wallet_id, category_id,
+                            sum, currentDate, comment, mode);
                 }
                 else if (operation_type == db.MOVE) {
-                    db.addTransaction(db.SPENDING, m_currency_id, m_wallet_id, category_id,
-                            -sum, currentDate, comment);
-                    db.addTransaction(db.GAIN, m_currency_id, m_wallet_id_dest, category_id,
-                            sum, currentDate, comment);
+                    db.addTransaction(history_item_selected_id, db.SPENDING, m_currency_id, m_wallet_id, category_id,
+                            -sum, currentDate, comment, mode);
+                    db.addTransaction(history_item_selected_id, db.GAIN, m_currency_id, m_wallet_id_dest, category_id,
+                            sum, currentDate, comment, mode);
                 }
                 else if (operation_type == db.CHANGE) {
-                    db.addTransaction(db.SPENDING, m_currency_id, m_wallet_id, category_id,
-                            -sum, currentDate, comment);
-                    db.addTransaction(db.GAIN, m_currency_id_dest, m_wallet_id_dest, category_id,
-                            sumDest, currentDate, comment);
+                    db.addTransaction(history_item_selected_id, db.SPENDING, m_currency_id, m_wallet_id, category_id,
+                            -sum, currentDate, comment, mode);
+                    db.addTransaction(history_item_selected_id, db.GAIN, m_currency_id_dest, m_wallet_id_dest, category_id,
+                            sumDest, currentDate, comment, mode);
                 }
             }
             catch (Exception ex) {
@@ -361,6 +410,14 @@ public class MainActivity extends AppCompatActivity {
                 // А ещё обновим историю операций и баланс
                 loadDataForOperationHistory();
                 loadDataForBalance();
+
+                if (mode == db.CONFIRM_EDIT) {
+                    tabHost.setCurrentTabByTag(getString(R.string.history_tab));
+
+                    btnConfirm.setVisibility(View.VISIBLE);
+                    btnEdit.setVisibility(View.GONE);
+                    btnCancel.setVisibility(View.GONE);
+                }
             }
         }
         else {
@@ -407,7 +464,7 @@ public class MainActivity extends AppCompatActivity {
 
 
     // Загрузка данных в спиннеры из БД
-    public void loadDataForSpinner(final String TABLE_NAME, Spinner currentSpinner, int string_id, final int type) {
+    public void loadDataForSpinner(final String TABLE_NAME, Spinner currentSpinner, Vector<Integer> spinnerBind, int string_id, final int type) {
 //        Log.d(LOG_TAG, "load data for spinner: " + type);
         if (TABLE_NAME.equals(DB.CATEGORY_TABLE)) {
             cursor = db.getAllData(TABLE_NAME, string_id);
@@ -424,6 +481,17 @@ public class MainActivity extends AppCompatActivity {
         SimpleCursorAdapter scAdapter = new SimpleCursorAdapter(this, R.layout.item_spinner, cursor, from, to);
         currentSpinner.setAdapter(scAdapter);
         currentSpinner.setPrompt(getResources().getString(string_id));
+
+        // связка индекса спиннера с id записи из базы
+        if (cursor.moveToFirst()) {
+            int column = cursor.getColumnIndex(DB.CATEGORY_COLUMN_ID);
+//            Log.d(LOG_TAG, "spinner: " + getResources().getString(string_id));
+            do {
+                int id = cursor.getInt(column);
+//                Log.d(LOG_TAG, "spin id: " + id);
+                spinnerBind.add(id);
+            } while (cursor.moveToNext());
+        }
 
         // устанавливаем обработчик нажатия
         currentSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
@@ -443,6 +511,96 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onNothingSelected(AdapterView<?> arg0) {}
         });
+    }
+
+
+    // Загрузка операции из БД для редактирования
+    void loadOperationDataToOperationTab() {
+        cursor = db.loadTransactionDataById(history_item_selected_id);
+//        db.logCursor(cursor);
+
+        btnConfirm.setVisibility(View.GONE);
+        btnEdit.setVisibility(View.VISIBLE);
+        btnCancel.setVisibility(View.VISIBLE);
+
+        if (cursor.moveToFirst()) {
+            int operationType = cursor.getInt(cursor.getColumnIndex(DB.RECORD_COLUMN_OPERATION_TYPE));
+            int currencyID = cursor.getInt(cursor.getColumnIndex(DB.RECORD_COLUMN_CURRENCY_ID));
+            int walletID = cursor.getInt(cursor.getColumnIndex(DB.RECORD_COLUMN_WALLET_ID));
+            int categoryID = cursor.getInt(cursor.getColumnIndex(DB.RECORD_COLUMN_CATEGORY_ID));
+            int sum = cursor.getInt(cursor.getColumnIndex(DB.RECORD_COLUMN_SUM));
+            String operationDate = cursor.getString(cursor.getColumnIndex(DB.RECORD_COLUMN_DATE));
+            String comment = cursor.getString(cursor.getColumnIndex(DB.RECORD_COLUMN_COMMENT));
+
+//            Log.d(LOG_TAG, "operationType = " + operationType);
+//            Log.d(LOG_TAG, "currencyID = " + currencyID);
+//            Log.d(LOG_TAG, "walletID = " + walletID);
+//            Log.d(LOG_TAG, "categoryID = " + categoryID);
+//            Log.d(LOG_TAG, "sum = " + sum);
+//            Log.d(LOG_TAG, "comment = " + comment);
+//            Log.d(LOG_TAG, "operationDate = " + operationDate);
+
+            rgOperationChoice.check(radioButtons[operationType - 1]);
+            onButtonClick(findViewById(radioButtons[operationType - 1]));
+
+            spinCurrency.setSelection(getSpinnerIndexByID(currencyID, spinCurrencyBind));
+            spinCurrencyDest.setSelection(getSpinnerIndexByID(currencyID, spinCurrencyDestBind));
+            spinWallet.setSelection(getSpinnerIndexByID(walletID, spinWalletBind));
+            spinWalletDest.setSelection(getSpinnerIndexByID(walletID, spinWalletDestBind));
+            if (categoryID < db.div_category_gain) {
+                spinCategory.setSelection(getSpinnerIndexByID(categoryID, spinCategoryBind));
+            }
+            else spinSource.setSelection(getSpinnerIndexByID(categoryID, spinSourceBind));
+
+            etSum.setText(String.valueOf(abs(sum)));
+            etComment.setText(comment);
+            try {
+                btnDate.setText(currentDateFormat.format(dbDateFormat.parse(operationDate)));
+            }
+            catch (Exception exception) {
+                Log.d(LOG_TAG, exception.toString());
+            }
+        }
+    }
+
+
+    // Выбор индекса спиннера по ID из БД
+    int getSpinnerIndexByID(int id, Vector<Integer> spinnerBind) {
+        int spinnerIndex = 0;
+        for (int i = 0; i < spinnerBind.size(); ++i) {
+            if (spinnerBind.get(i) == id) {
+                spinnerIndex = i;
+                break;
+            }
+        }
+        return spinnerIndex;
+    }
+
+
+    // Отмена редактирования
+    void onCancelEdit() { // Сбрасываем состояние виджетов
+        rgOperationChoice.check(radioButtons[0]);
+        onButtonClick(findViewById(radioButtons[0]));
+
+        String currDate = currentDateFormat.format(new Date(System.currentTimeMillis()));
+        btnDate.setText(currDate);
+
+        etSum.setText("");
+        etSumDest.setText("");
+        etComment.setText("");
+
+        spinCurrency.setSelection(0);
+        spinCurrencyDest.setSelection(0);
+        spinWallet.setSelection(0);
+        spinWalletDest.setSelection(0);
+        spinCategory.setSelection(0);
+        spinSource.setSelection(0);
+
+        tabHost.setCurrentTabByTag(getString(R.string.history_tab));
+
+        btnConfirm.setVisibility(View.VISIBLE);
+        btnEdit.setVisibility(View.GONE);
+        btnCancel.setVisibility(View.GONE);
     }
 
 
@@ -469,9 +627,8 @@ public class MainActivity extends AppCompatActivity {
                     history_item_selected_id = id;
                 }
 
-                // А ещё обновим историю операций и баланс
+                // А ещё обновим историю операций (чтобы контекстное меню элемента отобразилось)
                 loadDataForOperationHistory();
-//                loadDataForBalance();
             }
         });
     }
@@ -483,9 +640,9 @@ public class MainActivity extends AppCompatActivity {
 //        db.logCursor(cursor);
 
         String[] from = { DB.WALLET_COLUMN_IMAGE, DB.CATEGORY_COLUMN_NAME, DB.RECORD_COLUMN_COMMENT, DB.RECORD_COLUMN_DATE, DB.RECORD_COLUMN_SUM, DB.CURRENCY_COLUMN_TITLE,
-                DB.RECORD_COLUMN_SELECTED };
+                DB.RECORD_COLUMN_SELECTED, DB.RECORD_COLUMN_SELECTED };
         int[] to = { R.id.ivImg, R.id.tvCategory, R.id.tvComment, R.id.tvDate, R.id.tvSum, R.id.tvCurrency,
-                R.id.tvDelete };
+                R.id.tvDelete, R.id.tvEdit };
 
         lvHistory.setAdapter(new HistoryCursorAdapter(this, R.layout.item_history, cursor, from, to));
     }

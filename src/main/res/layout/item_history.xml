@@ -118,6 +118,24 @@
             android:layout_weight="1" >
 
             <TextView
+                android:id="@+id/tvEdit"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:gravity="center_horizontal"
+                android:text="@string/editButton"
+                android:background="@color/colorTextViewBack"
+                android:textSize="0sp"
+                android:layout_marginLeft="1sp"
+                android:layout_marginRight="1sp"
+                android:onClick="onButtonClick"/>
+        </TableLayout>
+
+        <TableLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_weight="1" >
+
+            <TextView
                 android:id="@+id/tvDelete"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"

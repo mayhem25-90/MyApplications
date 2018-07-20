@@ -68,11 +68,13 @@ public class HistoryCursorAdapter extends SimpleCursorAdapter
                 break;
 
             case R.id.tvDelete:
+            case R.id.tvEdit:
                 int select = Integer.parseInt(text);
                 if (select == 1) {
-                    v.setPadding(0, 11, 0, 11);
-                    v.setTextSize(16);
-                    v.setText("Удалить");
+                    v.setPadding(0, 13, 0, 13);
+                    v.setTextSize(14);
+                    if (v.getId() == R.id.tvDelete) v.setText("Удалить");
+                    if (v.getId() == R.id.tvEdit) v.setText("Редактировать");
                 }
                 else if (select == 0) {
                     v.setPadding(0, 0, 0, 0);

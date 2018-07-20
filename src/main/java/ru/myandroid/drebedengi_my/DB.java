@@ -13,8 +13,9 @@ public class DB {
 
     final int SPENDING = 1, GAIN = 2, MOVE = 3, CHANGE = 4;
     final int AUTO_SELECT = -1, NOT_SELECTED = 0, SELECTED = 1;
+    final int CONFIRM_SAVE = 0, CONFIRM_EDIT = 1;
 
-    private final int div_category_gain = 100000;
+    final int div_category_gain = 100000;
 
     // Данные для первоначального заполнения БД
     private String[] currencyData = new String[] { "руб", "USD", "EUR" };
@@ -218,8 +219,8 @@ public class DB {
     // Добавление записи об операции
     // operation_type, currency_id, currency_id_dest, wallet_id, wallet_id_dest, category_id,
     // sum, sumDest, currentDate, comment
-    public void addTransaction(int operation_type, long currency_id, long wallet_id, long category_id,
-                               double sum, String currentDate, String comment) {
+    public void addTransaction(long id, int operation_type, long currency_id, long wallet_id, long category_id,
+                               double sum, String currentDate, String comment, int mode) {
         ContentValues cv = new ContentValues();
         cv.put(RECORD_COLUMN_OPERATION_TYPE, operation_type);
         cv.put(RECORD_COLUMN_CURRENCY_ID, currency_id);
@@ -233,7 +234,8 @@ public class DB {
         cv.put(RECORD_COLUMN_COMMENT, comment);
         cv.put(RECORD_COLUMN_SELECTED, 0);
 
-        mDB.insert(RECORD_TABLE, null, cv);
+        if (mode == CONFIRM_SAVE) mDB.insert(RECORD_TABLE, null, cv);
+        else if (mode == CONFIRM_EDIT) mDB.update(RECORD_TABLE, cv, RECORD_COLUMN_ID + " = " + id, null);
     }
 
 
@@ -256,13 +258,21 @@ public class DB {
     }
 
 
-    // удалить запись из DB_TABLE
+    // Удалить запись из DB_TABLE
     public void deleteTransaction(long id) {
         mDB.delete(RECORD_TABLE, RECORD_COLUMN_ID + " = " + id, null);
     }
 
 
-    // вывод в лог данных из курсора
+    // Загрузка данных для редактирования транзакции
+    Cursor loadTransactionDataById(long id) {
+//        String selection = RECORD_COLUMN_ID + " = " + id;
+//        String[] selectionArgs = new String[] { String.valueOf(id) };
+        return mDB.query(RECORD_TABLE, null, RECORD_COLUMN_ID + " = " + id, null, null, null, null);
+    }
+
+
+    // Вывод в лог данных из курсора
     public void logCursor(Cursor c) {
         if (c != null) {
             if (c.moveToFirst()) {
