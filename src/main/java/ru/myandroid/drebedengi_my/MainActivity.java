@@ -1,5 +1,6 @@
 package ru.myandroid.drebedengi_my;
 
+import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.DatePickerDialog;
 import android.app.Dialog;
@@ -8,9 +9,8 @@ import android.database.Cursor;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
-import android.view.MotionEvent;
 import android.view.View;
-import android.widget.Adapter;
+import android.view.inputmethod.InputMethodManager;
 import android.widget.AdapterView;
 import android.widget.Button;
 import android.widget.DatePicker;
@@ -26,7 +26,8 @@ import android.widget.TableRow;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import java.sql.Date;
+import java.util.Calendar;
+import java.util.Date;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -61,16 +62,22 @@ public class MainActivity extends AppCompatActivity {
         // Инициализация вкладок
         tabHost = (TabHost) findViewById(android.R.id.tabhost);
         tabHost.setup();
-//        setupTab(getString(R.string.operations_tab), R.id.operationsTab);
-//        setupTab(getString(R.string.balance_tab), R.id.balanceTab);
-//        setupTab(getString(R.string.history_tab), R.id.historyTab);
-//        for (int i = 0; i < tabHost.getTabWidget().getChildCount(); i++) {
         for (int i = 0; i < tabCount; i++) {
 //            Log.d(LOG_TAG, "setupTab " + tabName[i] + " " + tabID[i]);
             setupTab(getString(tabName[i]), tabID[i]);
             TextView tv = (TextView) tabHost.getTabWidget().getChildAt(i).findViewById(android.R.id.title);
             tv.setTextColor(getResources().getColor(R.color.colorTextTab));
         }
+
+        tabHost.setOnTabChangedListener(new TabHost.OnTabChangeListener() {
+            @Override
+            public void onTabChanged(String s) {
+//                Log.d(LOG_TAG, "onTabChanged: " + s);
+                // Скрываем клавиатуру:
+                InputMethodManager inputMethodManager = (InputMethodManager) getSystemService(Activity.INPUT_METHOD_SERVICE);
+                inputMethodManager.hideSoftInputFromWindow(getCurrentFocus().getWindowToken(), 0);
+            }
+        });
 
         getSupportActionBar().hide();
 
@@ -107,13 +114,8 @@ public class MainActivity extends AppCompatActivity {
 // == ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ====
 
     final int DIALOG_DATE = 0;
-    final int DIALOG_CURRENCIES = 1;
-    final int DIALOG_WALLETS = 2;
-    final int DIALOG_CATEGORIES = 3;
-    final int DIALOG_SOURCES = 4;
-    final int DIALOG_TAGS = 5;
-    final int DIALOG_CONFIRM = 6;
-    final int DIALOG_DELETE = 7;
+    final int DIALOG_TAGS = 1;
+    final int DIALOG_DELETE = 2;
 
     public static final int spin_currency = 0,
                             spin_currency_dest = 1,
@@ -126,7 +128,6 @@ public class MainActivity extends AppCompatActivity {
     int[] radioButtons = {R.id.rbSpend, R.id.rbGain, R.id.rbMove, R.id.rbChange};
 
     // виджеты 1-го блока
-//    TextView tvHello;
     LinearLayout operationsTab;
     TableRow etSumRow, etSumDestRow;
     EditText etSum, etSumDest, etComment;
@@ -135,8 +136,10 @@ public class MainActivity extends AppCompatActivity {
     RadioGroup rgOperationChoice;
 //    ListView lvTestData;
 
+    Calendar operationDate = Calendar.getInstance();
+
     SimpleDateFormat dbDateFormat = new SimpleDateFormat("yyyy-MM-dd", Locale.US);
-    SimpleDateFormat currentDateFormat = new SimpleDateFormat("dd-MM-yyyy", Locale.US);
+    SimpleDateFormat btnDateFormat = new SimpleDateFormat("dd MMM, EEE", Locale.US);
 
     Vector<Integer> spinCurrencyBind = new Vector<>();
     Vector<Integer> spinCurrencyDestBind = new Vector<>();
@@ -150,9 +153,6 @@ public class MainActivity extends AppCompatActivity {
         Log.d(LOG_TAG, "initOperationsTabContent");
 
         operationsTab = (LinearLayout) findViewById(R.id.operationsTab);
-
-//        tvHello = (TextView) findViewById(R.id.tvHello);
-//        tvHello.setOnTouchListener(new View.OnSwipeTouchListener() {
 
         operationsTab.setOnTouchListener(new OnSwipeTouchListener(this) {
             public void onSwipeLeft() {
@@ -176,8 +176,8 @@ public class MainActivity extends AppCompatActivity {
 
         // Первоначальное заполнение даты
         btnDate = (Button) findViewById(R.id.btnDate);
-        String currDate = currentDateFormat.format(new Date(System.currentTimeMillis()));
-        btnDate.setText(currDate);
+        btnDate.setText(btnDateFormat.format(operationDate.getTime()));
+        btnDate.setText(checkDateForToday(operationDate.getTime()));
 
         etSumRow = (TableRow) findViewById(R.id.etSumRow);
         etSumRow.setBackgroundColor(getResources().getColor(R.color.colorSpend));
@@ -245,6 +245,31 @@ public class MainActivity extends AppCompatActivity {
     }
 
 
+    public String checkDateForToday(Date checkedDate) {
+        final Calendar currentDate = Calendar.getInstance();
+        String today = dbDateFormat.format(currentDate.getTime());
+        currentDate.add(Calendar.DATE, -1);
+        String yesterday = dbDateFormat.format(currentDate.getTime());
+        String dayOfWeek = new SimpleDateFormat(", EEE", Locale.US).format(checkedDate);
+
+        // Если дата сегодняшнего или вчерашнего дня, выводим текстом:
+        if (dbDateFormat.format(checkedDate).equals(today)) {
+            return getResources().getString(R.string.today) + dayOfWeek;
+        }
+        else if (dbDateFormat.format(checkedDate).equals(yesterday)) {
+            return getResources().getString(R.string.yesterday) + dayOfWeek;
+        }
+        else {
+            // А если год не совпадает с текущим, меняем формат:
+            if (operationDate.get(Calendar.YEAR) == Calendar.getInstance().get(Calendar.YEAR)) {
+                btnDateFormat = new SimpleDateFormat("dd MMM, EEE", Locale.US);
+            }
+            else btnDateFormat = new SimpleDateFormat("dd MMM yyyy, EEE", Locale.US);
+            return btnDateFormat.format(checkedDate);
+        }
+    }
+
+
     public void onButtonClick(View v) {
         switch (v.getId()) {
             case R.id.tvDelete: showDialog(DIALOG_DELETE); break;
@@ -308,9 +333,29 @@ public class MainActivity extends AppCompatActivity {
     DatePickerDialog.OnDateSetListener dateDialogCallBack = new DatePickerDialog.OnDateSetListener() {
         public void onDateSet(DatePicker view, int year, int monthOfYear, int dayOfMonth) {
             Date chosenDate = new Date(year - 1900, monthOfYear, dayOfMonth);
-            btnDate.setText(currentDateFormat.format(chosenDate));
+            operationDate.setTime(chosenDate);
+            btnDate.setText(checkDateForToday(operationDate.getTime()));
         }
     };
+
+
+    @Override
+    protected Dialog onCreateDialog(int id) {
+        AlertDialog.Builder adb = new AlertDialog.Builder(this);
+        switch (id) {
+            case DIALOG_DATE: // Дата
+                return new DatePickerDialog(this, dateDialogCallBack,
+                        operationDate.get(Calendar.YEAR), operationDate.get(Calendar.MONTH), operationDate.get(Calendar.DATE));
+
+            case DIALOG_DELETE: // Удаление операции
+                adb.setMessage(R.string.delete_message);
+                adb.setPositiveButton(R.string.yes, deleteButtonClickListener);
+                adb.setNeutralButton(R.string.no, deleteButtonClickListener);
+                return adb.create();
+
+            default: return adb.create();
+        }
+    }
 
 
     long m_spending_category_id = -1;
@@ -326,8 +371,7 @@ public class MainActivity extends AppCompatActivity {
                 && !etSum.getText().toString().equals("")
                 && Double.parseDouble(etSum.getText().toString()) > 0 ) {
             // Подготавливаем данные для записи в базу
-            String[] date = btnDate.getText().toString().split("-");
-            String currentDate = date[2] + "-" + date[1] + "-" + date[0];
+            String currentDate = dbDateFormat.format(operationDate.getTime());
             String comment = !etComment.getText().toString().equals(getResources().getString(R.string.comment_hint)) ?
                     etComment.getText().toString() : "";
 
@@ -422,24 +466,6 @@ public class MainActivity extends AppCompatActivity {
         }
         else {
             Toast.makeText(this, "Сумма должна быть больше 0", Toast.LENGTH_SHORT).show();
-        }
-    }
-
-
-    @Override
-    protected Dialog onCreateDialog(int id) {
-        AlertDialog.Builder adb = new AlertDialog.Builder(this);
-        switch (id) {
-            case DIALOG_DATE: // Дата
-                String[] date = btnDate.getText().toString().split("-");
-                return new DatePickerDialog(this, dateDialogCallBack, Integer.parseInt(date[2]), Integer.parseInt(date[1]) - 1, Integer.parseInt(date[0]));
-
-            case DIALOG_DELETE: // Удаление операции
-                adb.setMessage(R.string.delete_message);
-                adb.setPositiveButton(R.string.yes, deleteButtonClickListener);
-                adb.setNeutralButton(R.string.no, deleteButtonClickListener);
-
-            default: return adb.create();
         }
     }
 
@@ -555,7 +581,7 @@ public class MainActivity extends AppCompatActivity {
             etSum.setText(String.valueOf(abs(sum)));
             etComment.setText(comment);
             try {
-                btnDate.setText(currentDateFormat.format(dbDateFormat.parse(operationDate)));
+                btnDate.setText(btnDateFormat.format(dbDateFormat.parse(operationDate)));
             }
             catch (Exception exception) {
                 Log.d(LOG_TAG, exception.toString());
@@ -582,8 +608,7 @@ public class MainActivity extends AppCompatActivity {
         rgOperationChoice.check(radioButtons[0]);
         onButtonClick(findViewById(radioButtons[0]));
 
-        String currDate = currentDateFormat.format(new Date(System.currentTimeMillis()));
-        btnDate.setText(currDate);
+        btnDate.setText(btnDateFormat.format(new Date(System.currentTimeMillis())));
 
         etSum.setText("");
         etSumDest.setText("");

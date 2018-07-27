@@ -37,6 +37,9 @@
     <string name="editButton">Редактировать</string>
     <string name="cancelButton">Отмена</string>
 
+    <string name="today">Сегодня</string>
+    <string name="yesterday">Вчера</string>
+
     <!--<string name="currencies">Валюты</string>-->
     <!--<string name="wallets">Места хранения</string>-->
     <!--<string name="categories">Категории затрат</string>-->

@@ -4,6 +4,7 @@
     <color name="colorPrimaryDark">#303F9F</color>
     <color name="colorAccent">#B4B0F1</color>
 
+    <color name="colorUnderline">#646464</color>
     <color name="colorHint">#AAAAAA</color>
     <color name="colorTextTab">#FFFFFF</color>
 

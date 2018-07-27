@@ -84,8 +84,5 @@ public class HistoryCursorAdapter extends SimpleCursorAdapter
 
             default: break;
         }
-
-//        Button btnDelete = (Button) findViewById(R.id.btnDelete);
-//        btnDelete.setVisibility(View.GONE);
     }
 }
