@@ -4,6 +4,7 @@ import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.DatePickerDialog;
 import android.app.Dialog;
+import android.app.TimePickerDialog;
 import android.content.DialogInterface;
 import android.database.Cursor;
 import android.support.v7.app.AppCompatActivity;
@@ -24,6 +25,7 @@ import android.widget.Spinner;
 import android.widget.TabHost;
 import android.widget.TableRow;
 import android.widget.TextView;
+import android.widget.TimePicker;
 import android.widget.Toast;
 
 import java.util.Calendar;
@@ -36,6 +38,8 @@ import java.util.Map;
 import java.util.Vector;
 
 import static java.lang.Math.abs;
+import static ru.myandroid.drebedengi_my.DB.dbDateFormat;
+import static ru.myandroid.drebedengi_my.DB.dbTimeFormat;
 
 
 public class MainActivity extends AppCompatActivity {
@@ -63,7 +67,6 @@ public class MainActivity extends AppCompatActivity {
         tabHost = (TabHost) findViewById(android.R.id.tabhost);
         tabHost.setup();
         for (int i = 0; i < tabCount; i++) {
-//            Log.d(LOG_TAG, "setupTab " + tabName[i] + " " + tabID[i]);
             setupTab(getString(tabName[i]), tabID[i]);
             TextView tv = (TextView) tabHost.getTabWidget().getChildAt(i).findViewById(android.R.id.title);
             tv.setTextColor(getResources().getColor(R.color.colorTextTab));
@@ -114,8 +117,9 @@ public class MainActivity extends AppCompatActivity {
 // == ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ====
 
     final int DIALOG_DATE = 0;
-    final int DIALOG_TAGS = 1;
-    final int DIALOG_DELETE = 2;
+    final int DIALOG_TIME = 1;
+    final int DIALOG_TAGS = 2;
+    final int DIALOG_DELETE = 3;
 
     public static final int spin_currency = 0,
                             spin_currency_dest = 1,
@@ -131,15 +135,15 @@ public class MainActivity extends AppCompatActivity {
     LinearLayout operationsTab;
     TableRow etSumRow, etSumDestRow;
     EditText etSum, etSumDest, etComment;
-    Button btnDate, btnConfirm, btnEdit, btnCancel;
+    Button btnDateLeft, btnDateRight, btnDate, btnTime, btnConfirm, btnEdit, btnCancel;
     Spinner spinCurrency, spinCurrencyDest, spinWallet, spinWalletDest, spinCategory, spinSource;
     RadioGroup rgOperationChoice;
 //    ListView lvTestData;
 
     Calendar operationDate = Calendar.getInstance();
 
-    SimpleDateFormat dbDateFormat = new SimpleDateFormat("yyyy-MM-dd", Locale.US);
     SimpleDateFormat btnDateFormat = new SimpleDateFormat("dd MMM, EEE", Locale.US);
+    SimpleDateFormat btnTimeFormat = new SimpleDateFormat("HH:mm", Locale.US);
 
     Vector<Integer> spinCurrencyBind = new Vector<>();
     Vector<Integer> spinCurrencyDestBind = new Vector<>();
@@ -176,8 +180,14 @@ public class MainActivity extends AppCompatActivity {
 
         // Первоначальное заполнение даты
         btnDate = (Button) findViewById(R.id.btnDate);
-        btnDate.setText(btnDateFormat.format(operationDate.getTime()));
         btnDate.setText(checkDateForToday(operationDate.getTime()));
+
+        btnTime = (Button) findViewById(R.id.btnTime);
+        btnTime.setText(btnTimeFormat.format(operationDate.getTime()));
+
+        btnDateLeft = (Button) findViewById(R.id.btnDateLeft);
+
+        btnDateRight = (Button) findViewById(R.id.btnDateRight);
 
         etSumRow = (TableRow) findViewById(R.id.etSumRow);
         etSumRow.setBackgroundColor(getResources().getColor(R.color.colorSpend));
@@ -272,6 +282,16 @@ public class MainActivity extends AppCompatActivity {
 
     public void onButtonClick(View v) {
         switch (v.getId()) {
+            case R.id.btnDateLeft:
+                operationDate.add(Calendar.DATE, -1);
+                btnDate.setText(checkDateForToday(operationDate.getTime()));
+                break;
+
+            case R.id.btnDateRight:
+                operationDate.add(Calendar.DATE, 1);
+                btnDate.setText(checkDateForToday(operationDate.getTime()));
+                break;
+
             case R.id.tvDelete: showDialog(DIALOG_DELETE); break;
 
             case R.id.tvEdit:
@@ -280,6 +300,8 @@ public class MainActivity extends AppCompatActivity {
                 break;
 
             case R.id.btnDate: showDialog(DIALOG_DATE); break;
+
+            case R.id.btnTime: showDialog(DIALOG_TIME); break;
 
             case R.id.btnTag: showDialog(DIALOG_TAGS); break;
 
@@ -332,9 +354,23 @@ public class MainActivity extends AppCompatActivity {
 
     DatePickerDialog.OnDateSetListener dateDialogCallBack = new DatePickerDialog.OnDateSetListener() {
         public void onDateSet(DatePicker view, int year, int monthOfYear, int dayOfMonth) {
-            Date chosenDate = new Date(year - 1900, monthOfYear, dayOfMonth);
-            operationDate.setTime(chosenDate);
+            Date currentDate = operationDate.getTime();
+            currentDate.setYear(year - 1900);
+            currentDate.setMonth(monthOfYear);
+            currentDate.setDate(dayOfMonth);
+            operationDate.setTime(currentDate);
             btnDate.setText(checkDateForToday(operationDate.getTime()));
+        }
+    };
+
+
+    TimePickerDialog.OnTimeSetListener timeDialogCallBack = new TimePickerDialog.OnTimeSetListener() {
+        public void onTimeSet(TimePicker view, int hour, int minute) {
+            Date currentDate = operationDate.getTime();
+            currentDate.setHours(hour);
+            currentDate.setMinutes(minute);
+            operationDate.setTime(currentDate);
+            btnTime.setText(btnTimeFormat.format(currentDate));
         }
     };
 
@@ -346,6 +382,10 @@ public class MainActivity extends AppCompatActivity {
             case DIALOG_DATE: // Дата
                 return new DatePickerDialog(this, dateDialogCallBack,
                         operationDate.get(Calendar.YEAR), operationDate.get(Calendar.MONTH), operationDate.get(Calendar.DATE));
+
+            case DIALOG_TIME: // Время
+                return new TimePickerDialog(this, timeDialogCallBack,
+                        operationDate.get(Calendar.HOUR_OF_DAY), operationDate.get(Calendar.MINUTE), true);
 
             case DIALOG_DELETE: // Удаление операции
                 adb.setMessage(R.string.delete_message);
@@ -372,6 +412,7 @@ public class MainActivity extends AppCompatActivity {
                 && Double.parseDouble(etSum.getText().toString()) > 0 ) {
             // Подготавливаем данные для записи в базу
             String currentDate = dbDateFormat.format(operationDate.getTime());
+            String currentTime = dbTimeFormat.format(operationDate.getTime());
             String comment = !etComment.getText().toString().equals(getResources().getString(R.string.comment_hint)) ?
                     etComment.getText().toString() : "";
 
@@ -412,6 +453,7 @@ public class MainActivity extends AppCompatActivity {
             }
 
             Log.d(LOG_TAG, "currentDate = " + currentDate);
+            Log.d(LOG_TAG, "currentTime = " + currentTime);
             Log.d(LOG_TAG, "sum = " + sum);
             Log.d(LOG_TAG, "sum_dest = " + sumDest);
             Log.d(LOG_TAG, "currency_id = " + m_currency_id);
@@ -427,19 +469,19 @@ public class MainActivity extends AppCompatActivity {
             try {
                 if (operation_type == db.SPENDING || operation_type == db.GAIN) {
                     db.addTransaction(history_item_selected_id, operation_type, m_currency_id, m_wallet_id, category_id,
-                            sum, currentDate, comment, mode);
+                            sum, currentDate, currentTime, comment, mode);
                 }
                 else if (operation_type == db.MOVE) {
                     db.addTransaction(history_item_selected_id, db.SPENDING, m_currency_id, m_wallet_id, category_id,
-                            -sum, currentDate, comment, mode);
+                            -sum, currentDate, currentTime, comment, mode);
                     db.addTransaction(history_item_selected_id, db.GAIN, m_currency_id, m_wallet_id_dest, category_id,
-                            sum, currentDate, comment, mode);
+                            sum, currentDate, currentTime, comment, mode);
                 }
                 else if (operation_type == db.CHANGE) {
                     db.addTransaction(history_item_selected_id, db.SPENDING, m_currency_id, m_wallet_id, category_id,
-                            -sum, currentDate, comment, mode);
+                            -sum, currentDate, currentTime, comment, mode);
                     db.addTransaction(history_item_selected_id, db.GAIN, m_currency_id_dest, m_wallet_id_dest, category_id,
-                            sumDest, currentDate, comment, mode);
+                            sumDest, currentDate, currentTime, comment, mode);
                 }
             }
             catch (Exception ex) {
@@ -664,9 +706,11 @@ public class MainActivity extends AppCompatActivity {
         cursor = db.getAllHistoryData();
 //        db.logCursor(cursor);
 
-        String[] from = { DB.WALLET_COLUMN_IMAGE, DB.CATEGORY_COLUMN_NAME, DB.RECORD_COLUMN_COMMENT, DB.RECORD_COLUMN_DATE, DB.RECORD_COLUMN_SUM, DB.CURRENCY_COLUMN_TITLE,
+        String[] from = { DB.WALLET_COLUMN_IMAGE, DB.CATEGORY_COLUMN_NAME, DB.RECORD_COLUMN_COMMENT,
+                DB.RECORD_COLUMN_DATE, DB.RECORD_COLUMN_TIME, DB.RECORD_COLUMN_SUM, DB.CURRENCY_COLUMN_TITLE,
                 DB.RECORD_COLUMN_SELECTED, DB.RECORD_COLUMN_SELECTED };
-        int[] to = { R.id.ivImg, R.id.tvCategory, R.id.tvComment, R.id.tvDate, R.id.tvSum, R.id.tvCurrency,
+        int[] to = { R.id.ivImg, R.id.tvCategory, R.id.tvComment,
+                R.id.tvDate, R.id.tvTime, R.id.tvSum, R.id.tvCurrency,
                 R.id.tvDelete, R.id.tvEdit };
 
         lvHistory.setAdapter(new HistoryCursorAdapter(this, R.layout.item_history, cursor, from, to));

@@ -4,8 +4,6 @@ import android.content.Context;
 import android.database.Cursor;
 import android.graphics.Color;
 import android.util.Log;
-import android.view.View;
-import android.widget.Button;
 import android.widget.SimpleCursorAdapter;
 import android.widget.TextView;
 
@@ -15,10 +13,14 @@ import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Locale;
 
+import static ru.myandroid.drebedengi_my.DB.dbDateFormat;
+import static ru.myandroid.drebedengi_my.DB.dbTimeFormat;
+
+
 public class HistoryCursorAdapter extends SimpleCursorAdapter
 {
-    private SimpleDateFormat dbDateFormat = new SimpleDateFormat("yyyy-MM-dd", Locale.US);
-    private SimpleDateFormat historyDateFormat = new SimpleDateFormat("dd MMM", Locale.US);
+    private SimpleDateFormat historyDateFormat = new SimpleDateFormat("dd MMM,", Locale.US);
+    private SimpleDateFormat historyTimeFormat = new SimpleDateFormat("HH:mm", Locale.US);
     private DecimalFormat sumFormat;
 
     HistoryCursorAdapter(Context context, int resource, Cursor cursor, String[] from, int[] to) {
@@ -52,10 +54,10 @@ public class HistoryCursorAdapter extends SimpleCursorAdapter
                 String yesterday = dbDateFormat.format(calendar.getTime());
 
                 if (text.equals(today)) {
-                    v.setText("Сегодня");
+                    v.setText("Сегодня,");
                 }
                 else if (text.equals(yesterday)) {
-                    v.setText("Вчера");
+                    v.setText("Вчера,");
                 }
                 else {
                     try {
@@ -64,6 +66,15 @@ public class HistoryCursorAdapter extends SimpleCursorAdapter
                     catch (Exception exception) {
                         Log.d("myLogs", exception.toString());
                     }
+                }
+                break;
+
+            case R.id.tvTime:
+                try {
+                    v.setText(historyTimeFormat.format(dbTimeFormat.parse(text)));
+                }
+                catch (Exception exception) {
+                    Log.d("myLogs", exception.toString());
                 }
                 break;
 

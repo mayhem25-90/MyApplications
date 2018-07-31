@@ -7,6 +7,9 @@ import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 import android.util.Log;
 
+import java.text.SimpleDateFormat;
+import java.util.Locale;
+
 public class DB {
 
     private final String LOG_TAG = "myLogs";
@@ -16,6 +19,10 @@ public class DB {
     final int CONFIRM_SAVE = 0, CONFIRM_EDIT = 1;
 
     final int div_category_gain = 100000;
+
+    static SimpleDateFormat dbDateFormat = new SimpleDateFormat("yyyy-MM-dd", Locale.US);
+    static SimpleDateFormat dbTimeFormat = new SimpleDateFormat("HH:mm:ss", Locale.US);
+
 
     // Данные для первоначального заполнения БД
     private String[] currencyData = new String[] { "руб", "USD", "EUR" };
@@ -79,6 +86,7 @@ public class DB {
     public static final String RECORD_COLUMN_CATEGORY_ID = "category_id";
     public static final String RECORD_COLUMN_SUM = "sum";
     public static final String RECORD_COLUMN_DATE = "operation_date";
+    public static final String RECORD_COLUMN_TIME = "operation_time";
     public static final String RECORD_COLUMN_COMMENT = "comment";
     public static final String RECORD_COLUMN_OPERATION_TYPE = "operation_type";
     public static final String RECORD_COLUMN_SELECTED = "selected";
@@ -90,6 +98,7 @@ public class DB {
             RECORD_COLUMN_CATEGORY_ID + " integer, " +
             RECORD_COLUMN_SUM + " real, " +
             RECORD_COLUMN_DATE + " text, " +
+            RECORD_COLUMN_TIME + " text, " +
             RECORD_COLUMN_COMMENT + " text, " +
             RECORD_COLUMN_OPERATION_TYPE + " integer, " +
             RECORD_COLUMN_SELECTED + " integer" +
@@ -151,6 +160,7 @@ public class DB {
                 + WALLET_TABLE + "." + WALLET_COLUMN_IMAGE + ", "
                 + CATEGORY_TABLE + "." + CATEGORY_COLUMN_NAME + ", "
                 + RECORD_TABLE + "." + RECORD_COLUMN_DATE + ", "
+                + RECORD_TABLE + "." + RECORD_COLUMN_TIME + ", "
                 + RECORD_TABLE + "." + RECORD_COLUMN_SUM + ", "
                 + RECORD_TABLE + "." + RECORD_COLUMN_COMMENT + ", "
                 + RECORD_TABLE + "." + RECORD_COLUMN_SELECTED + ", "
@@ -165,7 +175,9 @@ public class DB {
                 + " inner join " + CURRENCY_TABLE
                 + " on " + RECORD_TABLE + "." + RECORD_COLUMN_CURRENCY_ID
                 + " = " + CURRENCY_TABLE + "." + CURRENCY_COLUMN_ID
-                + " order by " + RECORD_TABLE + "." + RECORD_COLUMN_DATE + " desc";
+                + " order by "
+                + RECORD_TABLE + "." + RECORD_COLUMN_DATE + " desc, "
+                + RECORD_TABLE + "." + RECORD_COLUMN_TIME + " desc";
 //        Log.d(LOG_TAG, sqlQuery);
         return mDB.rawQuery(sqlQuery, null);
     }
@@ -220,7 +232,7 @@ public class DB {
     // operation_type, currency_id, currency_id_dest, wallet_id, wallet_id_dest, category_id,
     // sum, sumDest, currentDate, comment
     public void addTransaction(long id, int operation_type, long currency_id, long wallet_id, long category_id,
-                               double sum, String currentDate, String comment, int mode) {
+                               double sum, String currentDate, String currentTime, String comment, int mode) {
         ContentValues cv = new ContentValues();
         cv.put(RECORD_COLUMN_OPERATION_TYPE, operation_type);
         cv.put(RECORD_COLUMN_CURRENCY_ID, currency_id);
@@ -231,6 +243,7 @@ public class DB {
         cv.put(RECORD_COLUMN_SUM, sum);
 //        cv.put(RECORD_COLUMN_SUM_DEST, sumDest);
         cv.put(RECORD_COLUMN_DATE, currentDate);
+        cv.put(RECORD_COLUMN_TIME, currentTime);
         cv.put(RECORD_COLUMN_COMMENT, comment);
         cv.put(RECORD_COLUMN_SELECTED, 0);
 
