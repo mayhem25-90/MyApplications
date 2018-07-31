@@ -31,11 +31,6 @@
                     android:layout_width="match_parent"
                     android:layout_height="match_parent" />
 
-                <!--<include-->
-                    <!--layout="@layout/tab_operations_activity"-->
-                    <!--android:layout_width="match_parent"-->
-                    <!--android:layout_height="match_parent" />-->
-
                 <include
                     layout="@layout/tab_history"
                     android:layout_width="match_parent"
@@ -45,13 +40,6 @@
                     layout="@layout/tab_balance"
                     android:layout_width="match_parent"
                     android:layout_height="match_parent" />
-
-                <!--<TextView-->
-                    <!--android:id="@+id/tvTab1"-->
-                    <!--android:layout_width="wrap_content"-->
-                    <!--android:layout_height="wrap_content"-->
-                    <!--android:text="@string/tag">-->
-                <!--</TextView>-->
 
             </FrameLayout>
         </LinearLayout>
