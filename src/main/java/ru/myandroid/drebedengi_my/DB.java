@@ -152,8 +152,7 @@ public class DB {
 // == ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ====
 
     // получить данные из таблицы для вывода истории операций
-    public Cursor getAllHistoryData() {
-//        return mDB.query(TABLE_NAME, null, null, null, null, null, null);
+    Cursor getAllHistoryData() {
         String sqlQuery = "select "
                 + RECORD_TABLE + "." + RECORD_COLUMN_ID + ", "
                 + CURRENCY_TABLE + "." + CURRENCY_COLUMN_TITLE + ", "
@@ -182,19 +181,38 @@ public class DB {
         return mDB.rawQuery(sqlQuery, null);
     }
 
+// == ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ====
+// 3. Баланс
+// == ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ====
+
+    // Получить список доступных мест хранения
+    Cursor getWalletData(int wallet) {
+        String sqlQuery = "select "
+                + WALLET_TABLE + "." + WALLET_COLUMN_ID + ", "
+                + WALLET_TABLE + "." + WALLET_COLUMN_IMAGE + ", "
+                + WALLET_TABLE + "." + WALLET_COLUMN_NAME
+                + " from " + WALLET_TABLE
+                + " where " + WALLET_COLUMN_ID + " = " + wallet;
+//        Log.d(LOG_TAG, sqlQuery);
+        return mDB.rawQuery(sqlQuery, null);
+    }
+
+
+    // Получить список доступных мест хранения
+    int getNumberOfRecords(String TABLE_NAME) {
+        return mDB.query(TABLE_NAME, null, null, null, null, null, null).getCount();
+    }
+
 
     // получить данные из таблицы для вывода баланса
-//    public Cursor getBalanceData(int wallet, int currency) {
-    public String getBalanceData(int wallet, int currency) {
+    Cursor getBalanceData(int wallet, int currency) {
         String sqlQuery = "select "
+                + WALLET_TABLE + "." + WALLET_COLUMN_ID + ", "
                 + WALLET_TABLE + "." + WALLET_COLUMN_IMAGE + ", "
                 + WALLET_TABLE + "." + WALLET_COLUMN_NAME + ", "
                 + CURRENCY_TABLE + "." + CURRENCY_COLUMN_TITLE + ", "
-//                + RECORD_TABLE + "." + RECORD_COLUMN_CURRENCY_ID + ", "
-//                + RECORD_TABLE + "." + RECORD_COLUMN_WALLET_ID + ", "
                 + "sum(" + RECORD_TABLE + "." + RECORD_COLUMN_SUM + ") as " + RECORD_COLUMN_SUM
                 + " from " + RECORD_TABLE
-//                + " where " + RECORD_TABLE + "." + RECORD_COLUMN_WALLET_ID + " = 0"
                 + " inner join " + WALLET_TABLE
                 + " on " + RECORD_TABLE + "." + RECORD_COLUMN_WALLET_ID
                 + " = " + WALLET_TABLE + "." + WALLET_COLUMN_ID
@@ -204,28 +222,8 @@ public class DB {
                 + " where " + RECORD_TABLE + "." + RECORD_COLUMN_WALLET_ID + " = " + wallet
                 + " and " + RECORD_TABLE + "." + RECORD_COLUMN_CURRENCY_ID + " = " + currency;
 //        Log.d(LOG_TAG, sqlQuery);
-//        return mDB.rawQuery(sqlQuery, null);
-        return sqlQuery;
-    }
-
-
-    // получить все данные из таблиц для вывода баланса
-    public Cursor getAllBalanceData() {
-        String sqlQuery = getBalanceData(0, 0) + " union all " + getBalanceData(0, 1) + " union all "
-                + getBalanceData(1, 0) + " union all " + getBalanceData(1, 1) + " union all "
-                + getBalanceData(2, 0) + " union all " + getBalanceData(2, 1) + " union all "
-                + getBalanceData(3, 0) + " union all " + getBalanceData(3, 1);
-//        Log.d(LOG_TAG, sqlQuery);
         return mDB.rawQuery(sqlQuery, null);
     }
-
-
-    //изменить запись в WALLET_TABLE
-//    public void changeRec(int pos, boolean isChecked) {
-//        ContentValues cv = new ContentValues();
-////        cv.put(COLUMN_CHK, (isChecked) ? 1 : 0);
-//        mDB.update(WALLET_TABLE, cv, WALLET_COLUMN_ID + " = " + (pos + 1), null);
-//    }
 
 
     // Добавление записи об операции

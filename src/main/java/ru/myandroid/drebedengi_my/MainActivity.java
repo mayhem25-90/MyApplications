@@ -7,19 +7,21 @@ import android.app.Dialog;
 import android.app.TimePickerDialog;
 import android.content.DialogInterface;
 import android.database.Cursor;
+import android.graphics.Color;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.LayoutInflater;
 import android.view.View;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.AdapterView;
 import android.widget.Button;
 import android.widget.DatePicker;
 import android.widget.EditText;
+import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.RadioGroup;
-import android.widget.SimpleAdapter;
 import android.widget.SimpleCursorAdapter;
 import android.widget.Spinner;
 import android.widget.TabHost;
@@ -28,13 +30,12 @@ import android.widget.TextView;
 import android.widget.TimePicker;
 import android.widget.Toast;
 
+import java.text.DecimalFormat;
+import java.text.DecimalFormatSymbols;
 import java.util.Calendar;
 import java.util.Date;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.Locale;
-import java.util.Map;
 import java.util.Vector;
 
 import static java.lang.Math.abs;
@@ -721,38 +722,75 @@ public class MainActivity extends AppCompatActivity {
 // 3. Вкладка баланса
 // == ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ====
 
-    ListView lvBalance;
+    LinearLayout llBalanceList;
 
     private void initBalanceTabContent() {
         Log.d(LOG_TAG, "initBalanceTabContent");
-        lvBalance = (ListView) findViewById(R.id.lvBalance);
+        llBalanceList = (LinearLayout) findViewById(R.id.llBalanceList);
         loadDataForBalance();
     }
 
-    // Загрузка баланса из БД
+
     public void loadDataForBalance() {
-        cursor = db.getAllBalanceData();
-//        db.logCursor(cursor);
+        LayoutInflater ltInflater = getLayoutInflater();
 
-        ArrayList<Map<String, Object>> data = new ArrayList<Map<String, Object>>(cursor.getCount());
-        Map<String, Object> m;
-//        if (cursor.moveToFirst()) {
-        if (cursor.moveToFirst() && (cursor.getCount() > 0)) {
-            for (int i = 0; i < cursor.getCount(); i++) {
-                m = new HashMap<String, Object>();
-                m.put(DB.WALLET_COLUMN_IMAGE, cursor.getString(cursor.getColumnIndex(DB.WALLET_COLUMN_IMAGE)));
-                m.put(DB.WALLET_COLUMN_NAME, cursor.getString(cursor.getColumnIndex(DB.WALLET_COLUMN_NAME)));
-                m.put(DB.CURRENCY_COLUMN_TITLE, cursor.getString(cursor.getColumnIndex(DB.CURRENCY_COLUMN_TITLE)));
-                m.put(DB.RECORD_COLUMN_SUM, cursor.getString(cursor.getColumnIndex(DB.RECORD_COLUMN_SUM)));
+        for (int i = 0; i < db.getNumberOfRecords(DB.WALLET_TABLE); i++) {
+//            Log.d(LOG_TAG, "walletData[" + i + "]: " + db.walletData[i]);
 
-                data.add(m);
-                cursor.moveToNext();
+            View balanceListItem = ltInflater.inflate(R.layout.item_balance, llBalanceList, false);
+
+            ImageView ivImg = (ImageView) balanceListItem.findViewById(R.id.ivImg);
+            TextView tvCategory = (TextView) balanceListItem.findViewById(R.id.tvCategory);
+            tvCategory.setTextColor(Color.BLACK);
+
+            cursor = db.getWalletData(i);
+//            db.logCursor(cursor);
+
+            if (cursor.moveToFirst()) {
+                ivImg.setImageResource(cursor.getInt(cursor.getColumnIndex(DB.WALLET_COLUMN_IMAGE)));
+                tvCategory.setText(cursor.getString(cursor.getColumnIndex(DB.WALLET_COLUMN_NAME)));
             }
+
+            LinearLayout llWallet = (LinearLayout) balanceListItem.findViewById(R.id.llWallet);
+            for (int j = 0; j < db.getNumberOfRecords(DB.CURRENCY_TABLE); j++) {
+//                Log.d(LOG_TAG, " - currencyData[" + j + "]: " + db.currencyData[j]);
+
+                cursor = db.getBalanceData(i, j);
+//                db.logCursor(cursor);
+
+                if (cursor.moveToFirst()) {
+                    int sum = cursor.getInt(cursor.getColumnIndex(DB.RECORD_COLUMN_SUM));
+                    String currency = cursor.getString(cursor.getColumnIndex(DB.CURRENCY_COLUMN_TITLE));
+
+                    if (sum != 0) {
+                        View balanceWalletListItem = ltInflater.inflate(R.layout.item_balance_wallet, llWallet, false);
+
+                        TextView tvSum = (TextView) balanceWalletListItem.findViewById(R.id.tvSum);
+                        tvSum.setText(String.valueOf(sum));
+
+                        TextView tvCurrency = (TextView) balanceWalletListItem.findViewById(R.id.tvCurrency);
+                        tvCurrency.setText(currency);
+
+                        // Форматируем вывод, чтобы было красиво
+                        DecimalFormatSymbols sumFormatSymbols = new DecimalFormatSymbols();
+                        sumFormatSymbols.setGroupingSeparator(' ');
+                        DecimalFormat sumFormat = new DecimalFormat("#,###", sumFormatSymbols); // отделяем тысячные разряды
+                        tvSum.setText(sumFormat.format(sum));
+                        if (sum < 0) {
+                            tvSum.setTextColor(Color.RED);
+                            tvCurrency.setTextColor(Color.RED);
+                        }
+                        else if (sum > 0) {
+                            tvSum.setTextColor(Color.rgb(0, 127, 0));
+                            tvCurrency.setTextColor(Color.rgb(0, 127, 0));
+                        }
+
+                        llWallet.addView(balanceWalletListItem);
+                    }
+                }
+            }
+
+            llBalanceList.addView(balanceListItem);
         }
-
-        String[] from = { DB.WALLET_COLUMN_IMAGE, DB.WALLET_COLUMN_NAME, DB.RECORD_COLUMN_SUM, DB.CURRENCY_COLUMN_TITLE };
-        int[] to = { R.id.ivImg, R.id.tvCategory, R.id.tvSum, R.id.tvCurrency };
-
-        lvBalance.setAdapter(new SimpleAdapter(this, data, R.layout.item_balance, from, to));
     }
 }
