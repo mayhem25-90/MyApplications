@@ -16,6 +16,7 @@ import android.view.View;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.AdapterView;
 import android.widget.Button;
+import android.widget.CheckBox;
 import android.widget.DatePicker;
 import android.widget.EditText;
 import android.widget.ImageView;
@@ -50,9 +51,8 @@ public class MainActivity extends AppCompatActivity {
     DB db;
     Cursor cursor;
 
-    int tabCount = 3;
-    int[] tabName = { R.string.operations_tab, R.string.balance_tab, R.string.history_tab };
-    int[] tabID = { R.id.operationsTab, R.id.balanceTab, R.id.historyTab };
+    int[] tabName = {R.string.operations_tab, R.string.balance_tab, R.string.history_tab, R.string.edit_categories_tab};
+    int[] tabID = {R.id.operationsTab, R.id.balanceTab, R.id.historyTab, R.id.editCategoriesTab};
     TabHost tabHost;
 
     @Override
@@ -60,14 +60,17 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        // открываем подключение к БД
+        // Открываем подключение к БД
         db = new DB(this);
         db.open();
+
+        // Проверка на существование таблицы планирования бюджета в БД
+        db.addColumnToBudgetTable(new SimpleDateFormat("yyyy_MM", Locale.US).format(operationDate.getTime()));
 
         // Инициализация вкладок
         tabHost = (TabHost) findViewById(android.R.id.tabhost);
         tabHost.setup();
-        for (int i = 0; i < tabCount; i++) {
+        for (int i = 0; i < tabID.length; i++) {
             setupTab(getString(tabName[i]), tabID[i]);
             TextView tv = (TextView) tabHost.getTabWidget().getChildAt(i).findViewById(android.R.id.title);
             tv.setTextColor(getResources().getColor(R.color.colorTextTab));
@@ -88,6 +91,7 @@ public class MainActivity extends AppCompatActivity {
         initOperationsTabContent();
         initHistoryTabContent();
         initBalanceTabContent();
+        initEditCategoriesTabContent();
     }
 
 
@@ -96,6 +100,27 @@ public class MainActivity extends AppCompatActivity {
         spec.setContent(id);
         spec.setIndicator(title);
         tabHost.addTab(spec);
+    }
+
+
+    private void updateSpinners() {
+        spinCurrencyBind.clear();
+        spinCurrencyDestBind.clear();
+        spinWalletBind.clear();
+        spinWalletDestBind.clear();
+        spinCategoryBind.clear();
+        spinSourceBind.clear();
+
+        spinEditCategoryBind.clear();
+
+        loadDataForSpinner(DB.CURRENCY_TABLE, spinCurrency, spinCurrencyBind, R.string.currency, spin_currency);
+        loadDataForSpinner(DB.CURRENCY_TABLE, spinCurrencyDest, spinCurrencyDestBind, R.string.currency, spin_currency_dest);
+        loadDataForSpinner(DB.WALLET_TABLE, spinWallet, spinWalletBind, R.string.wallet, spin_wallet);
+        loadDataForSpinner(DB.WALLET_TABLE, spinWalletDest, spinWalletDestBind, R.string.wallet, spin_wallet_dest);
+        loadDataForSpinner(DB.CATEGORY_TABLE, spinCategory, spinCategoryBind, R.string.category, spin_spending);
+        loadDataForSpinner(DB.CATEGORY_TABLE, spinSource, spinSourceBind, R.string.source, spin_source);
+
+        loadDataForSpinner(DB.CATEGORY_TABLE, spinEditCategory, spinEditCategoryBind, R.string.category, spin_edit_category);
     }
 
 
@@ -122,12 +147,12 @@ public class MainActivity extends AppCompatActivity {
     final int DIALOG_TAGS = 2;
     final int DIALOG_DELETE = 3;
 
-    public static final int spin_currency = 0,
-                            spin_currency_dest = 1,
-                            spin_wallet = 2,
-                            spin_wallet_dest = 3,
-                            spin_spending = 4,
-                            spin_source = 5;
+    public static final int spin_currency = 100,
+                            spin_currency_dest = 101,
+                            spin_wallet = 102,
+                            spin_wallet_dest = 103,
+                            spin_spending = 104,
+                            spin_source = 105;
 
     int currentRadioButton = 0;
     int[] radioButtons = {R.id.rbSpend, R.id.rbGain, R.id.rbMove, R.id.rbChange};
@@ -158,7 +183,6 @@ public class MainActivity extends AppCompatActivity {
         Log.d(LOG_TAG, "initOperationsTabContent");
 
         operationsTab = (LinearLayout) findViewById(R.id.operationsTab);
-
         operationsTab.setOnTouchListener(new OnSwipeTouchListener(this) {
             public void onSwipeLeft() {
                 if (currentRadioButton < radioButtons.length - 1) {
@@ -215,12 +239,12 @@ public class MainActivity extends AppCompatActivity {
         spinSource = (Spinner) findViewById(R.id.spinSource);
         spinSource.setVisibility(View.GONE);
 
-        loadDataForSpinner(DB.CURRENCY_TABLE, spinCurrency,     spinCurrencyBind,     R.string.currency, spin_currency);
+        loadDataForSpinner(DB.CURRENCY_TABLE, spinCurrency, spinCurrencyBind, R.string.currency, spin_currency);
         loadDataForSpinner(DB.CURRENCY_TABLE, spinCurrencyDest, spinCurrencyDestBind, R.string.currency, spin_currency_dest);
-        loadDataForSpinner(DB.WALLET_TABLE,   spinWallet,       spinWalletBind,       R.string.wallet,   spin_wallet);
-        loadDataForSpinner(DB.WALLET_TABLE,   spinWalletDest,   spinWalletDestBind,   R.string.wallet,   spin_wallet_dest);
-        loadDataForSpinner(DB.CATEGORY_TABLE, spinCategory,     spinCategoryBind,     R.string.category, spin_spending);
-        loadDataForSpinner(DB.CATEGORY_TABLE, spinSource,       spinSourceBind,       R.string.source,   spin_source);
+        loadDataForSpinner(DB.WALLET_TABLE, spinWallet, spinWalletBind, R.string.wallet, spin_wallet);
+        loadDataForSpinner(DB.WALLET_TABLE, spinWalletDest, spinWalletDestBind, R.string.wallet, spin_wallet_dest);
+        loadDataForSpinner(DB.CATEGORY_TABLE, spinCategory, spinCategoryBind, R.string.category, spin_spending);
+        loadDataForSpinner(DB.CATEGORY_TABLE, spinSource, spinSourceBind, R.string.source, spin_source);
 
         etComment = (EditText) findViewById(R.id.etComment);
 
@@ -293,24 +317,38 @@ public class MainActivity extends AppCompatActivity {
                 btnDate.setText(checkDateForToday(operationDate.getTime()));
                 break;
 
-            case R.id.tvDelete: showDialog(DIALOG_DELETE); break;
+            case R.id.tvDelete:
+                showDialog(DIALOG_DELETE);
+                break;
 
             case R.id.tvEdit:
                 tabHost.setCurrentTabByTag(getString(R.string.operations_tab));
                 loadOperationDataToOperationTab();
                 break;
 
-            case R.id.btnDate: showDialog(DIALOG_DATE); break;
+            case R.id.btnDate:
+                showDialog(DIALOG_DATE);
+                break;
 
-            case R.id.btnTime: showDialog(DIALOG_TIME); break;
+            case R.id.btnTime:
+                showDialog(DIALOG_TIME);
+                break;
 
-            case R.id.btnTag: showDialog(DIALOG_TAGS); break;
+            case R.id.btnTag:
+                showDialog(DIALOG_TAGS);
+                break;
 
-            case R.id.btnConfirm: onConfirmOperation(db.CONFIRM_SAVE); break;
+            case R.id.btnConfirm:
+                onConfirmOperation(db.CONFIRM_SAVE);
+                break;
 
-            case R.id.btnEdit: onConfirmOperation(db.CONFIRM_EDIT); break;
+            case R.id.btnEdit:
+                onConfirmOperation(db.CONFIRM_EDIT);
+                break;
 
-            case R.id.btnCancel: onCancelEdit(); break;
+            case R.id.btnCancel:
+                onCancelEdit();
+                break;
 
             case R.id.rbSpend:
                 etSumRow.setBackgroundColor(getResources().getColor(R.color.colorSpend));
@@ -348,7 +386,8 @@ public class MainActivity extends AppCompatActivity {
                 currentRadioButton = 3;
                 break;
 
-            default: break;
+            default:
+                break;
         }
     }
 
@@ -394,7 +433,8 @@ public class MainActivity extends AppCompatActivity {
                 adb.setNeutralButton(R.string.no, deleteButtonClickListener);
                 return adb.create();
 
-            default: return adb.create();
+            default:
+                return adb.create();
         }
     }
 
@@ -408,9 +448,9 @@ public class MainActivity extends AppCompatActivity {
 
 
     public void onConfirmOperation(int mode) {
-        if ( !etSum.getText().toString().equals(getResources().getString(R.string.sum_hint))
+        if (!etSum.getText().toString().equals(getResources().getString(R.string.sum_hint))
                 && !etSum.getText().toString().equals("")
-                && Double.parseDouble(etSum.getText().toString()) > 0 ) {
+                && Double.parseDouble(etSum.getText().toString()) > 0) {
             // Подготавливаем данные для записи в базу
             String currentDate = dbDateFormat.format(operationDate.getTime());
             String currentTime = dbTimeFormat.format(operationDate.getTime());
@@ -427,7 +467,7 @@ public class MainActivity extends AppCompatActivity {
                     operation_type = db.SPENDING;
                     confirmText = "Трата сохранена";
                     category_id = m_spending_category_id;
-                    sum = - Double.parseDouble(etSum.getText().toString());
+                    sum = -Double.parseDouble(etSum.getText().toString());
                     break;
 
                 case R.id.rbGain:
@@ -450,7 +490,8 @@ public class MainActivity extends AppCompatActivity {
                     sumDest = Double.parseDouble(etSumDest.getText().toString());
                     break;
 
-                default: break;
+                default:
+                    break;
             }
 
             Log.d(LOG_TAG, "currentDate = " + currentDate);
@@ -535,11 +576,7 @@ public class MainActivity extends AppCompatActivity {
     // Загрузка данных в спиннеры из БД
     public void loadDataForSpinner(final String TABLE_NAME, Spinner currentSpinner, Vector<Integer> spinnerBind, int string_id, final int type) {
 //        Log.d(LOG_TAG, "load data for spinner: " + type);
-        if (TABLE_NAME.equals(DB.CATEGORY_TABLE)) {
-            cursor = db.getAllData(TABLE_NAME, string_id);
-        }
-        else
-            cursor = db.getAllData(TABLE_NAME);
+        cursor = db.getAllData(TABLE_NAME, string_id);
 //        db.logCursor(cursor);
 
         // формируем столбцы сопоставления
@@ -556,9 +593,8 @@ public class MainActivity extends AppCompatActivity {
             int column = cursor.getColumnIndex(DB.CATEGORY_COLUMN_ID);
 //            Log.d(LOG_TAG, "spinner: " + getResources().getString(string_id));
             do {
-                int id = cursor.getInt(column);
-//                Log.d(LOG_TAG, "spin id: " + id);
-                spinnerBind.add(id);
+//                Log.d(LOG_TAG, "spin id: " + cursor.getInt(column));
+                spinnerBind.add(cursor.getInt(column));
             } while (cursor.moveToNext());
         }
 
@@ -573,6 +609,8 @@ public class MainActivity extends AppCompatActivity {
                     case spin_wallet_dest:   m_wallet_id_dest = id;       break;
                     case spin_spending:      m_spending_category_id = id; break;
                     case spin_source:        m_gain_category_id = id;     break;
+
+                    case spin_edit_category: m_edit_category_id = id;     break;
                     default: break;
                 }
             }
@@ -791,6 +829,87 @@ public class MainActivity extends AppCompatActivity {
             }
 
             llBalanceList.addView(balanceListItem);
+        }
+    }
+
+
+// == ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ====
+// 4. Вкладка редактирования категорий
+// == ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ====
+
+    public static final int spin_edit_category = 400;
+
+    long m_edit_category_id = -1;
+
+    TextView textEditCategory;
+    Spinner spinEditCategory;
+    CheckBox chkEditCategory;
+    EditText etCategory;
+
+    Vector<Integer> spinEditCategoryBind = new Vector<>();
+
+    private void initEditCategoriesTabContent() {
+        Log.d(LOG_TAG, "initEditCategoriesTabContent");
+
+        textEditCategory = (TextView) findViewById(R.id.textEditCategory);
+
+        spinEditCategory = (Spinner) findViewById(R.id.spinEditCategory);
+        loadDataForSpinner(DB.CATEGORY_TABLE, spinEditCategory, spinEditCategoryBind, R.string.category, spin_edit_category);
+
+        chkEditCategory = (CheckBox) findViewById(R.id.chkEditCategory);
+
+        etCategory = (EditText) findViewById(R.id.etCategory);
+    }
+
+
+    private void resetEditCategoriesTab() {
+        textEditCategory.setText(getResources().getString(R.string.edit_cat_edit));
+        spinEditCategory.setEnabled(true);
+        chkEditCategory.setChecked(false);
+        etCategory.setText("");
+    }
+
+
+    public void onEditLayoutButtonClick(View v) {
+        switch (v.getId()) {
+            case R.id.btnConfirm:
+//                Log.d(LOG_TAG, "on save click");
+                String newCategoryName = etCategory.getText().toString();
+                if (!newCategoryName.equals("")) {
+                    if (chkEditCategory.isChecked()) { // Добавляем новую категорию
+//                    Log.d(LOG_TAG, "check: create new category");
+                        db.createNewCategory(newCategoryName);
+                        Toast.makeText(MainActivity.this, R.string.message_edit_cat_new, Toast.LENGTH_SHORT).show();
+                    }
+                    else { // Редактируем данную категорию
+//                    Log.d(LOG_TAG, "not check: edit this category");
+                        db.updateCategory(m_edit_category_id, newCategoryName);
+                        Toast.makeText(MainActivity.this, R.string.message_edit_cat_edit, Toast.LENGTH_SHORT).show();
+                    }
+                    updateSpinners();
+                    resetEditCategoriesTab();
+                }
+                else Toast.makeText(MainActivity.this, R.string.message_edit_cat_edit_error, Toast.LENGTH_SHORT).show();
+
+                break;
+
+            case R.id.chkEditCategory:
+                if (chkEditCategory.isChecked()) {
+//                    Log.d(LOG_TAG, "check!");
+                    spinEditCategory.setEnabled(false);
+                    textEditCategory.setText(getResources().getString(R.string.edit_cat_new));
+//                    spinEditCategory.setBackgroundColor(getResources().getColor(R.color.colorHint));
+                }
+                else {
+//                    Log.d(LOG_TAG, "not check!");
+                    spinEditCategory.setEnabled(true);
+                    textEditCategory.setText(getResources().getString(R.string.edit_cat_edit));
+//                    spinEditCategory.setBackgroundColor(getResources().getColor(R.color.colorLayoutBack));
+                }
+                break;
+
+            default:
+                break;
         }
     }
 }

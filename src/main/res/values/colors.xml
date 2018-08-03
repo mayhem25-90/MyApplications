@@ -13,4 +13,5 @@
     <color name="colorMove">#54888888</color>
 
     <color name="colorTextViewBack">#DDDDDD</color>
+    <color name="colorLayoutBack">#EEEEEE</color>
 </resources>

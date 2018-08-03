@@ -5,16 +5,15 @@
     <string name="title_dashboard">Dashboard</string>
     <string name="title_notifications">Notifications</string>
 
-    <string name="operations_tab">Ввод операций</string>
-    <string name="history_tab">Журнал операций</string>
+    <string name="operations_tab">Ввод</string>
+    <string name="history_tab">Журнал</string>
     <string name="balance_tab">Баланс</string>
+    <string name="edit_categories_tab">Катег.</string>
 
     <string name="radio_1">Расходы</string>
     <string name="radio_2">Доходы</string>
     <string name="radio_3">Перемещ</string>
     <string name="radio_4">Обмены</string>
-
-    <!--<string name="dateLeft">"<"</string>-->
 
     <string name="sum_hint"><font size = "18">Сумма</font></string>
     <string name="sell_hint"><font size = "18">Продали</font></string>
@@ -42,6 +41,13 @@
 
     <string name="dateLeft"><b>&lt;</b></string>
     <string name="dateRight"><b>&gt;</b></string>
+
+    <string name="edit_cat_new">Создать новую категорию</string>
+    <string name="edit_cat_edit">Изменить категорию</string>
+    <string name="edit_cat_hint">Категория</string>
+    <string name="message_edit_cat_new">Категория добавлена</string>
+    <string name="message_edit_cat_edit">Категория изменена</string>
+    <string name="message_edit_cat_edit_error">Введите имя категории!</string>
 
     <!--<string name="currencies">Валюты</string>-->
     <!--<string name="wallets">Места хранения</string>-->

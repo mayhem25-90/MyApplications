@@ -27,7 +27,7 @@ public class DB {
     // Данные для первоначального заполнения БД
     private String[] currencyData = new String[] { "руб", "USD", "EUR" };
     private String[] walletData = new String[] { "Кошелёк", "Карта ТКС", "Яндекс", "Что-то ещё" };
-    private String[] categoryData = new String[] { "Еда", "Бухло", "Ништяки", "Наркота", "Фуфло", "Понты" };
+    private String[] categoryData = new String[] { "[Без категории]", "Еда", "Бухло", "Ништяки", "Наркота", "Фуфло", "Понты" };
     private String[] sourcesData = new String[] { "Работа", "Дилерство", "Лафа", "Халявка" };
     private final int imageWalletData[] = {R.mipmap.wallet42, R.mipmap.tcs42, R.mipmap.yandex42, R.mipmap.advcash42};
 
@@ -37,17 +37,17 @@ public class DB {
     private static final int DB_VERSION = 1;
 
     // Общие названия для полей таблиц
-    public static final String TABLE_COLUMN_ID = "_id";
-    public static final String TABLE_COLUMN_IMAGE = "image";
-    public static final String TABLE_COLUMN_NAME = "name";
+    static final String TABLE_COLUMN_ID = "_id";
+    static final String TABLE_COLUMN_IMAGE = "image";
+    static final String TABLE_COLUMN_NAME = "name";
 
 
     // Таблица валют
-    public static final String CURRENCY_TABLE = "currency";
-    public static final String CURRENCY_COLUMN_ID = "_id";
-    public static final String CURRENCY_COLUMN_IMAGE = "image";
-    public static final String CURRENCY_COLUMN_NAME = "name";
-    public static final String CURRENCY_COLUMN_TITLE = "title";
+    static final String CURRENCY_TABLE = "currency";
+    static final String CURRENCY_COLUMN_ID = "_id";
+    static final String CURRENCY_COLUMN_IMAGE = "image";
+    static final String CURRENCY_COLUMN_NAME = "name";
+    static final String CURRENCY_COLUMN_TITLE = "title";
 
     private static final String CURRENCY_TABLE_CREATE = "create table " + CURRENCY_TABLE + "(" +
             CURRENCY_COLUMN_ID + " integer primary key, " + CURRENCY_COLUMN_IMAGE + " integer, " +
@@ -55,10 +55,10 @@ public class DB {
 
 
     // Таблица с местами хранения средств
-    public static final String WALLET_TABLE = "wallet";
-    public static final String WALLET_COLUMN_ID = "_id";
-    public static final String WALLET_COLUMN_IMAGE = "image";
-    public static final String WALLET_COLUMN_NAME = "name";
+    static final String WALLET_TABLE = "wallet";
+    static final String WALLET_COLUMN_ID = "_id";
+    static final String WALLET_COLUMN_IMAGE = "image";
+    static final String WALLET_COLUMN_NAME = "name";
 
     private static final String WALLET_TABLE_CREATE = "create table " + WALLET_TABLE + "(" +
             WALLET_COLUMN_ID + " integer primary key, " + WALLET_COLUMN_IMAGE + " integer, " +
@@ -66,10 +66,10 @@ public class DB {
 
 
     // Таблица с категориями затрат и доходов
-    public static final String CATEGORY_TABLE = "category";
-    public static final String CATEGORY_COLUMN_ID = "_id";
-    public static final String CATEGORY_COLUMN_IMAGE = "image";
-    public static final String CATEGORY_COLUMN_NAME = "name";
+    static final String CATEGORY_TABLE = "category";
+    static final String CATEGORY_COLUMN_ID = "_id";
+    static final String CATEGORY_COLUMN_IMAGE = "image";
+    static final String CATEGORY_COLUMN_NAME = "name";
 
     private static final String CATEGORY_TABLE_CREATE = "create table " + CATEGORY_TABLE + "(" +
             CATEGORY_COLUMN_ID + " integer primary key, " + CATEGORY_COLUMN_IMAGE + " integer, " +
@@ -78,18 +78,18 @@ public class DB {
 
     // Таблица операций (транзакций) - расходы, доходы, перемещения и обмены
     // currency_id, wallet_id, category_id, sum, currentDate, comment
-    public static final String RECORD_TABLE = "records";
-    public static final String RECORD_COLUMN_ID = "_id";
-    public static final String RECORD_COLUMN_CURRENCY_ID = "currency_id";
-//    public static final String RECORD_COLUMN_CURRENCY_ID_DEST = "currency_id_dest";
-    public static final String RECORD_COLUMN_WALLET_ID = "wallet_id";
-    public static final String RECORD_COLUMN_CATEGORY_ID = "category_id";
-    public static final String RECORD_COLUMN_SUM = "sum";
-    public static final String RECORD_COLUMN_DATE = "operation_date";
-    public static final String RECORD_COLUMN_TIME = "operation_time";
-    public static final String RECORD_COLUMN_COMMENT = "comment";
-    public static final String RECORD_COLUMN_OPERATION_TYPE = "operation_type";
-    public static final String RECORD_COLUMN_SELECTED = "selected";
+    static final String RECORD_TABLE = "records";
+    static final String RECORD_COLUMN_ID = "_id";
+    static final String RECORD_COLUMN_CURRENCY_ID = "currency_id";
+//    static final String RECORD_COLUMN_CURRENCY_ID_DEST = "currency_id_dest";
+    static final String RECORD_COLUMN_WALLET_ID = "wallet_id";
+    static final String RECORD_COLUMN_CATEGORY_ID = "category_id";
+    static final String RECORD_COLUMN_SUM = "sum";
+    static final String RECORD_COLUMN_DATE = "operation_date";
+    static final String RECORD_COLUMN_TIME = "operation_time";
+    static final String RECORD_COLUMN_COMMENT = "comment";
+    static final String RECORD_COLUMN_OPERATION_TYPE = "operation_type";
+    static final String RECORD_COLUMN_SELECTED = "selected";
 
     private static final String RECORD_TABLE_CREATE = "create table " + RECORD_TABLE + "(" +
             RECORD_COLUMN_ID + " integer primary key, " +
@@ -105,33 +105,46 @@ public class DB {
             ");";
 
 
+    // Таблица для планирования бюджета
+    private static final String BUDGET_TABLE = "budget_plan";
+    private static final String BUDGET_COLUMN_CATEGORY_ID = "category_id";
+
+    private static final String BUDGET_TABLE_CREATE = "create table " + BUDGET_TABLE + "(" +
+            BUDGET_COLUMN_CATEGORY_ID + " integer primary key" +
+            ");";
+
+
+// == ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ====
+// 0. БД
+// == ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ====
+
+    private int maxSpendingCategory = -1;
+
     private final Context mCtx;
 
     private DBHelper mDBHelper;
     private SQLiteDatabase mDB;
 
-    public DB(Context ctx) {
+    DB(Context ctx) {
         mCtx = ctx;
     }
 
     // открыть подключение
-    public void open() {
+    void open() {
         mDBHelper = new DBHelper(mCtx, DB_NAME, null, DB_VERSION);
         mDB = mDBHelper.getWritableDatabase();
     }
 
     // закрыть подключение
-    public void close() {
+    void close() {
         if (mDBHelper != null) mDBHelper.close();
     }
 
     // получить все данные из таблицы
-    public Cursor getAllData(final String TABLE_NAME) {
-        return mDB.query(TABLE_NAME, null, null, null, null, null, null);
-    }
-
-    // тест - перегрузка
-    public Cursor getAllData(final String TABLE_NAME, int string_id) {
+    Cursor getAllData(final String TABLE_NAME, int string_id) {
+        if (!TABLE_NAME.equals(CATEGORY_TABLE)) {
+            return mDB.query(TABLE_NAME, null, null, null, null, null, null);
+        }
 //        Log.d(LOG_TAG, "--- string_id " + string_id + " ---");
         String selection = "";
         String[] selectionArgs = new String[] { String.valueOf(div_category_gain) };
@@ -143,8 +156,21 @@ public class DB {
 //            Log.d(LOG_TAG, "--- R.string.source ---");
             selection = "_id >= ?";
         }
-        return mDB.query(TABLE_NAME, null, selection, selectionArgs, null, null, null);
-//        return mDB.query(TABLE_NAME, null, null, null, null, null, null);
+        Cursor localCursor = mDB.query(TABLE_NAME, null, selection, selectionArgs, null, null, null);
+
+        // Заодно считаем id, с которым надо записать категорию в таблицу
+        if (localCursor.moveToFirst()) {
+            maxSpendingCategory = -1;
+            do {
+                int id = localCursor.getInt(localCursor.getColumnIndex(CATEGORY_COLUMN_ID));
+                if (id > maxSpendingCategory) {
+                    maxSpendingCategory = id;
+                }
+//                Log.d(LOG_TAG, "id: " + id);
+            } while (localCursor.moveToNext());
+        }
+        Log.d(LOG_TAG, "max category id: " + maxSpendingCategory);
+        return localCursor;
     }
 
 // == ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ====
@@ -229,7 +255,7 @@ public class DB {
     // Добавление записи об операции
     // operation_type, currency_id, currency_id_dest, wallet_id, wallet_id_dest, category_id,
     // sum, sumDest, currentDate, comment
-    public void addTransaction(long id, int operation_type, long currency_id, long wallet_id, long category_id,
+    void addTransaction(long id, int operation_type, long currency_id, long wallet_id, long category_id,
                                double sum, String currentDate, String currentTime, String comment, int mode) {
         ContentValues cv = new ContentValues();
         cv.put(RECORD_COLUMN_OPERATION_TYPE, operation_type);
@@ -261,6 +287,7 @@ public class DB {
                 int dbParameter = cursor.getInt(cursor.getColumnIndex(RECORD_COLUMN_SELECTED));
                 setParameter = (dbParameter == NOT_SELECTED) ? SELECTED : NOT_SELECTED;
             }
+            cursor.close();
         }
 
 //        Log.d(LOG_TAG, "id " + id + ": set " + setParameter);
@@ -270,18 +297,57 @@ public class DB {
 
 
     // Удалить запись из DB_TABLE
-    public void deleteTransaction(long id) {
+    void deleteTransaction(long id) {
         mDB.delete(RECORD_TABLE, RECORD_COLUMN_ID + " = " + id, null);
     }
 
 
     // Загрузка данных для редактирования транзакции
     Cursor loadTransactionDataById(long id) {
-//        String selection = RECORD_COLUMN_ID + " = " + id;
-//        String[] selectionArgs = new String[] { String.valueOf(id) };
         return mDB.query(RECORD_TABLE, null, RECORD_COLUMN_ID + " = " + id, null, null, null, null);
     }
 
+// == ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ====
+// 4. Категории и планирование
+// == ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ====
+
+    void createNewCategory(String category) {
+        ContentValues cv = new ContentValues();
+        cv.put(CATEGORY_COLUMN_ID, maxSpendingCategory + 1);
+        cv.put(CATEGORY_COLUMN_NAME, category);
+        mDB.insert(CATEGORY_TABLE, null, cv);
+
+        // Также, добавляем эту категорию в таблицу планирования бюджета
+        cv.clear();
+        cv.put(BUDGET_COLUMN_CATEGORY_ID, maxSpendingCategory + 1);
+        mDB.insert(BUDGET_TABLE, null, cv);
+    }
+
+
+    void updateCategory(long id, String category) {
+        ContentValues cv = new ContentValues();
+        cv.put(CATEGORY_COLUMN_NAME, category);
+        Log.d(LOG_TAG, "update category id: " + id);
+        mDB.update(CATEGORY_TABLE, cv, CATEGORY_COLUMN_ID + " = " + id, null);
+    }
+
+
+    void addColumnToBudgetTable(String newColumn) {
+        String sqlQuery = "alter table " + BUDGET_TABLE + " add column p" + newColumn + " text";
+        Log.d(LOG_TAG, sqlQuery);
+        try {
+            mDB.execSQL(sqlQuery);
+        }
+        catch (Exception ex) {
+            Log.d(LOG_TAG, ex.getClass() + " error: " + ex.getMessage());
+        }
+
+//        logCursor(mDB.rawQuery("select * from " + BUDGET_TABLE, null));
+    }
+
+// == ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ====
+// Остальное
+// == ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ====
 
     // Вывод в лог данных из курсора
     public void logCursor(Cursor c) {
@@ -304,7 +370,7 @@ public class DB {
 
     // класс по созданию и управлению БД
     private class DBHelper extends SQLiteOpenHelper {
-        public DBHelper(Context context, String name, SQLiteDatabase.CursorFactory factory, int version) {
+        DBHelper(Context context, String name, SQLiteDatabase.CursorFactory factory, int version) {
             super(context, name, factory, version);
         }
 
@@ -346,6 +412,18 @@ public class DB {
                 cv.put(CATEGORY_COLUMN_ID, i + div_category_gain);
                 cv.put(CATEGORY_COLUMN_NAME, sourcesData[i]);
                 db.insert(CATEGORY_TABLE, null, cv);
+            }
+
+
+            db.execSQL(BUDGET_TABLE_CREATE);
+            cv.clear();
+            for (int i = 0; i < categoryData.length; i++) {
+                cv.put(BUDGET_COLUMN_CATEGORY_ID, i);
+                db.insert(BUDGET_TABLE, null, cv);
+            }
+            for (int i = 0; i < sourcesData.length; i++) {
+                cv.put(BUDGET_COLUMN_CATEGORY_ID, i + div_category_gain);
+                db.insert(BUDGET_TABLE, null, cv);
             }
 
 
