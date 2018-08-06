@@ -278,25 +278,25 @@
             android:layout_height="wrap_content"
             android:layout_width="wrap_content"
             android:checked="true"
-            android:text="@string/radio_1"
+            android:text="@string/radio_spend"
             android:onClick="onButtonClick" />
         <RadioButton
             android:id="@+id/rbGain"
             android:layout_height="wrap_content"
             android:layout_width="wrap_content"
-            android:text="@string/radio_2"
+            android:text="@string/radio_gain"
             android:onClick="onButtonClick" />
         <RadioButton
             android:id="@+id/rbMove"
             android:layout_height="wrap_content"
             android:layout_width="wrap_content"
-            android:text="@string/radio_3"
+            android:text="@string/radio_move"
             android:onClick="onButtonClick" />
         <RadioButton
             android:id="@+id/rbChange"
             android:layout_height="wrap_content"
             android:layout_width="wrap_content"
-            android:text="@string/radio_4"
+            android:text="@string/radio_change"
             android:layout_marginRight="4dp"
             android:onClick="onButtonClick" />
     </RadioGroup>

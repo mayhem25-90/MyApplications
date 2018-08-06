@@ -112,6 +112,8 @@ public class MainActivity extends AppCompatActivity {
         spinSourceBind.clear();
 
         spinEditCategoryBind.clear();
+        spinEditSourceBind.clear();
+        spinEditWalletBind.clear();
 
         loadDataForSpinner(DB.CURRENCY_TABLE, spinCurrency, spinCurrencyBind, R.string.currency, spin_currency);
         loadDataForSpinner(DB.CURRENCY_TABLE, spinCurrencyDest, spinCurrencyDestBind, R.string.currency, spin_currency_dest);
@@ -121,6 +123,8 @@ public class MainActivity extends AppCompatActivity {
         loadDataForSpinner(DB.CATEGORY_TABLE, spinSource, spinSourceBind, R.string.source, spin_source);
 
         loadDataForSpinner(DB.CATEGORY_TABLE, spinEditCategory, spinEditCategoryBind, R.string.category, spin_edit_category);
+        loadDataForSpinner(DB.CATEGORY_TABLE, spinEditSource, spinEditSourceBind, R.string.source, spin_edit_source);
+        loadDataForSpinner(DB.WALLET_TABLE, spinEditWallet, spinEditWalletBind, R.string.wallet, spin_edit_wallet);
     }
 
 
@@ -611,6 +615,9 @@ public class MainActivity extends AppCompatActivity {
                     case spin_source:        m_gain_category_id = id;     break;
 
                     case spin_edit_category: m_edit_category_id = id;     break;
+                    case spin_edit_source:   m_edit_source_id = id;       break;
+                    case spin_edit_wallet:   m_edit_wallet_id = id;       break;
+
                     default: break;
                 }
             }
@@ -837,34 +844,55 @@ public class MainActivity extends AppCompatActivity {
 // 4. Вкладка редактирования категорий
 // == ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ====
 
-    public static final int spin_edit_category = 400;
+    public static final int spin_edit_category = 400,
+                            spin_edit_source = 401,
+                            spin_edit_wallet = 402;
 
     long m_edit_category_id = -1;
+    long m_edit_source_id = -1;
+    long m_edit_wallet_id = -1;
 
     TextView textEditCategory;
-    Spinner spinEditCategory;
+    RadioGroup rgEditChoice;
+    Spinner spinEditCategory, spinEditSource, spinEditWallet;
     CheckBox chkEditCategory;
     EditText etCategory;
 
     Vector<Integer> spinEditCategoryBind = new Vector<>();
+    Vector<Integer> spinEditSourceBind = new Vector<>();
+    Vector<Integer> spinEditWalletBind = new Vector<>();
 
     private void initEditCategoriesTabContent() {
         Log.d(LOG_TAG, "initEditCategoriesTabContent");
 
         textEditCategory = (TextView) findViewById(R.id.textEditCategory);
 
+        rgEditChoice = (RadioGroup) findViewById(R.id.rgEditChoice);
+
         spinEditCategory = (Spinner) findViewById(R.id.spinEditCategory);
         loadDataForSpinner(DB.CATEGORY_TABLE, spinEditCategory, spinEditCategoryBind, R.string.category, spin_edit_category);
+
+        spinEditSource = (Spinner) findViewById(R.id.spinEditSource);
+        loadDataForSpinner(DB.CATEGORY_TABLE, spinEditSource, spinEditSourceBind, R.string.source, spin_edit_source);
+
+        spinEditWallet = (Spinner) findViewById(R.id.spinEditWallet);
+        loadDataForSpinner(DB.WALLET_TABLE, spinEditWallet, spinEditWalletBind, R.string.wallet, spin_edit_wallet);
 
         chkEditCategory = (CheckBox) findViewById(R.id.chkEditCategory);
 
         etCategory = (EditText) findViewById(R.id.etCategory);
+
+        // Выбираем конкретную категорию
+        rgEditChoice.check(R.id.rbEditSpend);
+        onEditLayoutButtonClick(findViewById(R.id.rbEditSpend));
     }
 
 
     private void resetEditCategoriesTab() {
         textEditCategory.setText(getResources().getString(R.string.edit_cat_edit));
         spinEditCategory.setEnabled(true);
+        spinEditSource.setEnabled(true);
+        spinEditWallet.setEnabled(true);
         chkEditCategory.setChecked(false);
         etCategory.setText("");
     }
@@ -872,18 +900,58 @@ public class MainActivity extends AppCompatActivity {
 
     public void onEditLayoutButtonClick(View v) {
         switch (v.getId()) {
+            case R.id.rbEditSpend:
+                spinEditCategory.setVisibility(View.VISIBLE);
+                spinEditSource.setVisibility(View.GONE);
+                spinEditWallet.setVisibility(View.GONE);
+                break;
+
+            case R.id.rbEditGain:
+                spinEditCategory.setVisibility(View.GONE);
+                spinEditSource.setVisibility(View.VISIBLE);
+                spinEditWallet.setVisibility(View.GONE);
+                break;
+
+            case R.id.rbEditWallet:
+                spinEditCategory.setVisibility(View.GONE);
+                spinEditSource.setVisibility(View.GONE);
+                spinEditWallet.setVisibility(View.VISIBLE);
+                break;
+
             case R.id.btnConfirm:
 //                Log.d(LOG_TAG, "on save click");
+                // Выбираем то, что редактируем
+                int mode = -1;
+                long edit_id = -1;
+                switch (rgEditChoice.getCheckedRadioButtonId()) {
+                    case R.id.rbEditSpend:
+                        mode = db.EDIT_SPEND;
+                        edit_id = m_edit_category_id;
+                        break;
+
+                    case R.id.rbEditGain:
+                        mode = db.EDIT_SOURCE;
+                        edit_id = m_edit_source_id;
+                        break;
+
+                    case R.id.rbEditWallet:
+                        mode = db.EDIT_WALLET;
+                        edit_id = m_edit_wallet_id;
+                        break;
+
+                    default: break;
+                }
+
                 String newCategoryName = etCategory.getText().toString();
                 if (!newCategoryName.equals("")) {
                     if (chkEditCategory.isChecked()) { // Добавляем новую категорию
 //                    Log.d(LOG_TAG, "check: create new category");
-                        db.createNewCategory(newCategoryName);
+                        db.createNewCategory(mode, newCategoryName);
                         Toast.makeText(MainActivity.this, R.string.message_edit_cat_new, Toast.LENGTH_SHORT).show();
                     }
                     else { // Редактируем данную категорию
 //                    Log.d(LOG_TAG, "not check: edit this category");
-                        db.updateCategory(m_edit_category_id, newCategoryName);
+                        db.updateCategory(mode, edit_id, newCategoryName);
                         Toast.makeText(MainActivity.this, R.string.message_edit_cat_edit, Toast.LENGTH_SHORT).show();
                     }
                     updateSpinners();
@@ -897,14 +965,16 @@ public class MainActivity extends AppCompatActivity {
                 if (chkEditCategory.isChecked()) {
 //                    Log.d(LOG_TAG, "check!");
                     spinEditCategory.setEnabled(false);
+                    spinEditSource.setEnabled(false);
+                    spinEditWallet.setEnabled(false);
                     textEditCategory.setText(getResources().getString(R.string.edit_cat_new));
-//                    spinEditCategory.setBackgroundColor(getResources().getColor(R.color.colorHint));
                 }
                 else {
 //                    Log.d(LOG_TAG, "not check!");
                     spinEditCategory.setEnabled(true);
+                    spinEditSource.setEnabled(true);
+                    spinEditWallet.setEnabled(true);
                     textEditCategory.setText(getResources().getString(R.string.edit_cat_edit));
-//                    spinEditCategory.setBackgroundColor(getResources().getColor(R.color.colorLayoutBack));
                 }
                 break;
 

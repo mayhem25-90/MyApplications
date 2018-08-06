@@ -10,10 +10,11 @@
     <string name="balance_tab">Баланс</string>
     <string name="edit_categories_tab">Катег.</string>
 
-    <string name="radio_1">Расходы</string>
-    <string name="radio_2">Доходы</string>
-    <string name="radio_3">Перемещ</string>
-    <string name="radio_4">Обмены</string>
+    <string name="radio_spend">Расходы</string>
+    <string name="radio_gain">Доходы</string>
+    <string name="radio_move">Перемещ</string>
+    <string name="radio_change">Обмены</string>
+    <string name="radio_wallet">Места хранения</string>
 
     <string name="sum_hint"><font size = "18">Сумма</font></string>
     <string name="sell_hint"><font size = "18">Продали</font></string>

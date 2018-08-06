@@ -119,6 +119,7 @@ public class DB {
 // == ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ====
 
     private int maxSpendingCategory = -1;
+    private int maxSourceCategory = -1;
 
     private final Context mCtx;
 
@@ -160,16 +161,23 @@ public class DB {
 
         // Заодно считаем id, с которым надо записать категорию в таблицу
         if (localCursor.moveToFirst()) {
-            maxSpendingCategory = -1;
+            int maxCategory = -1;
             do {
                 int id = localCursor.getInt(localCursor.getColumnIndex(CATEGORY_COLUMN_ID));
-                if (id > maxSpendingCategory) {
-                    maxSpendingCategory = id;
+                if (id > maxCategory) {
+                    maxCategory = id;
                 }
 //                Log.d(LOG_TAG, "id: " + id);
             } while (localCursor.moveToNext());
+
+            if (string_id == R.string.category) {
+                maxSpendingCategory = maxCategory;
+            }
+            else if (string_id == R.string.source) {
+                maxSourceCategory = maxCategory;
+            }
+            Log.d(LOG_TAG, "max category id: " + maxCategory);
         }
-        Log.d(LOG_TAG, "max category id: " + maxSpendingCategory);
         return localCursor;
     }
 
@@ -311,24 +319,55 @@ public class DB {
 // 4. Категории и планирование
 // == ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ====
 
-    void createNewCategory(String category) {
-        ContentValues cv = new ContentValues();
-        cv.put(CATEGORY_COLUMN_ID, maxSpendingCategory + 1);
-        cv.put(CATEGORY_COLUMN_NAME, category);
-        mDB.insert(CATEGORY_TABLE, null, cv);
+    final int EDIT_SPEND = 0, EDIT_SOURCE = 1, EDIT_WALLET = 2;
 
-        // Также, добавляем эту категорию в таблицу планирования бюджета
-        cv.clear();
-        cv.put(BUDGET_COLUMN_CATEGORY_ID, maxSpendingCategory + 1);
-        mDB.insert(BUDGET_TABLE, null, cv);
+    void createNewCategory(int mode, String category) {
+        ContentValues cv = new ContentValues();
+
+        switch (mode) {
+            case EDIT_SPEND:
+                cv.put(CATEGORY_COLUMN_ID, maxSpendingCategory + 1);
+                cv.put(CATEGORY_COLUMN_NAME, category);
+                mDB.insert(CATEGORY_TABLE, null, cv);
+
+                // Также, добавляем эту категорию в таблицу планирования бюджета
+                cv.clear();
+                cv.put(BUDGET_COLUMN_CATEGORY_ID, maxSpendingCategory + 1);
+                mDB.insert(BUDGET_TABLE, null, cv);
+                break;
+
+            case EDIT_SOURCE:
+                cv.put(CATEGORY_COLUMN_ID, maxSourceCategory + 1);
+                cv.put(CATEGORY_COLUMN_NAME, category);
+                mDB.insert(CATEGORY_TABLE, null, cv);
+
+                // Также, добавляем эту категорию в таблицу планирования бюджета
+                cv.clear();
+                cv.put(BUDGET_COLUMN_CATEGORY_ID, maxSourceCategory + 1);
+                mDB.insert(BUDGET_TABLE, null, cv);
+                break;
+
+            case EDIT_WALLET:
+                cv.put(CATEGORY_COLUMN_NAME, category);
+                mDB.insert(WALLET_TABLE, null, cv);
+                break;
+        }
     }
 
 
-    void updateCategory(long id, String category) {
-        ContentValues cv = new ContentValues();
-        cv.put(CATEGORY_COLUMN_NAME, category);
-        Log.d(LOG_TAG, "update category id: " + id);
-        mDB.update(CATEGORY_TABLE, cv, CATEGORY_COLUMN_ID + " = " + id, null);
+    void updateCategory(int mode, long id, String category) {
+        if (mode == EDIT_WALLET) {
+            ContentValues cv = new ContentValues();
+            cv.put(WALLET_COLUMN_NAME, category);
+            Log.d(LOG_TAG, "update WALLET id: " + id);
+            mDB.update(WALLET_TABLE, cv, WALLET_COLUMN_ID + " = " + id, null);
+        }
+        else {
+            ContentValues cv = new ContentValues();
+            cv.put(CATEGORY_COLUMN_NAME, category);
+            Log.d(LOG_TAG, "update category id: " + id);
+            mDB.update(CATEGORY_TABLE, cv, CATEGORY_COLUMN_ID + " = " + id, null);
+        }
     }
 
 
