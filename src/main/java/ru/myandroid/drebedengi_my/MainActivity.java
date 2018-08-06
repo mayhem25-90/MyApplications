@@ -64,8 +64,11 @@ public class MainActivity extends AppCompatActivity {
         db = new DB(this);
         db.open();
 
-        // Проверка на существование таблицы планирования бюджета в БД
+        // Проверка на существование данного месяца в таблице планирования бюджета в БД
+        Calendar planDate = Calendar.getInstance();
+        planDate.add(Calendar.MONTH, 1);
         db.addColumnToBudgetTable(new SimpleDateFormat("yyyy_MM", Locale.US).format(operationDate.getTime()));
+        db.addColumnToBudgetTable(new SimpleDateFormat("yyyy_MM", Locale.US).format(planDate.getTime()));
 
         // Инициализация вкладок
         tabHost = (TabHost) findViewById(android.R.id.tabhost);
@@ -127,6 +130,21 @@ public class MainActivity extends AppCompatActivity {
         loadDataForSpinner(DB.WALLET_TABLE, spinEditWallet, spinEditWalletBind, R.string.wallet, spin_edit_wallet);
     }
 
+
+    private void updateTime() {
+        Date localDate = operationDate.getTime();
+        localDate.setHours(Integer.parseInt(new SimpleDateFormat("HH", Locale.US).format(Calendar.getInstance().getTime())));
+        localDate.setMinutes(Integer.parseInt(new SimpleDateFormat("mm", Locale.US).format(Calendar.getInstance().getTime())));
+        operationDate.setTime(localDate);
+        btnTime.setText(btnTimeFormat.format(localDate)); // Устанавливаем текущее время при открытии окна
+    }
+
+
+    @Override
+    protected void onStart() {
+        super.onStart();
+        updateTime();
+    }
 
     @Override
     protected void onStop() {
@@ -355,6 +373,7 @@ public class MainActivity extends AppCompatActivity {
                 break;
 
             case R.id.rbSpend:
+                updateTime();
                 etSumRow.setBackgroundColor(getResources().getColor(R.color.colorSpend));
                 etSumDestRow.setVisibility(View.GONE);
                 spinWalletDest.setVisibility(View.GONE);
@@ -588,8 +607,7 @@ public class MainActivity extends AppCompatActivity {
         int[] to = { R.id.ivImg, R.id.tvText };
 
         // создааем адаптер и настраиваем список
-        SimpleCursorAdapter scAdapter = new SimpleCursorAdapter(this, R.layout.item_spinner, cursor, from, to);
-        currentSpinner.setAdapter(scAdapter);
+        currentSpinner.setAdapter(new SimpleCursorAdapter(this, R.layout.item_spinner, cursor, from, to));
         currentSpinner.setPrompt(getResources().getString(string_id));
 
         // связка индекса спиннера с id записи из базы
@@ -777,6 +795,7 @@ public class MainActivity extends AppCompatActivity {
 
 
     public void loadDataForBalance() {
+        llBalanceList.removeAllViews();
         LayoutInflater ltInflater = getLayoutInflater();
 
         for (int i = 0; i < db.getNumberOfRecords(DB.WALLET_TABLE); i++) {

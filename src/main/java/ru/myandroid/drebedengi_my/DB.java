@@ -19,17 +19,63 @@ public class DB {
     final int CONFIRM_SAVE = 0, CONFIRM_EDIT = 1;
 
     final int div_category_gain = 100000;
+    final int div_category_group = 1000;
 
     static SimpleDateFormat dbDateFormat = new SimpleDateFormat("yyyy-MM-dd", Locale.US);
     static SimpleDateFormat dbTimeFormat = new SimpleDateFormat("HH:mm:ss", Locale.US);
 
 
     // Данные для первоначального заполнения БД
-    private String[] currencyData = new String[] { "руб", "USD", "EUR" };
-    private String[] walletData = new String[] { "Кошелёк", "Карта ТКС", "Яндекс", "Что-то ещё" };
-    private String[] categoryData = new String[] { "[Без категории]", "Еда", "Бухло", "Ништяки", "Наркота", "Фуфло", "Понты" };
-    private String[] sourcesData = new String[] { "Работа", "Дилерство", "Лафа", "Халявка" };
-    private final int imageWalletData[] = {R.mipmap.wallet42, R.mipmap.tcs42, R.mipmap.yandex42, R.mipmap.advcash42};
+    private String[] currencyData = { "руб", "USD", "EUR" };
+    private String[] categoryData = { "[Без категории]",
+            "Еда", "Развлечения", "Подарки", "Проезд", "Счета", "Авто", "Учёба, курсы, тренинги", "Дом, семья", "Здоровье", "Гигиена", "Техника", "Одежда", "Спорт", "Путешествия", "Работа", "Разное", "Банковские операции",
+
+            "Обеды, перекусы", "Продукты", "Спортивное питание",
+            "Кафешки", "Встречи, сходки", "Кино", "Музеи, выставки", "Аттракционы", "Каток", "Вечеринки", "Концерты", "Аквапарк", "Разные развлечения",
+            "Цветы", "Благотворительность",
+            "Метро", "Электрички", "Наземный транспорт", "Такси", "Каршеринг",
+            "Мобильный", "Банкинг", "Интернет",
+            "Бензин", "Запчасти", "Мойка", "Обслуживание авто", "Штрафы",
+            "Канцтовары",
+            "Родителям", "Хозтовары", "Кварплата", "Дети", "Мебель",
+            "Лечение, стоматология", "Аптека, лекарства",
+            "Стрижка", "Мыло, гели, шампуни", "Бритьё",
+            "Телефон", "Компьютер и комплектующие", "Планшеты, эл. книжки", "Ноутбук и комплектующие", "Принтер", "Разная техника",
+            "Верхняя одежда", "Рубашки, футболки", "Джинсы, брюки, шорты", "Нижнее бельё", "Обувь", "Аксессуары", "Кофты", "Парфюм", "Услуги стилиста",
+            "Велосипед", "Походный инвентарь", "Лыжный инвентарь", "Спорт. одежда", "Борьба",
+            "Велопоездки", "Санатории", "По стране | жильё", "По стране | транспорт", "По стране | питание", "По стране | экскурсии", "По стране | сувениры",
+            "Путешествия | жильё", "Путешествия | транспорт", "Путешествия | питание", "Путешествия | экскурсии", "Путешествия | развлечения", "Путешествия | сувениры", "Путешествия | разное",
+            "Фотопечать", "Почта",
+            "Комиссия за перевод", "Процент по займу" };
+    private final int[] categoryParentData = { 0,
+            div_category_group, 2000, 3000, 4000, 5000, 6000, 7000, 8000, 9000, 10000, 11000, 12000, 13000, 14000, 15000, 16000, 17000,
+
+            1001, 1002, 1003,
+            2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010,
+            3001, 3002,
+            4001, 4002, 4003, 4004, 4005,
+            5001, 5002, 5003,
+            6001, 6002, 6003, 6004, 6005,
+            7001,
+            8001, 8002, 8003, 8004, 8005,
+            9001, 9002,
+            10001, 10002, 10003,
+            11001, 11002, 11003, 11004, 11005, 11006,
+            12001, 12002, 12003, 12004, 12005, 12006, 12007, 12008, 12009,
+            13001, 13002, 13003, 13004, 13005,
+            14001, 14002, 14003, 14004, 14005, 14006, 14007, 14008, 14009, 14010, 14011, 14012, 14013, 14014,
+            16001, 16002,
+            17001, 17002 };
+    private String[] sourcesData = { "Работа (\"Агат\")", "Фриланс", "ООО \"Атлант+\"", "Альтернатива", "Родители", "Подарки", "Разное" };
+    private final int[] sourcesParentData = { 1000, 2000, 3000, 4000, 5000, 6000, 7000 };
+    private String[] walletData = { "Кошелёк", "Ящик домашний", "Карта \"Сбербанк\" (Visa)", "Карта \"Тинькофф\" (Visa)", "Яндекс.Деньги", "\"Детские деньги\"", "Счёт \"Сбербанк\"", "Счёт \"Совкомбанк\"",
+            "Карта \"Зенит\" (MasterCard)", "Карта \"Солид\" (MasterCard)", "Карта \"Кукуруза\" (MasterCard)", "Карта \"Альфа\" (MasterCard)",
+            "PerfectMoney", "AdvCash", "ePayments", "Blockchain", "MyEtherWallet",
+            "Мама", "Денис Тетерин", "Евгений", "Сбербанк", "Биржи", "Tirus", "Polybius", "GS Mining", "DEEX", "FBF" };
+    private final int imageWalletData[] = { R.mipmap.wallet42, 0, 0, R.mipmap.tcs42, R.mipmap.yandex42, 0, 0, 0,
+            0, 0, 0, 0,
+            0, R.mipmap.advcash42, 0, 0, 0,
+            0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
 
 
     // База данных
@@ -40,6 +86,7 @@ public class DB {
     static final String TABLE_COLUMN_ID = "_id";
     static final String TABLE_COLUMN_IMAGE = "image";
     static final String TABLE_COLUMN_NAME = "name";
+    static final String TABLE_COLUMN_PARENT = "parent_id";
 
 
     // Таблица валют
@@ -51,7 +98,8 @@ public class DB {
 
     private static final String CURRENCY_TABLE_CREATE = "create table " + CURRENCY_TABLE + "(" +
             CURRENCY_COLUMN_ID + " integer primary key, " + CURRENCY_COLUMN_IMAGE + " integer, " +
-            CURRENCY_COLUMN_NAME + " text, " + CURRENCY_COLUMN_TITLE + " text" + ");";
+            CURRENCY_COLUMN_NAME + " text, " + CURRENCY_COLUMN_TITLE + " text, " +
+            TABLE_COLUMN_PARENT + " integer" + ");";
 
 
     // Таблица с местами хранения средств
@@ -62,7 +110,7 @@ public class DB {
 
     private static final String WALLET_TABLE_CREATE = "create table " + WALLET_TABLE + "(" +
             WALLET_COLUMN_ID + " integer primary key, " + WALLET_COLUMN_IMAGE + " integer, " +
-            WALLET_COLUMN_NAME + " text" + ");";
+            WALLET_COLUMN_NAME + " text, " + TABLE_COLUMN_PARENT + " integer" + ");";
 
 
     // Таблица с категориями затрат и доходов
@@ -70,10 +118,11 @@ public class DB {
     static final String CATEGORY_COLUMN_ID = "_id";
     static final String CATEGORY_COLUMN_IMAGE = "image";
     static final String CATEGORY_COLUMN_NAME = "name";
+    static final String CATEGORY_COLUMN_PARENT = "parent_id";
 
     private static final String CATEGORY_TABLE_CREATE = "create table " + CATEGORY_TABLE + "(" +
             CATEGORY_COLUMN_ID + " integer primary key, " + CATEGORY_COLUMN_IMAGE + " integer, " +
-            CATEGORY_COLUMN_NAME + " text" + ");";
+            CATEGORY_COLUMN_NAME + " text, " + CATEGORY_COLUMN_PARENT + " integer" + ");";
 
 
     // Таблица операций (транзакций) - расходы, доходы, перемещения и обмены
@@ -157,7 +206,7 @@ public class DB {
 //            Log.d(LOG_TAG, "--- R.string.source ---");
             selection = "_id >= ?";
         }
-        Cursor localCursor = mDB.query(TABLE_NAME, null, selection, selectionArgs, null, null, null);
+        Cursor localCursor = mDB.query(TABLE_NAME, null, selection, selectionArgs, CATEGORY_COLUMN_PARENT, null, null);
 
         // Заодно считаем id, с которым надо записать категорию в таблицу
         if (localCursor.moveToFirst()) {
@@ -176,7 +225,7 @@ public class DB {
             else if (string_id == R.string.source) {
                 maxSourceCategory = maxCategory;
             }
-            Log.d(LOG_TAG, "max category id: " + maxCategory);
+//            Log.d(LOG_TAG, "max category id: " + maxCategory);
         }
         return localCursor;
     }
@@ -441,15 +490,24 @@ public class DB {
             cv.put(CATEGORY_COLUMN_ID, -1);
             cv.put(CATEGORY_COLUMN_NAME, "<->");
             db.insert(CATEGORY_TABLE, null, cv);
-            cv.clear();
             for (int i = 0; i < categoryData.length; i++) {
+                cv.clear();
                 cv.put(CATEGORY_COLUMN_ID, i);
                 cv.put(CATEGORY_COLUMN_NAME, categoryData[i]);
+                cv.put(CATEGORY_COLUMN_PARENT, categoryParentData[i]);
+                if (categoryParentData[i] % 1000 != 0) {
+                    cv.put(CATEGORY_COLUMN_IMAGE, R.mipmap.empty42);
+                }
                 db.insert(CATEGORY_TABLE, null, cv);
             }
             for (int i = 0; i < sourcesData.length; i++) {
+                cv.clear();
                 cv.put(CATEGORY_COLUMN_ID, i + div_category_gain);
                 cv.put(CATEGORY_COLUMN_NAME, sourcesData[i]);
+                cv.put(CATEGORY_COLUMN_PARENT, sourcesParentData[i]);
+                if (sourcesParentData[i] % 1000 != 0) {
+                    cv.put(CATEGORY_COLUMN_IMAGE, R.mipmap.empty42);
+                }
                 db.insert(CATEGORY_TABLE, null, cv);
             }
 
