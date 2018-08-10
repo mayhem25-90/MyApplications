@@ -10,9 +10,11 @@ import android.database.Cursor;
 import android.graphics.Color;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.text.InputType;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
+import android.view.WindowManager;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.AdapterView;
 import android.widget.Button;
@@ -51,8 +53,11 @@ public class MainActivity extends AppCompatActivity {
     DB db;
     Cursor cursor;
 
-    int[] tabName = {R.string.operations_tab, R.string.balance_tab, R.string.history_tab, R.string.edit_categories_tab};
-    int[] tabID = {R.id.operationsTab, R.id.balanceTab, R.id.historyTab, R.id.editCategoriesTab};
+    Calendar operationDate = Calendar.getInstance();
+    Calendar planDate = Calendar.getInstance();
+
+    int[] tabName = {R.string.operations_tab, R.string.balance_tab, R.string.history_tab, R.string.plan_tab, R.string.edit_categories_tab};
+    int[] tabID = {R.id.operationsTab, R.id.balanceTab, R.id.historyTab, R.id.planTab, R.id.editCategoriesTab};
     TabHost tabHost;
 
     @Override
@@ -65,7 +70,6 @@ public class MainActivity extends AppCompatActivity {
         db.open();
 
         // Проверка на существование данного месяца в таблице планирования бюджета в БД
-        Calendar planDate = Calendar.getInstance();
         planDate.add(Calendar.MONTH, 1);
         db.addColumnToBudgetTable(new SimpleDateFormat("yyyy_MM", Locale.US).format(operationDate.getTime()));
         db.addColumnToBudgetTable(new SimpleDateFormat("yyyy_MM", Locale.US).format(planDate.getTime()));
@@ -95,6 +99,7 @@ public class MainActivity extends AppCompatActivity {
         initHistoryTabContent();
         initBalanceTabContent();
         initEditCategoriesTabContent();
+        initPlanTabContent();
     }
 
 
@@ -168,6 +173,7 @@ public class MainActivity extends AppCompatActivity {
     final int DIALOG_TIME = 1;
     final int DIALOG_TAGS = 2;
     final int DIALOG_DELETE = 3;
+    final int DIALOG_EDIT_PLAN = 4;
 
     public static final int spin_currency = 100,
                             spin_currency_dest = 101,
@@ -186,9 +192,6 @@ public class MainActivity extends AppCompatActivity {
     Button btnDateLeft, btnDateRight, btnDate, btnTime, btnConfirm, btnEdit, btnCancel;
     Spinner spinCurrency, spinCurrencyDest, spinWallet, spinWalletDest, spinCategory, spinSource;
     RadioGroup rgOperationChoice;
-//    ListView lvTestData;
-
-    Calendar operationDate = Calendar.getInstance();
 
     SimpleDateFormat btnDateFormat = new SimpleDateFormat("dd MMM, EEE", Locale.US);
     SimpleDateFormat btnTimeFormat = new SimpleDateFormat("HH:mm", Locale.US);
@@ -275,9 +278,6 @@ public class MainActivity extends AppCompatActivity {
         btnEdit.setVisibility(View.GONE);
         btnCancel = (Button) findViewById(R.id.btnCancel);
         btnCancel.setVisibility(View.GONE);
-
-//        lvTestData = (ListView) findViewById(R.id.lvTestData);
-//        loadDataForTestList();
 
         rgOperationChoice = (RadioGroup) findViewById(R.id.rgOperationChoice);
         rgOperationChoice.check(radioButtons[currentRadioButton]);
@@ -440,7 +440,7 @@ public class MainActivity extends AppCompatActivity {
 
     @Override
     protected Dialog onCreateDialog(int id) {
-        AlertDialog.Builder adb = new AlertDialog.Builder(this);
+        final AlertDialog.Builder adb = new AlertDialog.Builder(this);
         switch (id) {
             case DIALOG_DATE: // Дата
                 return new DatePickerDialog(this, dateDialogCallBack,
@@ -455,6 +455,31 @@ public class MainActivity extends AppCompatActivity {
                 adb.setPositiveButton(R.string.yes, deleteButtonClickListener);
                 adb.setNeutralButton(R.string.no, deleteButtonClickListener);
                 return adb.create();
+
+            case DIALOG_EDIT_PLAN:
+                adb.setMessage(R.string.edit_plan_message);
+
+                final EditText textInput = new EditText(this);
+                textInput.setInputType(InputType.TYPE_CLASS_NUMBER);
+                adb.setView(textInput);
+                adb.setPositiveButton(R.string.confirmButton, new DialogInterface.OnClickListener() {
+                    public void onClick(DialogInterface dialog, int which) {
+//                        Log.d(LOG_TAG, "Редактируем лимит для категории " + recordPlanTableID + ": " + textInput.getText().toString());
+                        if (!textInput.getText().toString().equals("")) {
+                            String currMonth = new SimpleDateFormat("yyyy_MM", Locale.US).format(planDate.getTime());
+                            db.updateLimitForCategory(currMonth, recordPlanTableID, Integer.parseInt(textInput.getText().toString()));
+                            // А ещё обновим план:
+                            loadDataForPlanList();
+                            textInput.setText("");
+                            Toast.makeText(MainActivity.this, R.string.edit_limit_message, Toast.LENGTH_SHORT).show();
+                        }
+                    }
+                });
+                adb.setNeutralButton(R.string.cancelButton, null);
+
+                Dialog dialog = adb.create();
+                dialog.getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_VISIBLE);
+                return dialog;
 
             default:
                 return adb.create();
@@ -572,7 +597,7 @@ public class MainActivity extends AppCompatActivity {
             }
         }
         else {
-            Toast.makeText(this, "Сумма должна быть больше 0", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, R.string.error_confirm_zero, Toast.LENGTH_SHORT).show();
         }
     }
 
@@ -1000,5 +1025,79 @@ public class MainActivity extends AppCompatActivity {
             default:
                 break;
         }
+    }
+
+
+// == ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ====
+// 5. Вкладка планирования
+// == ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ====
+
+    TextView textMonth, tvSumPlan, tvSumFact;
+    ListView lvPlan;
+    LinearLayout lSpend;
+
+    long recordPlanTableID = -1;
+
+    private void initPlanTabContent() {
+        Log.d(LOG_TAG, "initPlanTabContent");
+
+        textMonth = (TextView) findViewById(R.id.textMonth);
+        textMonth.setText(new SimpleDateFormat("yyyy MMM", Locale.US).format(planDate.getTime()));
+
+        lSpend = (LinearLayout) findViewById(R.id.lSpend);
+        lSpend.setBackgroundColor(getResources().getColor(R.color.colorSpend));
+
+        TextView tvCat = (TextView) lSpend.findViewById(R.id.tvCategory);
+        tvCat.setText(R.string.radio_spend);
+
+        tvSumPlan = (TextView) lSpend.findViewById(R.id.tvSumPlan);
+        updatePlanSum(DB.PLAN, tvSumPlan);
+
+        tvSumFact = (TextView) lSpend.findViewById(R.id.tvSumFact);
+        updatePlanSum(DB.FACT, tvSumFact);
+
+        lvPlan = (ListView) findViewById(R.id.lvPlan);
+        lvPlan.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView<?> adapterView, View view, int i, long l) {
+//                Log.d(LOG_TAG, "on list plan item click: " + i + " " + l);
+                recordPlanTableID = l;
+                showDialog(DIALOG_EDIT_PLAN);
+            }
+        });
+        loadDataForPlanList();
+    }
+
+
+    void updatePlanSum(int columnType, TextView tvSum) {
+        DecimalFormatSymbols sumFormatSymbols = new DecimalFormatSymbols();
+        sumFormatSymbols.setGroupingSeparator(' ');
+        DecimalFormat sumFormat = new DecimalFormat("#,###", sumFormatSymbols); // отделяем тысячные разряды;
+
+        cursor = db.getPlanAllSpendSum(columnType, new SimpleDateFormat("yyyy_MM", Locale.US).format(planDate.getTime()));
+//        db.logCursor(cursor);
+        if ((cursor != null) && (cursor.moveToFirst())) {
+            int sum = cursor.getInt(cursor.getColumnIndex(DB.RECORD_COLUMN_SUM));
+            tvSum.setText(sumFormat.format(sum));
+        }
+    }
+
+
+    void loadDataForPlanList() {
+//        Log.d(LOG_TAG, "load data for plan list");
+
+        updatePlanSum(DB.PLAN, tvSumPlan);
+        updatePlanSum(DB.FACT, tvSumFact);
+
+        String currMonth = new SimpleDateFormat("yyyy_MM", Locale.US).format(planDate.getTime());
+        cursor = db.getPlanData(currMonth);
+//        db.logCursor(cursor);
+
+        // формируем столбцы сопоставления
+        String[] from = { DB.CATEGORY_COLUMN_NAME, DB.BUDGET_COLUMN_PLAN + currMonth, DB.BUDGET_COLUMN_FACT + currMonth };
+        int[] to = { R.id.tvCategory, R.id.tvSumPlan, R.id.tvSumFact };
+
+        // создааем адаптер и настраиваем список
+        lvPlan.setAdapter(new PlanCursorAdapter(this, R.layout.item_plan, cursor, from, to));
     }
 }

@@ -9,6 +9,7 @@
     <string name="history_tab">Журнал</string>
     <string name="balance_tab">Баланс</string>
     <string name="edit_categories_tab">Катег.</string>
+    <string name="plan_tab">План</string>
 
     <string name="radio_spend">Расходы</string>
     <string name="radio_gain">Доходы</string>
@@ -27,6 +28,7 @@
     <string name="source">Источник дохода</string>
     <string name="tag">Ещё</string>
     <string name="confirmButton">Сохранить</string>
+    <string name="error_confirm_zero">Сумма должна быть больше 0</string>
 
     <string name="deleteButton">Удалить</string>
     <string name="delete_message">Вы действительно хотите удалить запись?</string>
@@ -49,6 +51,12 @@
     <string name="message_edit_cat_new">Категория добавлена</string>
     <string name="message_edit_cat_edit">Категория изменена</string>
     <string name="message_edit_cat_edit_error">Введите имя категории!</string>
+
+    <string name="budget_plan">План бюджета</string>
+    <string name="edit_plan_message">Установить лимит:</string>
+    <string name="plan">План</string>
+    <string name="fact">Факт</string>
+    <string name="edit_limit_message">Лимит установлен</string>
 
     <!--<string name="currencies">Валюты</string>-->
     <!--<string name="wallets">Места хранения</string>-->

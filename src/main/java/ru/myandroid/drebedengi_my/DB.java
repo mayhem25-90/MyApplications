@@ -47,7 +47,7 @@ public class DB {
             "Путешествия | жильё", "Путешествия | транспорт", "Путешествия | питание", "Путешествия | экскурсии", "Путешествия | развлечения", "Путешествия | сувениры", "Путешествия | разное",
             "Фотопечать", "Почта",
             "Комиссия за перевод", "Процент по займу" };
-    private final int[] categoryParentData = { 0,
+    private final int[] categoryGroupData = { 0,
             div_category_group, 2000, 3000, 4000, 5000, 6000, 7000, 8000, 9000, 10000, 11000, 12000, 13000, 14000, 15000, 16000, 17000,
 
             1001, 1002, 1003,
@@ -66,8 +66,27 @@ public class DB {
             14001, 14002, 14003, 14004, 14005, 14006, 14007, 14008, 14009, 14010, 14011, 14012, 14013, 14014,
             16001, 16002,
             17001, 17002 };
+    private final int[] categoryParentData = { -1,
+            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+
+            1, 1, 1,
+            2, 2, 2, 2, 2, 2, 2, 2, 2, 2,
+            3, 3,
+            4, 4, 4, 4, 4,
+            5, 5, 5,
+            6, 6, 6, 6, 6,
+            7,
+            8, 8, 8, 8, 8,
+            9, 9,
+            10, 10, 10,
+            11, 11, 11, 11, 11, 11,
+            12, 12, 12, 12, 12, 12, 12, 12, 12,
+            13, 13, 13, 13, 13,
+            14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14,
+            16, 16,
+            17, 17 };
     private String[] sourcesData = { "Работа (\"Агат\")", "Фриланс", "ООО \"Атлант+\"", "Альтернатива", "Родители", "Подарки", "Разное" };
-    private final int[] sourcesParentData = { 1000, 2000, 3000, 4000, 5000, 6000, 7000 };
+    private final int[] sourcesGroupData = { 1000, 2000, 3000, 4000, 5000, 6000, 7000 };
     private String[] walletData = { "Кошелёк", "Ящик домашний", "Карта \"Сбербанк\" (Visa)", "Карта \"Тинькофф\" (Visa)", "Яндекс.Деньги", "\"Детские деньги\"", "Счёт \"Сбербанк\"", "Счёт \"Совкомбанк\"",
             "Карта \"Зенит\" (MasterCard)", "Карта \"Солид\" (MasterCard)", "Карта \"Кукуруза\" (MasterCard)", "Карта \"Альфа\" (MasterCard)",
             "PerfectMoney", "AdvCash", "ePayments", "Blockchain", "MyEtherWallet",
@@ -118,11 +137,13 @@ public class DB {
     static final String CATEGORY_COLUMN_ID = "_id";
     static final String CATEGORY_COLUMN_IMAGE = "image";
     static final String CATEGORY_COLUMN_NAME = "name";
+    static final String CATEGORY_COLUMN_GROUP = "group_id";
     static final String CATEGORY_COLUMN_PARENT = "parent_id";
 
     private static final String CATEGORY_TABLE_CREATE = "create table " + CATEGORY_TABLE + "(" +
             CATEGORY_COLUMN_ID + " integer primary key, " + CATEGORY_COLUMN_IMAGE + " integer, " +
-            CATEGORY_COLUMN_NAME + " text, " + CATEGORY_COLUMN_PARENT + " integer" + ");";
+            CATEGORY_COLUMN_NAME + " text, " + CATEGORY_COLUMN_GROUP + " integer, " +
+            CATEGORY_COLUMN_PARENT + " integer" + ");";
 
 
     // Таблица операций (транзакций) - расходы, доходы, перемещения и обмены
@@ -155,11 +176,13 @@ public class DB {
 
 
     // Таблица для планирования бюджета
-    private static final String BUDGET_TABLE = "budget_plan";
-    private static final String BUDGET_COLUMN_CATEGORY_ID = "category_id";
+    static final String BUDGET_TABLE = "budget_plan";
+    static final String BUDGET_COLUMN_ID = "_id";
+    static final String BUDGET_COLUMN_PLAN = "plan_";
+    static final String BUDGET_COLUMN_FACT = "fact_";
 
     private static final String BUDGET_TABLE_CREATE = "create table " + BUDGET_TABLE + "(" +
-            BUDGET_COLUMN_CATEGORY_ID + " integer primary key" +
+            BUDGET_COLUMN_ID + " integer primary key" +
             ");";
 
 
@@ -206,7 +229,7 @@ public class DB {
 //            Log.d(LOG_TAG, "--- R.string.source ---");
             selection = "_id >= ?";
         }
-        Cursor localCursor = mDB.query(TABLE_NAME, null, selection, selectionArgs, CATEGORY_COLUMN_PARENT, null, null);
+        Cursor localCursor = mDB.query(TABLE_NAME, null, selection, selectionArgs, CATEGORY_COLUMN_GROUP, null, null);
 
         // Заодно считаем id, с которым надо записать категорию в таблицу
         if (localCursor.moveToFirst()) {
@@ -365,7 +388,7 @@ public class DB {
     }
 
 // == ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ====
-// 4. Категории и планирование
+// 4. Категории
 // == ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ====
 
     final int EDIT_SPEND = 0, EDIT_SOURCE = 1, EDIT_WALLET = 2;
@@ -381,7 +404,7 @@ public class DB {
 
                 // Также, добавляем эту категорию в таблицу планирования бюджета
                 cv.clear();
-                cv.put(BUDGET_COLUMN_CATEGORY_ID, maxSpendingCategory + 1);
+                cv.put(BUDGET_COLUMN_ID, maxSpendingCategory + 1);
                 mDB.insert(BUDGET_TABLE, null, cv);
                 break;
 
@@ -392,7 +415,7 @@ public class DB {
 
                 // Также, добавляем эту категорию в таблицу планирования бюджета
                 cv.clear();
-                cv.put(BUDGET_COLUMN_CATEGORY_ID, maxSourceCategory + 1);
+                cv.put(BUDGET_COLUMN_ID, maxSourceCategory + 1);
                 mDB.insert(BUDGET_TABLE, null, cv);
                 break;
 
@@ -419,9 +442,23 @@ public class DB {
         }
     }
 
+// == ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ====
+// 5. Планирование
+// == ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ====
+
+    static final int PLAN = 0, FACT = 1;
 
     void addColumnToBudgetTable(String newColumn) {
-        String sqlQuery = "alter table " + BUDGET_TABLE + " add column p" + newColumn + " text";
+        String sqlQuery = "alter table " + BUDGET_TABLE + " add column " + BUDGET_COLUMN_PLAN + newColumn + " text";
+        Log.d(LOG_TAG, sqlQuery);
+        try {
+            mDB.execSQL(sqlQuery);
+        }
+        catch (Exception ex) {
+            Log.d(LOG_TAG, ex.getClass() + " error: " + ex.getMessage());
+        }
+
+        sqlQuery = "alter table " + BUDGET_TABLE + " add column " + BUDGET_COLUMN_FACT + newColumn + " text";
         Log.d(LOG_TAG, sqlQuery);
         try {
             mDB.execSQL(sqlQuery);
@@ -431,6 +468,46 @@ public class DB {
         }
 
 //        logCursor(mDB.rawQuery("select * from " + BUDGET_TABLE, null));
+    }
+
+
+    Cursor getPlanData(String column) {
+        String sqlQuery = "select "
+                + BUDGET_TABLE + "." + BUDGET_COLUMN_ID + ", "
+                + BUDGET_TABLE + "." + BUDGET_COLUMN_PLAN + column + ", "
+                + BUDGET_TABLE + "." + BUDGET_COLUMN_FACT + column + ", "
+                + CATEGORY_TABLE + "." + CATEGORY_COLUMN_NAME
+                + " from " + BUDGET_TABLE
+                + " inner join " + CATEGORY_TABLE
+                + " on " + BUDGET_TABLE + "." + BUDGET_COLUMN_ID
+                + " = " + CATEGORY_TABLE + "." + CATEGORY_COLUMN_ID
+                + " where " + CATEGORY_TABLE + "." + CATEGORY_COLUMN_PARENT + " = 0";
+//        Log.d(LOG_TAG, sqlQuery);
+        return mDB.rawQuery(sqlQuery, null);
+    }
+
+
+    Cursor getPlanAllSpendSum(int columnType, String column) {
+        if (columnType == PLAN) {
+            column = BUDGET_COLUMN_PLAN + column;
+        }
+        else if (columnType == FACT) {
+            column = BUDGET_COLUMN_FACT + column;
+        }
+
+        String sqlQuery = "select "
+                + "sum(" + BUDGET_TABLE + "." + column + ") as " + RECORD_COLUMN_SUM
+                + " from " + BUDGET_TABLE;
+//        Log.d(LOG_TAG, sqlQuery);
+        return mDB.rawQuery(sqlQuery, null);
+    }
+
+
+    void updateLimitForCategory(String column, long id, int limit) {
+        ContentValues cv = new ContentValues();
+        cv.put(BUDGET_COLUMN_PLAN + column, limit);
+//        Log.d(LOG_TAG, "update limit for category " + id + " (" + limit + "), month: " + column);
+        mDB.update(BUDGET_TABLE, cv, BUDGET_COLUMN_ID + " = " + id, null);
     }
 
 // == ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ====
@@ -494,8 +571,9 @@ public class DB {
                 cv.clear();
                 cv.put(CATEGORY_COLUMN_ID, i);
                 cv.put(CATEGORY_COLUMN_NAME, categoryData[i]);
+                cv.put(CATEGORY_COLUMN_GROUP, categoryGroupData[i]);
                 cv.put(CATEGORY_COLUMN_PARENT, categoryParentData[i]);
-                if (categoryParentData[i] % 1000 != 0) {
+                if (categoryGroupData[i] % 1000 != 0) {
                     cv.put(CATEGORY_COLUMN_IMAGE, R.mipmap.empty42);
                 }
                 db.insert(CATEGORY_TABLE, null, cv);
@@ -504,8 +582,8 @@ public class DB {
                 cv.clear();
                 cv.put(CATEGORY_COLUMN_ID, i + div_category_gain);
                 cv.put(CATEGORY_COLUMN_NAME, sourcesData[i]);
-                cv.put(CATEGORY_COLUMN_PARENT, sourcesParentData[i]);
-                if (sourcesParentData[i] % 1000 != 0) {
+                cv.put(CATEGORY_COLUMN_GROUP, sourcesGroupData[i]);
+                if (sourcesGroupData[i] % 1000 != 0) {
                     cv.put(CATEGORY_COLUMN_IMAGE, R.mipmap.empty42);
                 }
                 db.insert(CATEGORY_TABLE, null, cv);
@@ -515,11 +593,11 @@ public class DB {
             db.execSQL(BUDGET_TABLE_CREATE);
             cv.clear();
             for (int i = 0; i < categoryData.length; i++) {
-                cv.put(BUDGET_COLUMN_CATEGORY_ID, i);
+                cv.put(BUDGET_COLUMN_ID, i);
                 db.insert(BUDGET_TABLE, null, cv);
             }
             for (int i = 0; i < sourcesData.length; i++) {
-                cv.put(BUDGET_COLUMN_CATEGORY_ID, i + div_category_gain);
+                cv.put(BUDGET_COLUMN_ID, i + div_category_gain);
                 db.insert(BUDGET_TABLE, null, cv);
             }
 
