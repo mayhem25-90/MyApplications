@@ -10,6 +10,8 @@ import android.util.Log;
 import java.text.SimpleDateFormat;
 import java.util.Locale;
 
+import static java.lang.Math.abs;
+
 public class DB {
 
     private final String LOG_TAG = "myLogs";
@@ -18,11 +20,12 @@ public class DB {
     final int AUTO_SELECT = -1, NOT_SELECTED = 0, SELECTED = 1;
     final int CONFIRM_SAVE = 0, CONFIRM_EDIT = 1;
 
-    final int div_category_gain = 100000;
+    final int div_category_gain = 1000000;
     final int div_category_group = 1000;
 
     static SimpleDateFormat dbDateFormat = new SimpleDateFormat("yyyy-MM-dd", Locale.US);
     static SimpleDateFormat dbTimeFormat = new SimpleDateFormat("HH:mm:ss", Locale.US);
+    static SimpleDateFormat dbBudgetDateFormat = new SimpleDateFormat("yyyy_MM", Locale.US);
 
 
     // Данные для первоначального заполнения БД
@@ -137,12 +140,13 @@ public class DB {
     static final String CATEGORY_COLUMN_ID = "_id";
     static final String CATEGORY_COLUMN_IMAGE = "image";
     static final String CATEGORY_COLUMN_NAME = "name";
-    static final String CATEGORY_COLUMN_GROUP = "group_id";
+//    static final String CATEGORY_COLUMN_GROUP = "group_id";
     static final String CATEGORY_COLUMN_PARENT = "parent_id";
 
     private static final String CATEGORY_TABLE_CREATE = "create table " + CATEGORY_TABLE + "(" +
             CATEGORY_COLUMN_ID + " integer primary key, " + CATEGORY_COLUMN_IMAGE + " integer, " +
-            CATEGORY_COLUMN_NAME + " text, " + CATEGORY_COLUMN_GROUP + " integer, " +
+            CATEGORY_COLUMN_NAME + " text, " +
+//            CATEGORY_COLUMN_GROUP + " integer, " +
             CATEGORY_COLUMN_PARENT + " integer" + ");";
 
 
@@ -229,7 +233,8 @@ public class DB {
 //            Log.d(LOG_TAG, "--- R.string.source ---");
             selection = "_id >= ?";
         }
-        Cursor localCursor = mDB.query(TABLE_NAME, null, selection, selectionArgs, CATEGORY_COLUMN_GROUP, null, null);
+//        Cursor localCursor = mDB.query(TABLE_NAME, null, selection, selectionArgs, CATEGORY_COLUMN_GROUP, null, null);
+        Cursor localCursor = mDB.query(TABLE_NAME, null, selection, selectionArgs, CATEGORY_COLUMN_ID, null, null);
 
         // Заодно считаем id, с которым надо записать категорию в таблицу
         if (localCursor.moveToFirst()) {
@@ -510,6 +515,43 @@ public class DB {
         mDB.update(BUDGET_TABLE, cv, BUDGET_COLUMN_ID + " = " + id, null);
     }
 
+
+    void updateFactSumForCategory(String column, long id) {
+        int factSum = calculateFactSumForCategory(column, id);
+
+        ContentValues cv = new ContentValues();
+        cv.put(BUDGET_COLUMN_FACT + column, factSum);
+//        Log.d(LOG_TAG, "update fact sum for category " + id + " (" + factSum + "), month: " + column);
+        mDB.update(BUDGET_TABLE, cv, BUDGET_COLUMN_ID + " = " + id, null);
+    }
+
+
+    private int calculateFactSumForCategory(String month, long category_id) {
+        try {
+            String seekMonth = new SimpleDateFormat("yyyy-MM", Locale.US).format(dbBudgetDateFormat.parse(month));
+//            Log.d(LOG_TAG, seekMonth);
+
+            String sqlQuery = "select "
+                    + "sum(" + RECORD_TABLE + "." + RECORD_COLUMN_SUM + ") as " + RECORD_COLUMN_SUM
+                    + " from " + RECORD_TABLE
+                    + " where " + RECORD_TABLE + "." + RECORD_COLUMN_DATE + " like '" + seekMonth + "%'"
+                    + " and " + RECORD_TABLE + "." + RECORD_COLUMN_CATEGORY_ID + " >= " + category_id
+                    + " and " + RECORD_TABLE + "." + RECORD_COLUMN_CATEGORY_ID + " < " + (category_id + div_category_group);
+            Log.d(LOG_TAG, sqlQuery);
+            Cursor cursor = mDB.rawQuery(sqlQuery, null);
+//            logCursor(cursor);
+            if ((cursor != null) && (cursor.moveToFirst())) {
+                int factSum = cursor.getInt(cursor.getColumnIndex(DB.RECORD_COLUMN_SUM));
+                cursor.close();
+                return abs(factSum);
+            }
+        }
+        catch (Exception exception) {
+            Log.d(LOG_TAG, exception.toString());
+        }
+        return -1;
+    }
+
 // == ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ====
 // Остальное
 // == ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ====
@@ -569,21 +611,21 @@ public class DB {
             db.insert(CATEGORY_TABLE, null, cv);
             for (int i = 0; i < categoryData.length; i++) {
                 cv.clear();
-                cv.put(CATEGORY_COLUMN_ID, i);
+                cv.put(CATEGORY_COLUMN_ID, categoryGroupData[i]);
                 cv.put(CATEGORY_COLUMN_NAME, categoryData[i]);
-                cv.put(CATEGORY_COLUMN_GROUP, categoryGroupData[i]);
+//                cv.put(CATEGORY_COLUMN_GROUP, categoryGroupData[i]);
                 cv.put(CATEGORY_COLUMN_PARENT, categoryParentData[i]);
-                if (categoryGroupData[i] % 1000 != 0) {
+                if (categoryGroupData[i] % div_category_group != 0) {
                     cv.put(CATEGORY_COLUMN_IMAGE, R.mipmap.empty42);
                 }
                 db.insert(CATEGORY_TABLE, null, cv);
             }
             for (int i = 0; i < sourcesData.length; i++) {
                 cv.clear();
-                cv.put(CATEGORY_COLUMN_ID, i + div_category_gain);
+                cv.put(CATEGORY_COLUMN_ID, sourcesGroupData[i] + div_category_gain);
                 cv.put(CATEGORY_COLUMN_NAME, sourcesData[i]);
-                cv.put(CATEGORY_COLUMN_GROUP, sourcesGroupData[i]);
-                if (sourcesGroupData[i] % 1000 != 0) {
+//                cv.put(CATEGORY_COLUMN_GROUP, sourcesGroupData[i]);
+                if (sourcesGroupData[i] % div_category_group != 0) {
                     cv.put(CATEGORY_COLUMN_IMAGE, R.mipmap.empty42);
                 }
                 db.insert(CATEGORY_TABLE, null, cv);
@@ -593,11 +635,11 @@ public class DB {
             db.execSQL(BUDGET_TABLE_CREATE);
             cv.clear();
             for (int i = 0; i < categoryData.length; i++) {
-                cv.put(BUDGET_COLUMN_ID, i);
+                cv.put(BUDGET_COLUMN_ID, categoryGroupData[i]);
                 db.insert(BUDGET_TABLE, null, cv);
             }
             for (int i = 0; i < sourcesData.length; i++) {
-                cv.put(BUDGET_COLUMN_ID, i + div_category_gain);
+                cv.put(BUDGET_COLUMN_ID, sourcesGroupData[i] + div_category_gain);
                 db.insert(BUDGET_TABLE, null, cv);
             }
 

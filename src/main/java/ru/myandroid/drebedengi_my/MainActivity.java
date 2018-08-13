@@ -44,6 +44,7 @@ import java.util.Vector;
 import static java.lang.Math.abs;
 import static ru.myandroid.drebedengi_my.DB.dbDateFormat;
 import static ru.myandroid.drebedengi_my.DB.dbTimeFormat;
+import static ru.myandroid.drebedengi_my.DB.dbBudgetDateFormat;
 
 
 public class MainActivity extends AppCompatActivity {
@@ -71,8 +72,9 @@ public class MainActivity extends AppCompatActivity {
 
         // Проверка на существование данного месяца в таблице планирования бюджета в БД
         planDate.add(Calendar.MONTH, 1);
-        db.addColumnToBudgetTable(new SimpleDateFormat("yyyy_MM", Locale.US).format(operationDate.getTime()));
-        db.addColumnToBudgetTable(new SimpleDateFormat("yyyy_MM", Locale.US).format(planDate.getTime()));
+        db.addColumnToBudgetTable(dbBudgetDateFormat.format(operationDate.getTime()));
+        db.addColumnToBudgetTable(dbBudgetDateFormat.format(planDate.getTime()));
+        planDate.add(Calendar.MONTH, -1);
 
         // Инициализация вкладок
         tabHost = (TabHost) findViewById(android.R.id.tabhost);
@@ -466,7 +468,7 @@ public class MainActivity extends AppCompatActivity {
                     public void onClick(DialogInterface dialog, int which) {
 //                        Log.d(LOG_TAG, "Редактируем лимит для категории " + recordPlanTableID + ": " + textInput.getText().toString());
                         if (!textInput.getText().toString().equals("")) {
-                            String currMonth = new SimpleDateFormat("yyyy_MM", Locale.US).format(planDate.getTime());
+                            String currMonth = dbBudgetDateFormat.format(planDate.getTime());
                             db.updateLimitForCategory(currMonth, recordPlanTableID, Integer.parseInt(textInput.getText().toString()));
                             // А ещё обновим план:
                             loadDataForPlanList();
@@ -594,6 +596,15 @@ public class MainActivity extends AppCompatActivity {
                     btnEdit.setVisibility(View.GONE);
                     btnCancel.setVisibility(View.GONE);
                 }
+
+                long last_record_category_group_id = db.div_category_group * ((int) (category_id / db.div_category_group));
+//                Log.d(LOG_TAG, "last_record_category_group_id: " + last_record_category_group_id);
+
+                String last_record_operation_date = dbBudgetDateFormat.format(operationDate.getTime());
+//                Log.d(LOG_TAG, "last_record_operation_date: " + last_record_operation_date);
+
+                db.updateFactSumForCategory(last_record_operation_date, last_record_category_group_id);
+                loadDataForPlanList();
             }
         }
         else {
@@ -1051,10 +1062,8 @@ public class MainActivity extends AppCompatActivity {
         tvCat.setText(R.string.radio_spend);
 
         tvSumPlan = (TextView) lSpend.findViewById(R.id.tvSumPlan);
-        updatePlanSum(DB.PLAN, tvSumPlan);
 
         tvSumFact = (TextView) lSpend.findViewById(R.id.tvSumFact);
-        updatePlanSum(DB.FACT, tvSumFact);
 
         lvPlan = (ListView) findViewById(R.id.lvPlan);
         lvPlan.setOnItemClickListener(new AdapterView.OnItemClickListener() {
@@ -1074,7 +1083,7 @@ public class MainActivity extends AppCompatActivity {
         sumFormatSymbols.setGroupingSeparator(' ');
         DecimalFormat sumFormat = new DecimalFormat("#,###", sumFormatSymbols); // отделяем тысячные разряды;
 
-        cursor = db.getPlanAllSpendSum(columnType, new SimpleDateFormat("yyyy_MM", Locale.US).format(planDate.getTime()));
+        cursor = db.getPlanAllSpendSum(columnType, dbBudgetDateFormat.format(planDate.getTime()));
 //        db.logCursor(cursor);
         if ((cursor != null) && (cursor.moveToFirst())) {
             int sum = cursor.getInt(cursor.getColumnIndex(DB.RECORD_COLUMN_SUM));
@@ -1089,7 +1098,7 @@ public class MainActivity extends AppCompatActivity {
         updatePlanSum(DB.PLAN, tvSumPlan);
         updatePlanSum(DB.FACT, tvSumFact);
 
-        String currMonth = new SimpleDateFormat("yyyy_MM", Locale.US).format(planDate.getTime());
+        String currMonth = dbBudgetDateFormat.format(planDate.getTime());
         cursor = db.getPlanData(currMonth);
 //        db.logCursor(cursor);
 
