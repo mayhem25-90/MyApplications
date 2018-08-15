@@ -52,11 +52,17 @@
     <string name="message_edit_cat_edit">Категория изменена</string>
     <string name="message_edit_cat_edit_error">Введите имя категории!</string>
 
+    <string name="radio_control">Контроль расходов</string>
+    <string name="radio_plan">Планирование бюджета</string>
+
     <string name="budget_plan">План бюджета</string>
     <string name="edit_plan_message">Установить лимит:</string>
     <string name="plan">План</string>
     <string name="fact">Факт</string>
     <string name="edit_limit_message">Лимит установлен</string>
+    <string name="plan_limit">Лимит по плану</string>
+    <string name="plan_remain">Осталось потратить</string>
+    <string name="plan_already_spend">Потрачено</string>
 
     <!--<string name="currencies">Валюты</string>-->
     <!--<string name="wallets">Места хранения</string>-->

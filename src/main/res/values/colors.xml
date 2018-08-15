@@ -14,4 +14,7 @@
 
     <color name="colorTextViewBack">#DDDDDD</color>
     <color name="colorLayoutBack">#EEEEEE</color>
+
+    <color name="positive">#008800</color>
+    <color name="negative">#FF0000</color>
 </resources>

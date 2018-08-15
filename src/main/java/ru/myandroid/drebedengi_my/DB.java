@@ -451,10 +451,11 @@ public class DB {
 // 5. Планирование
 // == ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ====
 
-    static final int PLAN = 0, FACT = 1;
+    static final int PLAN = 0, FACT = 1, REMAIN = 2;
 
     void addColumnToBudgetTable(String newColumn) {
-        String sqlQuery = "alter table " + BUDGET_TABLE + " add column " + BUDGET_COLUMN_PLAN + newColumn + " text";
+        String sqlQuery = "alter table " + BUDGET_TABLE + " add column " + BUDGET_COLUMN_PLAN + newColumn
+                + " text default 0";
         Log.d(LOG_TAG, sqlQuery);
         try {
             mDB.execSQL(sqlQuery);
@@ -463,7 +464,8 @@ public class DB {
             Log.d(LOG_TAG, ex.getClass() + " error: " + ex.getMessage());
         }
 
-        sqlQuery = "alter table " + BUDGET_TABLE + " add column " + BUDGET_COLUMN_FACT + newColumn + " text";
+        sqlQuery = "alter table " + BUDGET_TABLE + " add column " + BUDGET_COLUMN_FACT + newColumn
+                + " text default 0";
         Log.d(LOG_TAG, sqlQuery);
         try {
             mDB.execSQL(sqlQuery);
@@ -493,18 +495,29 @@ public class DB {
 
 
     Cursor getPlanAllSpendSum(int columnType, String column) {
-        if (columnType == PLAN) {
-            column = BUDGET_COLUMN_PLAN + column;
-        }
-        else if (columnType == FACT) {
-            column = BUDGET_COLUMN_FACT + column;
-        }
-
-        String sqlQuery = "select "
-                + "sum(" + BUDGET_TABLE + "." + column + ") as " + RECORD_COLUMN_SUM
-                + " from " + BUDGET_TABLE;
+        if (columnType == REMAIN) {
+            String sqlQuery = "select "
+                    + "sum(" + BUDGET_TABLE + "." + BUDGET_COLUMN_PLAN + column + ")"
+                    + " - sum(" + BUDGET_TABLE + "." + BUDGET_COLUMN_FACT + column + ")"
+                    + " as " + RECORD_COLUMN_SUM
+                    + " from " + BUDGET_TABLE;
 //        Log.d(LOG_TAG, sqlQuery);
-        return mDB.rawQuery(sqlQuery, null);
+            return mDB.rawQuery(sqlQuery, null);
+        }
+        else {
+            if (columnType == PLAN) {
+                column = BUDGET_COLUMN_PLAN + column;
+            }
+            else if (columnType == FACT) {
+                column = BUDGET_COLUMN_FACT + column;
+            }
+
+            String sqlQuery = "select "
+                    + "sum(" + BUDGET_TABLE + "." + column + ") as " + RECORD_COLUMN_SUM
+                    + " from " + BUDGET_TABLE;
+//        Log.d(LOG_TAG, sqlQuery);
+            return mDB.rawQuery(sqlQuery, null);
+        }
     }
 
 
@@ -537,7 +550,7 @@ public class DB {
                     + " where " + RECORD_TABLE + "." + RECORD_COLUMN_DATE + " like '" + seekMonth + "%'"
                     + " and " + RECORD_TABLE + "." + RECORD_COLUMN_CATEGORY_ID + " >= " + category_id
                     + " and " + RECORD_TABLE + "." + RECORD_COLUMN_CATEGORY_ID + " < " + (category_id + div_category_group);
-            Log.d(LOG_TAG, sqlQuery);
+//            Log.d(LOG_TAG, sqlQuery);
             Cursor cursor = mDB.rawQuery(sqlQuery, null);
 //            logCursor(cursor);
             if ((cursor != null) && (cursor.moveToFirst())) {
@@ -550,6 +563,38 @@ public class DB {
             Log.d(LOG_TAG, exception.toString());
         }
         return -1;
+    }
+
+
+    void refreshFactSumForAllCategories(String month) {
+        Cursor c = getPlanData(month);
+        if ((c != null) && (c.moveToFirst())) {
+//            Log.d(LOG_TAG, "plan categories count: " + c.getCount());
+            do {
+                int category_id = c.getInt(c.getColumnIndex(DB.BUDGET_COLUMN_ID));
+//                Log.d(LOG_TAG, "category_id: " + category_id);
+                updateFactSumForCategory(month, category_id);
+            } while (c.moveToNext());
+        }
+    }
+
+
+    Cursor getRemainData(String column) {
+        String sqlQuery = "select "
+                + BUDGET_TABLE + "." + BUDGET_COLUMN_ID + ", "
+                + CATEGORY_TABLE + "." + CATEGORY_COLUMN_NAME + ", "
+                + "(" + BUDGET_TABLE + "." + BUDGET_COLUMN_PLAN + column + ")"
+                + " - (" + BUDGET_TABLE + "." + BUDGET_COLUMN_FACT + column + ")"
+                + " as " + RECORD_COLUMN_SUM
+                + " from " + BUDGET_TABLE
+                + " inner join " + CATEGORY_TABLE
+                + " on " + BUDGET_TABLE + "." + BUDGET_COLUMN_ID
+                + " = " + CATEGORY_TABLE + "." + CATEGORY_COLUMN_ID
+                + " where " + CATEGORY_TABLE + "." + CATEGORY_COLUMN_PARENT + " = 0"
+                + " and " + BUDGET_TABLE + "." + BUDGET_COLUMN_PLAN + column
+                + " - " + BUDGET_TABLE + "." + BUDGET_COLUMN_FACT + column + " != 0";
+//        Log.d(LOG_TAG, sqlQuery);
+        return mDB.rawQuery(sqlQuery, null);
     }
 
 // == ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ====

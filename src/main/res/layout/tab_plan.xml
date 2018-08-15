@@ -6,93 +6,226 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
+    <RadioGroup
+        android:id="@+id/rgPlanChoice"
+        android:layout_height="wrap_content"
+        android:layout_width="wrap_content"
+        android:layout_gravity="center_horizontal"
+        android:orientation="horizontal" >
+        <RadioButton
+            android:id="@+id/rbControl"
+            android:layout_height="wrap_content"
+            android:layout_width="wrap_content"
+            android:checked="true"
+            android:text="@string/radio_control"
+            android:onClick="onPlanLayoutButtonClick" />
+        <RadioButton
+            android:id="@+id/rbPlan"
+            android:layout_height="wrap_content"
+            android:layout_width="wrap_content"
+            android:text="@string/radio_plan"
+            android:onClick="onPlanLayoutButtonClick" />
+    </RadioGroup>
+
     <LinearLayout
+        android:id="@+id/layControl"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:layout_marginTop="5sp"
-        android:layout_marginLeft="5sp"
-        android:layout_marginRight="5sp"
-        android:background="@color/colorLayoutBack">
+        android:orientation="vertical">
 
-        <TableLayout
+        <LinearLayout
             android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:layout_weight="1" >
+            android:layout_height="wrap_content"
+            android:layout_marginTop="5sp"
+            android:layout_marginLeft="5sp"
+            android:layout_marginRight="5sp"
+            android:orientation="horizontal"
+            android:baselineAligned="false" >
 
-            <TextView
+            <TableLayout
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginLeft="15sp"
-                android:layout_marginRight="15sp"
-                android:layout_marginTop="10sp"
-                android:text="@string/budget_plan"
-                android:textSize="@dimen/text_size" />
-        </TableLayout>
+                android:layout_height="match_parent"
+                android:gravity="center_vertical"
+                android:layout_weight="1" >
 
-        <TableLayout
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:layout_weight="1" >
+                <TextView
+                    android:id="@+id/tvCategory"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center_vertical"
+                    android:text="@string/plan_limit"
+                    android:layout_marginLeft="15sp"
+                    android:layout_marginRight="15sp"
+                    android:textSize="@dimen/text_size" />
 
-            <TableRow
+            </TableLayout>
+
+            <TableLayout
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
                 android:gravity="center"
-                android:layout_weight="1">
+                android:layout_weight="2" >
 
                 <TextView
-                    android:id="@+id/textMonth"
+                    android:id="@+id/tvLimitPlan"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
+                    android:layout_gravity="end"
+                    android:gravity="end"
                     android:layout_margin="5sp"
-                    android:text="@string/plan"
-                    android:textSize="@dimen/text_history_size" />
-            </TableRow>
+                    android:layout_weight="1"
+                    android:textSize="@dimen/text_history_sum_size" />
+            </TableLayout>
+        </LinearLayout>
 
-            <TableRow
+        <RelativeLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+
+            <ProgressBar
+                android:id="@+id/pbLimit"
+                style="@android:style/Widget.ProgressBar.Horizontal"
+                android:progressDrawable="@drawable/progress_drawable"
                 android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:layout_weight="1">
+                android:layout_height="wrap_content"
+                android:layout_margin="10sp"
+                android:max="100" >
+            </ProgressBar>
 
-                <TextView
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_gravity="center"
-                    android:gravity="center"
-                    android:layout_margin="5sp"
-                    android:layout_weight="1"
-                    android:text="@string/plan"
-                    android:textSize="@dimen/text_history_size" />
+            <TextView
+                android:id="@+id/tvPbLimit"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center"
+                android:textColor="@color/colorTextTab"
+                android:layout_alignBottom="@id/pbLimit"
+                android:background="@android:color/transparent" />
+        </RelativeLayout>
 
-                <TextView
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_gravity="center"
-                    android:gravity="center"
-                    android:layout_margin="5sp"
-                    android:layout_weight="1"
-                    android:text="@string/fact"
-                    android:textSize="@dimen/text_history_size" />
-            </TableRow>
-        </TableLayout>
+        <include
+            layout="@layout/item_plan_control"
+            android:id="@+id/lRemain"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginLeft="5sp"
+            android:layout_marginRight="5sp" />
+
+        <ListView
+            android:id="@+id/lvRemains"
+            android:layout_width="match_parent"
+            android:layout_height="0sp"
+            android:layout_weight="1"
+            android:layout_marginLeft="5sp"
+            android:layout_marginRight="5sp" />
+
+        <include
+            layout="@layout/item_plan_control"
+            android:id="@+id/lAlreadySpend"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginLeft="5sp"
+            android:layout_marginRight="5sp"
+            android:layout_marginBottom="5sp" />
+
     </LinearLayout>
 
-    <include
-        layout="@layout/item_plan"
-        android:id="@+id/lSpend"
+    <LinearLayout
+        android:id="@+id/layPlan"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginLeft="5sp"
-        android:layout_marginRight="5sp" />
+        android:orientation="vertical">
 
-    <ListView
-        android:id="@+id/lvPlan"
-        android:layout_width="match_parent"
-        android:layout_height="0sp"
-        android:layout_weight="1"
-        android:layout_marginLeft="5sp"
-        android:layout_marginRight="5sp"
-        android:layout_marginBottom="5sp" />
+        <LinearLayout
+            android:id="@+id/layPlanTitle"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_marginTop="5sp"
+            android:layout_marginLeft="5sp"
+            android:layout_marginRight="5sp"
+            android:background="@color/colorLayoutBack"
+            android:baselineAligned="false" >
+
+            <TableLayout
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:layout_weight="1" >
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginLeft="15sp"
+                    android:layout_marginRight="15sp"
+                    android:layout_marginTop="10sp"
+                    android:text="@string/budget_plan"
+                    android:textSize="@dimen/text_size" />
+            </TableLayout>
+
+            <TableLayout
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:layout_weight="1" >
+
+                <TableRow
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:gravity="center"
+                    android:layout_weight="1">
+
+                    <TextView
+                        android:id="@+id/textMonth"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_margin="5sp"
+                        android:text="@string/plan"
+                        android:textSize="@dimen/text_history_size" />
+                </TableRow>
+
+                <TableRow
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:layout_weight="1">
+
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_gravity="center"
+                        android:gravity="center"
+                        android:layout_margin="5sp"
+                        android:layout_weight="1"
+                        android:text="@string/plan"
+                        android:textSize="@dimen/text_history_size" />
+
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_gravity="center"
+                        android:gravity="center"
+                        android:layout_margin="5sp"
+                        android:layout_weight="1"
+                        android:text="@string/fact"
+                        android:textSize="@dimen/text_history_size" />
+                </TableRow>
+            </TableLayout>
+        </LinearLayout>
+
+        <include
+            layout="@layout/item_plan"
+            android:id="@+id/lSpend"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginLeft="5sp"
+            android:layout_marginRight="5sp" />
+
+        <ListView
+            android:id="@+id/lvPlan"
+            android:layout_width="match_parent"
+            android:layout_height="0sp"
+            android:layout_weight="1"
+            android:layout_marginLeft="5sp"
+            android:layout_marginRight="5sp"
+            android:layout_marginBottom="5sp" />
+
+    </LinearLayout>
 
 </LinearLayout>

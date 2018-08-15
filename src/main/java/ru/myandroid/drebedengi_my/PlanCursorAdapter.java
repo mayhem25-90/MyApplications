@@ -3,8 +3,6 @@ package ru.myandroid.drebedengi_my;
 import android.content.Context;
 import android.database.Cursor;
 import android.graphics.Color;
-import android.util.Log;
-import android.widget.ImageView;
 import android.widget.SimpleCursorAdapter;
 import android.widget.TextView;
 
@@ -32,7 +30,6 @@ public class PlanCursorAdapter extends SimpleCursorAdapter
             case R.id.tvSumFact:
                 if (!text.equals("")) {
                     int sum = Integer.parseInt(text);
-                    if (sum < 0) v.setTextColor(Color.RED);
                     v.setText(sumFormat.format(sum));
                 }
                 break;
@@ -40,6 +37,15 @@ public class PlanCursorAdapter extends SimpleCursorAdapter
             case R.id.tvSumPlan:
                 if (!text.equals("")) {
                     int sum = Integer.parseInt(text);
+                    v.setText(sumFormat.format(sum));
+                }
+                break;
+
+            case R.id.tvSumRemain:
+                if (!text.equals("")) {
+                    int sum = Integer.parseInt(text);
+                    if (sum < 0) v.setTextColor(Color.RED);
+                    else if (sum > 0) v.setTextColor(Color.rgb(0, 127, 0));
                     v.setText(sumFormat.format(sum));
                 }
                 break;
