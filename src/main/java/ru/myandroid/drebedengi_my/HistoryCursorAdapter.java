@@ -4,6 +4,7 @@ import android.content.Context;
 import android.database.Cursor;
 import android.graphics.Color;
 import android.util.Log;
+import android.view.View;
 import android.widget.SimpleCursorAdapter;
 import android.widget.TextView;
 
@@ -45,6 +46,26 @@ public class HistoryCursorAdapter extends SimpleCursorAdapter
 
             case R.id.tvCategory:
                 v.setTextColor(Color.BLACK);
+                if (text.equals("")) {
+                    v.setVisibility(View.GONE);
+                }
+                else v.setVisibility(View.VISIBLE);
+                break;
+
+            case R.id.tvWalletFrom:
+                v.setTextColor(Color.BLACK);
+                if (text.equals("")) {
+                    v.setVisibility(View.GONE);
+                }
+                else v.setVisibility(View.VISIBLE);
+                break;
+
+            case R.id.tvWalletTo:
+                v.setTextColor(Color.BLACK);
+                if (text.equals("")) {
+                    v.setVisibility(View.GONE);
+                }
+                else v.setVisibility(View.VISIBLE);
                 break;
 
             case R.id.tvDate:

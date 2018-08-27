@@ -561,20 +561,30 @@ public class MainActivity extends AppCompatActivity {
             // Добаляем запись в базу
             try {
                 if (operation_type == db.SPENDING || operation_type == db.GAIN) {
-                    db.addTransaction(history_item_selected_id, operation_type, m_currency_id, m_wallet_id, category_id,
-                            sum, currentDate, currentTime, comment, mode);
+                    db.addTransaction(history_item_selected_id, operation_type, category_id,
+                            sum, currentDate, currentTime, comment, mode,
+                            m_currency_id, m_wallet_id, -1);
                 }
                 else if (operation_type == db.MOVE) {
-                    db.addTransaction(history_item_selected_id, db.SPENDING, m_currency_id, m_wallet_id, category_id,
-                            -sum, currentDate, currentTime, comment, mode);
-                    db.addTransaction(history_item_selected_id, db.GAIN, m_currency_id, m_wallet_id_dest, category_id,
-                            sum, currentDate, currentTime, comment, mode);
+                    db.addTransaction(history_item_selected_id, db.MOVE, category_id,
+                            sum, currentDate, currentTime, comment, mode,
+                            m_currency_id, m_wallet_id, m_wallet_id_dest);
+
+                    // Для корректного подсчёта баланса дублируем операцию
+                    db.addTransaction(history_item_selected_id, db.SPENDING, category_id,
+                            -sum, currentDate, currentTime, comment, mode,
+                            m_currency_id, m_wallet_id, -1);
+                    db.addTransaction(history_item_selected_id, db.GAIN, category_id,
+                            sum, currentDate, currentTime, comment, mode,
+                            m_currency_id, m_wallet_id_dest, -1);
                 }
                 else if (operation_type == db.CHANGE) {
-                    db.addTransaction(history_item_selected_id, db.SPENDING, m_currency_id, m_wallet_id, category_id,
-                            -sum, currentDate, currentTime, comment, mode);
-                    db.addTransaction(history_item_selected_id, db.GAIN, m_currency_id_dest, m_wallet_id_dest, category_id,
-                            sumDest, currentDate, currentTime, comment, mode);
+                    db.addTransaction(history_item_selected_id, db.SPENDING, category_id,
+                            -sum, currentDate, currentTime, comment, mode,
+                            m_currency_id, m_wallet_id, -1);
+                    db.addTransaction(history_item_selected_id, db.GAIN, category_id,
+                            sumDest, currentDate, currentTime, comment, mode,
+                            m_currency_id_dest, m_wallet_id_dest, -1);
                 }
             }
             catch (Exception ex) {
@@ -810,10 +820,12 @@ public class MainActivity extends AppCompatActivity {
         cursor = db.getAllHistoryData();
 //        db.logCursor(cursor);
 
-        String[] from = { DB.WALLET_COLUMN_IMAGE, DB.CATEGORY_COLUMN_NAME, DB.RECORD_COLUMN_COMMENT,
+        String[] from = { DB.TABLE_COLUMN_IMAGE_FROM, DB.TABLE_COLUMN_IMAGE_TO,
+                DB.CATEGORY_COLUMN_NAME, DB.TABLE_COLUMN_NAME_FROM, DB.TABLE_COLUMN_NAME_TO, DB.RECORD_COLUMN_COMMENT,
                 DB.RECORD_COLUMN_DATE, DB.RECORD_COLUMN_TIME, DB.RECORD_COLUMN_SUM, DB.CURRENCY_COLUMN_TITLE,
                 DB.RECORD_COLUMN_SELECTED, DB.RECORD_COLUMN_SELECTED };
-        int[] to = { R.id.ivImg, R.id.tvCategory, R.id.tvComment,
+        int[] to = { R.id.ivImgFrom, R.id.ivImgTo,
+                R.id.tvCategory, R.id.tvWalletFrom, R.id.tvWalletTo, R.id.tvComment,
                 R.id.tvDate, R.id.tvTime, R.id.tvSum, R.id.tvCurrency,
                 R.id.tvDelete, R.id.tvEdit };
 

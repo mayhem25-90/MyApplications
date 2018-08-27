@@ -106,8 +106,12 @@ public class DB {
 
     // Общие названия для полей таблиц
     static final String TABLE_COLUMN_ID = "_id";
-    static final String TABLE_COLUMN_IMAGE = "image";
     static final String TABLE_COLUMN_NAME = "name";
+    static final String TABLE_COLUMN_NAME_TO = "name_to";
+    static final String TABLE_COLUMN_NAME_FROM = "name_from";
+    static final String TABLE_COLUMN_IMAGE = "image";
+    static final String TABLE_COLUMN_IMAGE_TO = "image_to";
+    static final String TABLE_COLUMN_IMAGE_FROM = "image_from";
     static final String TABLE_COLUMN_PARENT = "parent_id";
 
 
@@ -157,6 +161,7 @@ public class DB {
     static final String RECORD_COLUMN_CURRENCY_ID = "currency_id";
 //    static final String RECORD_COLUMN_CURRENCY_ID_DEST = "currency_id_dest";
     static final String RECORD_COLUMN_WALLET_ID = "wallet_id";
+    static final String RECORD_COLUMN_WALLET_ID_DEST = "wallet_id_dest";
     static final String RECORD_COLUMN_CATEGORY_ID = "category_id";
     static final String RECORD_COLUMN_SUM = "sum";
     static final String RECORD_COLUMN_DATE = "operation_date";
@@ -169,6 +174,7 @@ public class DB {
             RECORD_COLUMN_ID + " integer primary key, " +
             RECORD_COLUMN_CURRENCY_ID + " integer, " +
             RECORD_COLUMN_WALLET_ID + " integer, " +
+            RECORD_COLUMN_WALLET_ID_DEST + " integer, " +
             RECORD_COLUMN_CATEGORY_ID + " integer, " +
             RECORD_COLUMN_SUM + " real, " +
             RECORD_COLUMN_DATE + " text, " +
@@ -259,37 +265,177 @@ public class DB {
     }
 
 // == ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ====
+// 1. Операции
+// == ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ====
+
+    // Добавление записи об операции
+    void addTransaction(long id, int operation_type, long category_id,
+                        double sum, String currentDate, String currentTime, String comment, int mode,
+                        long currency_id, long wallet_id, long wallet_id_dest) {
+        ContentValues cv = new ContentValues();
+        cv.put(RECORD_COLUMN_OPERATION_TYPE, operation_type);
+        cv.put(RECORD_COLUMN_CURRENCY_ID, currency_id);
+//        cv.put(RECORD_COLUMN_CURRENCY_ID_DEST, currency_id_dest);
+        cv.put(RECORD_COLUMN_WALLET_ID, wallet_id);
+        cv.put(RECORD_COLUMN_WALLET_ID_DEST, wallet_id_dest);
+        cv.put(RECORD_COLUMN_CATEGORY_ID, category_id);
+        cv.put(RECORD_COLUMN_SUM, sum);
+//        cv.put(RECORD_COLUMN_SUM_DEST, sumDest);
+        cv.put(RECORD_COLUMN_DATE, currentDate);
+        cv.put(RECORD_COLUMN_TIME, currentTime);
+        cv.put(RECORD_COLUMN_COMMENT, comment);
+        cv.put(RECORD_COLUMN_SELECTED, 0);
+
+        try {
+            if (mode == CONFIRM_SAVE) mDB.insert(RECORD_TABLE, null, cv);
+            else if (mode == CONFIRM_EDIT)
+                mDB.update(RECORD_TABLE, cv, RECORD_COLUMN_ID + " = " + id, null);
+        }
+        catch (Exception ex) {
+            Log.d(LOG_TAG, ex.getClass() + " error: " + ex.getMessage());
+        }
+    }
+
+
+    // Удалить запись о транзакции
+    void deleteTransaction(long id) {
+        mDB.delete(RECORD_TABLE, RECORD_COLUMN_ID + " = " + id, null);
+    }
+
+
+    // Загрузка данных для редактирования транзакции
+    Cursor loadTransactionDataById(long id) {
+        return mDB.query(RECORD_TABLE, null, RECORD_COLUMN_ID + " = " + id, null, null, null, null);
+    }
+
+// == ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ====
 // 2. Журнал операций
 // == ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ====
 
     // получить данные из таблицы для вывода истории операций
     Cursor getAllHistoryData() {
-        String sqlQuery = "select "
+//        String sqlQueryBase = "select "
+//                + RECORD_TABLE + "." + RECORD_COLUMN_ID + ", "
+//                + RECORD_TABLE + "." + RECORD_COLUMN_DATE + ", "
+//                + RECORD_TABLE + "." + RECORD_COLUMN_TIME + ", "
+//                + RECORD_TABLE + "." + RECORD_COLUMN_SUM + ", "
+//                + RECORD_TABLE + "." + RECORD_COLUMN_COMMENT + ", "
+//                + RECORD_TABLE + "." + RECORD_COLUMN_SELECTED + ", "
+//                + RECORD_TABLE + "." + RECORD_COLUMN_OPERATION_TYPE + ", "
+//                + CATEGORY_TABLE + "." + CATEGORY_COLUMN_NAME + ", "
+//                + CURRENCY_TABLE + "." + CURRENCY_COLUMN_TITLE + ", "
+//                + WALLET_TABLE + "_to" + "." + WALLET_COLUMN_NAME + " as " + TABLE_COLUMN_NAME_TO + ", "
+//                + WALLET_TABLE + "_to" + "." + WALLET_COLUMN_IMAGE + " as " + TABLE_COLUMN_IMAGE_TO + ", "
+//                + WALLET_TABLE + "_from" + "." + WALLET_COLUMN_NAME + " as " + TABLE_COLUMN_NAME_FROM + ", "
+//                + WALLET_TABLE + "_from" + "." + WALLET_COLUMN_IMAGE + " as " + TABLE_COLUMN_IMAGE_FROM
+//                + " from " + RECORD_TABLE
+//
+//                + " inner join " + CATEGORY_TABLE
+//                + " on " + RECORD_TABLE + "." + RECORD_COLUMN_CATEGORY_ID
+//                + " = " + CATEGORY_TABLE + "." + CATEGORY_COLUMN_ID
+//
+//                + " inner join " + WALLET_TABLE + " as " + WALLET_TABLE + "_from"
+//                + " on " + RECORD_TABLE + "." + RECORD_COLUMN_WALLET_ID
+//                + " = " + WALLET_TABLE + "_from" + "." + WALLET_COLUMN_ID
+//
+//                + " left join " + WALLET_TABLE + " as " + WALLET_TABLE + "_to"
+//                + " on " + RECORD_TABLE + "." + RECORD_COLUMN_WALLET_ID_DEST
+//                + " = " + WALLET_TABLE + "_to" + "." + WALLET_COLUMN_ID
+//
+//                + " inner join " + CURRENCY_TABLE
+//                + " on " + RECORD_TABLE + "." + RECORD_COLUMN_CURRENCY_ID
+//                + " = " + CURRENCY_TABLE + "." + CURRENCY_COLUMN_ID;
+
+        String sqlQueryConditionSpendGain = " where "
+                + CATEGORY_TABLE + "." + CATEGORY_COLUMN_NAME + " != ''";
+
+        String sqlQueryConditionMoveChange = " where ("
+                + RECORD_COLUMN_OPERATION_TYPE + " = " + MOVE
+                + " or " + RECORD_COLUMN_OPERATION_TYPE + " = " + CHANGE + ")";
+
+//                + " where ("
+//                + CATEGORY_TABLE + "." + CATEGORY_COLUMN_NAME + " != ''"
+//                + " or " + RECORD_COLUMN_OPERATION_TYPE + " = " + MOVE
+//                + " or " + RECORD_COLUMN_OPERATION_TYPE + " = " + CHANGE + ")"
+
+        String sqlQueryOrder = " order by "
+//                + RECORD_TABLE + "."
+                + RECORD_COLUMN_DATE + " desc, "
+//                + RECORD_TABLE + "."
+                + RECORD_COLUMN_TIME + " desc";
+
+        String sqlQuery = "select * from ("
+                + sqlQueryHistoryBase("_to") + sqlQueryConditionSpendGain // выборка расходов и доходов
+                + " union "
+                + sqlQueryHistoryBase("_from") + sqlQueryConditionMoveChange // выборка перемещений и обменов
+                + ")" + sqlQueryOrder;
+
+        Log.d(LOG_TAG, sqlQuery);
+        Cursor cursor = null;
+        try {
+            cursor = mDB.rawQuery(sqlQuery, null);
+        }
+        catch (Exception ex) {
+            Log.d(LOG_TAG, ex.getClass() + " error: " + ex.getMessage());
+        }
+        return cursor;
+    }
+
+
+    // Вспомогательное формирование запроса для вывода истории
+    private String sqlQueryHistoryBase(String direction) {
+        return "select "
                 + RECORD_TABLE + "." + RECORD_COLUMN_ID + ", "
-                + CURRENCY_TABLE + "." + CURRENCY_COLUMN_TITLE + ", "
-                + WALLET_TABLE + "." + WALLET_COLUMN_IMAGE + ", "
-                + CATEGORY_TABLE + "." + CATEGORY_COLUMN_NAME + ", "
                 + RECORD_TABLE + "." + RECORD_COLUMN_DATE + ", "
                 + RECORD_TABLE + "." + RECORD_COLUMN_TIME + ", "
                 + RECORD_TABLE + "." + RECORD_COLUMN_SUM + ", "
                 + RECORD_TABLE + "." + RECORD_COLUMN_COMMENT + ", "
                 + RECORD_TABLE + "." + RECORD_COLUMN_SELECTED + ", "
-                + RECORD_TABLE + "." + RECORD_COLUMN_OPERATION_TYPE
+                + RECORD_TABLE + "." + RECORD_COLUMN_OPERATION_TYPE + ", "
+                + CATEGORY_TABLE + "." + CATEGORY_COLUMN_NAME + ", "
+                + CURRENCY_TABLE + "." + CURRENCY_COLUMN_TITLE + ", "
+                + WALLET_TABLE + "_to" + "." + WALLET_COLUMN_NAME + " as " + TABLE_COLUMN_NAME_TO + ", "
+                + WALLET_TABLE + "_to" + "." + WALLET_COLUMN_IMAGE + " as " + TABLE_COLUMN_IMAGE_TO + ", "
+//                + WALLET_TABLE + "_from" + "." + WALLET_COLUMN_NAME + " as " + TABLE_COLUMN_NAME_FROM + ", "
+                + WALLET_TABLE + direction + "." + WALLET_COLUMN_NAME + " as " + TABLE_COLUMN_NAME_FROM + ", "
+                + WALLET_TABLE + "_from" + "." + WALLET_COLUMN_IMAGE + " as " + TABLE_COLUMN_IMAGE_FROM
                 + " from " + RECORD_TABLE
+
                 + " inner join " + CATEGORY_TABLE
                 + " on " + RECORD_TABLE + "." + RECORD_COLUMN_CATEGORY_ID
                 + " = " + CATEGORY_TABLE + "." + CATEGORY_COLUMN_ID
-                + " inner join " + WALLET_TABLE
+
+                + " inner join " + WALLET_TABLE + " as " + WALLET_TABLE + "_from"
                 + " on " + RECORD_TABLE + "." + RECORD_COLUMN_WALLET_ID
-                + " = " + WALLET_TABLE + "." + WALLET_COLUMN_ID
+                + " = " + WALLET_TABLE + "_from" + "." + WALLET_COLUMN_ID
+
+                + " left join " + WALLET_TABLE + " as " + WALLET_TABLE + "_to"
+                + " on " + RECORD_TABLE + "." + RECORD_COLUMN_WALLET_ID_DEST
+                + " = " + WALLET_TABLE + "_to" + "." + WALLET_COLUMN_ID
+
                 + " inner join " + CURRENCY_TABLE
                 + " on " + RECORD_TABLE + "." + RECORD_COLUMN_CURRENCY_ID
-                + " = " + CURRENCY_TABLE + "." + CURRENCY_COLUMN_ID
-                + " order by "
-                + RECORD_TABLE + "." + RECORD_COLUMN_DATE + " desc, "
-                + RECORD_TABLE + "." + RECORD_COLUMN_TIME + " desc";
-//        Log.d(LOG_TAG, sqlQuery);
-        return mDB.rawQuery(sqlQuery, null);
+                + " = " + CURRENCY_TABLE + "." + CURRENCY_COLUMN_ID;
+    }
+
+
+    // Добавление параметра отображения "контекстного" меню в журнале операций
+    void setSelectedParameter(long id, int setParameter) {
+        ContentValues cv = new ContentValues();
+        if (setParameter == AUTO_SELECT) {
+            Cursor cursor = mDB.rawQuery("select " + RECORD_COLUMN_SELECTED + " from " + RECORD_TABLE
+                    + " where " + RECORD_COLUMN_ID + " = " + id, null);
+            if (cursor.moveToFirst()) {
+//            Log.d(LOG_TAG, "id " + id + ": now selected = " + cursor.getInt(cursor.getColumnIndex(RECORD_COLUMN_SELECTED)));
+                int dbParameter = cursor.getInt(cursor.getColumnIndex(RECORD_COLUMN_SELECTED));
+                setParameter = (dbParameter == NOT_SELECTED) ? SELECTED : NOT_SELECTED;
+            }
+            cursor.close();
+        }
+
+//        Log.d(LOG_TAG, "id " + id + ": set " + setParameter);
+        cv.put(RECORD_COLUMN_SELECTED, setParameter);
+        mDB.update(RECORD_TABLE, cv, RECORD_COLUMN_ID + " = " + id, null);
     }
 
 // == ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ====
@@ -331,65 +477,11 @@ public class DB {
                 + " on " + RECORD_TABLE + "." + RECORD_COLUMN_CURRENCY_ID
                 + " = " + CURRENCY_TABLE + "." + CURRENCY_COLUMN_ID
                 + " where " + RECORD_TABLE + "." + RECORD_COLUMN_WALLET_ID + " = " + wallet
-                + " and " + RECORD_TABLE + "." + RECORD_COLUMN_CURRENCY_ID + " = " + currency;
+                + " and " + RECORD_TABLE + "." + RECORD_COLUMN_CURRENCY_ID + " = " + currency
+                + " and (" + RECORD_TABLE + "." + RECORD_COLUMN_OPERATION_TYPE + " = " + SPENDING
+                + " or " + RECORD_TABLE + "." + RECORD_COLUMN_OPERATION_TYPE + " = " + GAIN + ")";
 //        Log.d(LOG_TAG, sqlQuery);
         return mDB.rawQuery(sqlQuery, null);
-    }
-
-
-    // Добавление записи об операции
-    // operation_type, currency_id, currency_id_dest, wallet_id, wallet_id_dest, category_id,
-    // sum, sumDest, currentDate, comment
-    void addTransaction(long id, int operation_type, long currency_id, long wallet_id, long category_id,
-                               double sum, String currentDate, String currentTime, String comment, int mode) {
-        ContentValues cv = new ContentValues();
-        cv.put(RECORD_COLUMN_OPERATION_TYPE, operation_type);
-        cv.put(RECORD_COLUMN_CURRENCY_ID, currency_id);
-//        cv.put(RECORD_COLUMN_CURRENCY_ID_DEST, currency_id_dest);
-        cv.put(RECORD_COLUMN_WALLET_ID, + wallet_id);
-//        cv.put(RECORD_COLUMN_WALLET_ID_DEST, + wallet_id_dest);
-        cv.put(RECORD_COLUMN_CATEGORY_ID, + category_id);
-        cv.put(RECORD_COLUMN_SUM, sum);
-//        cv.put(RECORD_COLUMN_SUM_DEST, sumDest);
-        cv.put(RECORD_COLUMN_DATE, currentDate);
-        cv.put(RECORD_COLUMN_TIME, currentTime);
-        cv.put(RECORD_COLUMN_COMMENT, comment);
-        cv.put(RECORD_COLUMN_SELECTED, 0);
-
-        if (mode == CONFIRM_SAVE) mDB.insert(RECORD_TABLE, null, cv);
-        else if (mode == CONFIRM_EDIT) mDB.update(RECORD_TABLE, cv, RECORD_COLUMN_ID + " = " + id, null);
-    }
-
-
-    // Добавление параметра отображения "контекстного" меню в журнале операций
-    void setSelectedParameter(long id, int setParameter) {
-        ContentValues cv = new ContentValues();
-        if (setParameter == AUTO_SELECT) {
-            Cursor cursor = mDB.rawQuery("select " + RECORD_COLUMN_SELECTED + " from " + RECORD_TABLE
-                    + " where " + RECORD_COLUMN_ID + " = " + id, null);
-            if (cursor.moveToFirst()) {
-//            Log.d(LOG_TAG, "id " + id + ": now selected = " + cursor.getInt(cursor.getColumnIndex(RECORD_COLUMN_SELECTED)));
-                int dbParameter = cursor.getInt(cursor.getColumnIndex(RECORD_COLUMN_SELECTED));
-                setParameter = (dbParameter == NOT_SELECTED) ? SELECTED : NOT_SELECTED;
-            }
-            cursor.close();
-        }
-
-//        Log.d(LOG_TAG, "id " + id + ": set " + setParameter);
-        cv.put(RECORD_COLUMN_SELECTED, setParameter);
-        mDB.update(RECORD_TABLE, cv, RECORD_COLUMN_ID + " = " + id, null);
-    }
-
-
-    // Удалить запись из DB_TABLE
-    void deleteTransaction(long id) {
-        mDB.delete(RECORD_TABLE, RECORD_COLUMN_ID + " = " + id, null);
-    }
-
-
-    // Загрузка данных для редактирования транзакции
-    Cursor loadTransactionDataById(long id) {
-        return mDB.query(RECORD_TABLE, null, RECORD_COLUMN_ID + " = " + id, null, null, null, null);
     }
 
 // == ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ====
@@ -454,9 +546,9 @@ public class DB {
     static final int PLAN = 0, FACT = 1, REMAIN = 2;
 
     void addColumnToBudgetTable(String newColumn) {
-        String sqlQuery = "alter table " + BUDGET_TABLE + " add column " + BUDGET_COLUMN_PLAN + newColumn
-                + " text default 0";
-        Log.d(LOG_TAG, sqlQuery);
+        String sqlQuery = "alter table " + BUDGET_TABLE
+                + " add column " + BUDGET_COLUMN_PLAN + newColumn + " text default 0";
+//        Log.d(LOG_TAG, sqlQuery);
         try {
             mDB.execSQL(sqlQuery);
         }
@@ -464,9 +556,9 @@ public class DB {
             Log.d(LOG_TAG, ex.getClass() + " error: " + ex.getMessage());
         }
 
-        sqlQuery = "alter table " + BUDGET_TABLE + " add column " + BUDGET_COLUMN_FACT + newColumn
-                + " text default 0";
-        Log.d(LOG_TAG, sqlQuery);
+        sqlQuery = "alter table " + BUDGET_TABLE
+                + " add column " + BUDGET_COLUMN_FACT + newColumn + " text default 0";
+//        Log.d(LOG_TAG, sqlQuery);
         try {
             mDB.execSQL(sqlQuery);
         }
@@ -529,7 +621,7 @@ public class DB {
     }
 
 
-    void updateFactSumForCategory(String column, long id) {
+    private void updateFactSumForCategory(String column, long id) {
         int factSum = calculateFactSumForCategory(column, id);
 
         ContentValues cv = new ContentValues();
@@ -652,7 +744,7 @@ public class DB {
             db.execSQL(CATEGORY_TABLE_CREATE);
             cv.clear();
             cv.put(CATEGORY_COLUMN_ID, -1);
-            cv.put(CATEGORY_COLUMN_NAME, "<->");
+            cv.put(CATEGORY_COLUMN_NAME, "");
             db.insert(CATEGORY_TABLE, null, cv);
             for (int i = 0; i < categoryData.length; i++) {
                 cv.clear();
