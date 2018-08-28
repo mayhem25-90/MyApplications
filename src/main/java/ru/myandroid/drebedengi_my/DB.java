@@ -112,6 +112,8 @@ public class DB {
     static final String TABLE_COLUMN_IMAGE = "image";
     static final String TABLE_COLUMN_IMAGE_TO = "image_to";
     static final String TABLE_COLUMN_IMAGE_FROM = "image_from";
+    static final String TABLE_COLUMN_TITLE_TO = "title_to";
+    static final String TABLE_COLUMN_TITLE_FROM = "title_from";
     static final String TABLE_COLUMN_PARENT = "parent_id";
 
 
@@ -159,11 +161,12 @@ public class DB {
     static final String RECORD_TABLE = "records";
     static final String RECORD_COLUMN_ID = "_id";
     static final String RECORD_COLUMN_CURRENCY_ID = "currency_id";
-//    static final String RECORD_COLUMN_CURRENCY_ID_DEST = "currency_id_dest";
+    static final String RECORD_COLUMN_CURRENCY_ID_DEST = "currency_id_dest";
     static final String RECORD_COLUMN_WALLET_ID = "wallet_id";
     static final String RECORD_COLUMN_WALLET_ID_DEST = "wallet_id_dest";
     static final String RECORD_COLUMN_CATEGORY_ID = "category_id";
     static final String RECORD_COLUMN_SUM = "sum";
+    static final String RECORD_COLUMN_SUM_MOVE = "sum_move";
     static final String RECORD_COLUMN_DATE = "operation_date";
     static final String RECORD_COLUMN_TIME = "operation_time";
     static final String RECORD_COLUMN_COMMENT = "comment";
@@ -173,10 +176,12 @@ public class DB {
     private static final String RECORD_TABLE_CREATE = "create table " + RECORD_TABLE + "(" +
             RECORD_COLUMN_ID + " integer primary key, " +
             RECORD_COLUMN_CURRENCY_ID + " integer, " +
+            RECORD_COLUMN_CURRENCY_ID_DEST + " integer, " +
             RECORD_COLUMN_WALLET_ID + " integer, " +
             RECORD_COLUMN_WALLET_ID_DEST + " integer, " +
             RECORD_COLUMN_CATEGORY_ID + " integer, " +
             RECORD_COLUMN_SUM + " real, " +
+            RECORD_COLUMN_SUM_MOVE + " real, " +
             RECORD_COLUMN_DATE + " text, " +
             RECORD_COLUMN_TIME + " text, " +
             RECORD_COLUMN_COMMENT + " text, " +
@@ -269,18 +274,26 @@ public class DB {
 // == ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ====
 
     // Добавление записи об операции
-    void addTransaction(long id, int operation_type, long category_id,
-                        double sum, String currentDate, String currentTime, String comment, int mode,
-                        long currency_id, long wallet_id, long wallet_id_dest) {
+    void addTransaction(int mode, long id, int operation_type, long category_id,
+                        double sum, double sum_dest, String currentDate, String currentTime, String comment,
+                        long currency_id, long currency_id_dest, long wallet_id, long wallet_id_dest) {
         ContentValues cv = new ContentValues();
         cv.put(RECORD_COLUMN_OPERATION_TYPE, operation_type);
         cv.put(RECORD_COLUMN_CURRENCY_ID, currency_id);
-//        cv.put(RECORD_COLUMN_CURRENCY_ID_DEST, currency_id_dest);
+        cv.put(RECORD_COLUMN_CURRENCY_ID_DEST, currency_id_dest);
         cv.put(RECORD_COLUMN_WALLET_ID, wallet_id);
         cv.put(RECORD_COLUMN_WALLET_ID_DEST, wallet_id_dest);
         cv.put(RECORD_COLUMN_CATEGORY_ID, category_id);
-        cv.put(RECORD_COLUMN_SUM, sum);
-//        cv.put(RECORD_COLUMN_SUM_DEST, sumDest);
+        if ((operation_type == SPENDING) || (operation_type == GAIN)) {
+            cv.put(RECORD_COLUMN_SUM, sum);
+        }
+        else if (operation_type == MOVE) {
+            cv.put(RECORD_COLUMN_SUM_MOVE, sum);
+        }
+        else if (operation_type == CHANGE) {
+            cv.put(RECORD_COLUMN_SUM, sum_dest);
+            cv.put(RECORD_COLUMN_SUM_MOVE, sum);
+        }
         cv.put(RECORD_COLUMN_DATE, currentDate);
         cv.put(RECORD_COLUMN_TIME, currentTime);
         cv.put(RECORD_COLUMN_COMMENT, comment);
@@ -370,7 +383,7 @@ public class DB {
                 + sqlQueryHistoryBase("_from") + sqlQueryConditionMoveChange // выборка перемещений и обменов
                 + ")" + sqlQueryOrder;
 
-        Log.d(LOG_TAG, sqlQuery);
+//        Log.d(LOG_TAG, sqlQuery);
         Cursor cursor = null;
         try {
             cursor = mDB.rawQuery(sqlQuery, null);
@@ -389,16 +402,18 @@ public class DB {
                 + RECORD_TABLE + "." + RECORD_COLUMN_DATE + ", "
                 + RECORD_TABLE + "." + RECORD_COLUMN_TIME + ", "
                 + RECORD_TABLE + "." + RECORD_COLUMN_SUM + ", "
+                + RECORD_TABLE + "." + RECORD_COLUMN_SUM_MOVE + ", "
                 + RECORD_TABLE + "." + RECORD_COLUMN_COMMENT + ", "
                 + RECORD_TABLE + "." + RECORD_COLUMN_SELECTED + ", "
                 + RECORD_TABLE + "." + RECORD_COLUMN_OPERATION_TYPE + ", "
                 + CATEGORY_TABLE + "." + CATEGORY_COLUMN_NAME + ", "
-                + CURRENCY_TABLE + "." + CURRENCY_COLUMN_TITLE + ", "
                 + WALLET_TABLE + "_to" + "." + WALLET_COLUMN_NAME + " as " + TABLE_COLUMN_NAME_TO + ", "
                 + WALLET_TABLE + "_to" + "." + WALLET_COLUMN_IMAGE + " as " + TABLE_COLUMN_IMAGE_TO + ", "
 //                + WALLET_TABLE + "_from" + "." + WALLET_COLUMN_NAME + " as " + TABLE_COLUMN_NAME_FROM + ", "
                 + WALLET_TABLE + direction + "." + WALLET_COLUMN_NAME + " as " + TABLE_COLUMN_NAME_FROM + ", "
-                + WALLET_TABLE + "_from" + "." + WALLET_COLUMN_IMAGE + " as " + TABLE_COLUMN_IMAGE_FROM
+                + WALLET_TABLE + "_from" + "." + WALLET_COLUMN_IMAGE + " as " + TABLE_COLUMN_IMAGE_FROM + ", "
+                + CURRENCY_TABLE + "_to" + "." + CURRENCY_COLUMN_TITLE + " as " + TABLE_COLUMN_TITLE_TO + ", "
+                + CURRENCY_TABLE + "_from" + "." + CURRENCY_COLUMN_TITLE + " as " + TABLE_COLUMN_TITLE_FROM
                 + " from " + RECORD_TABLE
 
                 + " inner join " + CATEGORY_TABLE
@@ -413,9 +428,13 @@ public class DB {
                 + " on " + RECORD_TABLE + "." + RECORD_COLUMN_WALLET_ID_DEST
                 + " = " + WALLET_TABLE + "_to" + "." + WALLET_COLUMN_ID
 
-                + " inner join " + CURRENCY_TABLE
+                + " left join " + CURRENCY_TABLE + " as " + CURRENCY_TABLE + "_from"
                 + " on " + RECORD_TABLE + "." + RECORD_COLUMN_CURRENCY_ID
-                + " = " + CURRENCY_TABLE + "." + CURRENCY_COLUMN_ID;
+                + " = " + CURRENCY_TABLE + "_from" + "." + CURRENCY_COLUMN_ID
+
+                + " left join " + CURRENCY_TABLE + " as " + CURRENCY_TABLE + "_to"
+                + " on " + RECORD_TABLE + "." + RECORD_COLUMN_CURRENCY_ID_DEST
+                + " = " + CURRENCY_TABLE + "_to" + "." + CURRENCY_COLUMN_ID;
     }
 
 

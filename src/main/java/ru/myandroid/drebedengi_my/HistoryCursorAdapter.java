@@ -38,10 +38,43 @@ public class HistoryCursorAdapter extends SimpleCursorAdapter
 
         switch (v.getId()) {
             case R.id.tvSum:
-                double sum = Double.parseDouble(text);
-                if (sum < 0) v.setTextColor(Color.RED);
-                else if (sum > 0) v.setTextColor(Color.rgb(0, 127, 0));
-                v.setText(sumFormat.format(sum));
+                if (text.equals("")) {
+                    v.setVisibility(View.GONE);
+                }
+                else {
+                    v.setVisibility(View.VISIBLE);
+                    double sum = Double.parseDouble(text);
+                    if (sum < 0) v.setTextColor(Color.RED);
+                    else if (sum > 0) v.setTextColor(Color.rgb(0, 127, 0));
+                    v.setText(sumFormat.format(sum));
+                }
+                break;
+
+            case R.id.tvSumMove:
+                if (text.equals("")) {
+                    v.setVisibility(View.GONE);
+                }
+                else {
+                    v.setVisibility(View.VISIBLE);
+                    double sumMove = Double.parseDouble(text);
+                    if (sumMove < 0) v.setTextColor(Color.RED);
+                    else if (sumMove > 0) v.setTextColor(Color.BLACK);
+                    v.setText(sumFormat.format(sumMove));
+                }
+                break;
+
+            case R.id.tvCurrency:
+                if (text.equals("")) {
+                    v.setVisibility(View.GONE);
+                }
+                else v.setVisibility(View.VISIBLE);
+                break;
+
+            case R.id.tvCurrencyMove:
+                if (text.equals("")) {
+                    v.setVisibility(View.GONE);
+                }
+                else v.setVisibility(View.VISIBLE);
                 break;
 
             case R.id.tvCategory:
