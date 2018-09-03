@@ -571,10 +571,10 @@ public class MainActivity extends AppCompatActivity {
                             -1, m_currency_id, m_wallet_id, m_wallet_id_dest);
 
                     // Для корректного подсчёта баланса дублируем операцию
-                    db.addTransaction(mode, history_item_selected_id, db.SPENDING, category_id,
+                    db.addTransaction(mode, history_item_selected_id + 1, db.SPENDING, category_id,
                             -sum, -1, currentDate, currentTime, comment,
                             m_currency_id, -1, m_wallet_id, -1);
-                    db.addTransaction(mode, history_item_selected_id, db.GAIN, category_id,
+                    db.addTransaction(mode, history_item_selected_id + 2, db.GAIN, category_id,
                             sum, -1, currentDate, currentTime, comment,
                             m_currency_id, -1, m_wallet_id_dest, -1);
                 }
@@ -584,10 +584,10 @@ public class MainActivity extends AppCompatActivity {
                             m_currency_id_dest, m_currency_id, m_wallet_id, m_wallet_id_dest);
 
                     // Для корректного подсчёта баланса дублируем операцию
-                    db.addTransaction(mode, history_item_selected_id, db.SPENDING, category_id,
+                    db.addTransaction(mode, history_item_selected_id + 1, db.SPENDING, category_id,
                             -sum, -1, currentDate, currentTime, comment,
                             m_currency_id, -1, m_wallet_id, -1);
-                    db.addTransaction(mode, history_item_selected_id, db.GAIN, category_id,
+                    db.addTransaction(mode, history_item_selected_id + 2, db.GAIN, category_id,
                             sumDest, -1, currentDate, currentTime, comment,
                             m_currency_id_dest, -1, m_wallet_id_dest, -1);
                 }
@@ -712,10 +712,14 @@ public class MainActivity extends AppCompatActivity {
         if (cursor.moveToFirst()) {
             int operationType = cursor.getInt(cursor.getColumnIndex(DB.RECORD_COLUMN_OPERATION_TYPE));
             int currencyID = cursor.getInt(cursor.getColumnIndex(DB.RECORD_COLUMN_CURRENCY_ID));
+            int currencyIDDest = cursor.getInt(cursor.getColumnIndex(DB.RECORD_COLUMN_CURRENCY_ID_DEST));
             int walletID = cursor.getInt(cursor.getColumnIndex(DB.RECORD_COLUMN_WALLET_ID));
+            int walletIDDest = cursor.getInt(cursor.getColumnIndex(DB.RECORD_COLUMN_WALLET_ID_DEST));
             int categoryID = cursor.getInt(cursor.getColumnIndex(DB.RECORD_COLUMN_CATEGORY_ID));
             int sum = cursor.getInt(cursor.getColumnIndex(DB.RECORD_COLUMN_SUM));
+            int sumMove = cursor.getInt(cursor.getColumnIndex(DB.RECORD_COLUMN_SUM_MOVE));
             String operationDateText = cursor.getString(cursor.getColumnIndex(DB.RECORD_COLUMN_DATE));
+            String operationTimeText = cursor.getString(cursor.getColumnIndex(DB.RECORD_COLUMN_TIME));
             String comment = cursor.getString(cursor.getColumnIndex(DB.RECORD_COLUMN_COMMENT));
 
 //            Log.d(LOG_TAG, "operationType = " + operationType);
@@ -729,19 +733,28 @@ public class MainActivity extends AppCompatActivity {
             rgOperationChoice.check(radioButtons[operationType - 1]);
             onButtonClick(findViewById(radioButtons[operationType - 1]));
 
-            spinCurrency.setSelection(getSpinnerIndexByID(currencyID, spinCurrencyBind));
-            spinCurrencyDest.setSelection(getSpinnerIndexByID(currencyID, spinCurrencyDestBind));
+            if ((operationType == db.SPENDING) || (operationType == db.GAIN)) {
+                etSum.setText(String.valueOf(abs(sum)));
+                spinCurrency.setSelection(getSpinnerIndexByID(currencyID, spinCurrencyBind));
+                spinCurrencyDest.setSelection(getSpinnerIndexByID(currencyIDDest, spinCurrencyDestBind));
+            }
+            else if ((operationType == db.MOVE) || (operationType == db.CHANGE)) {
+                etSum.setText(String.valueOf(abs(sumMove)));
+                etSumDest.setText(String.valueOf(abs(sum)));
+                spinCurrency.setSelection(getSpinnerIndexByID(currencyIDDest, spinCurrencyBind));
+                spinCurrencyDest.setSelection(getSpinnerIndexByID(currencyID, spinCurrencyDestBind));
+            }
+
             spinWallet.setSelection(getSpinnerIndexByID(walletID, spinWalletBind));
-            spinWalletDest.setSelection(getSpinnerIndexByID(walletID, spinWalletDestBind));
+            spinWalletDest.setSelection(getSpinnerIndexByID(walletIDDest, spinWalletDestBind));
             if (categoryID < db.div_category_gain) {
                 spinCategory.setSelection(getSpinnerIndexByID(categoryID, spinCategoryBind));
             }
             else spinSource.setSelection(getSpinnerIndexByID(categoryID, spinSourceBind));
 
-            etSum.setText(String.valueOf(abs(sum)));
             etComment.setText(comment);
             try {
-                operationDate.setTime(dbDateFormat.parse(operationDateText));
+                operationDate.setTime(new SimpleDateFormat("yyyy-MM-dd_HH:mm:ss", Locale.US).parse(operationDateText + "_" + operationTimeText));
                 btnDate.setText(checkDateForToday(operationDate.getTime()));
             }
             catch (Exception exception) {
@@ -823,7 +836,7 @@ public class MainActivity extends AppCompatActivity {
     // Загрузка истории операций из БД
     public void loadDataForOperationHistory() {
         cursor = db.getAllHistoryData();
-        db.logCursor(cursor);
+//        db.logCursor(cursor);
 
         String[] from = { DB.TABLE_COLUMN_IMAGE_FROM, DB.TABLE_COLUMN_IMAGE_TO,
                 DB.CATEGORY_COLUMN_NAME, DB.TABLE_COLUMN_NAME_FROM, DB.TABLE_COLUMN_NAME_TO, DB.RECORD_COLUMN_COMMENT,

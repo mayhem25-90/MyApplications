@@ -300,9 +300,14 @@ public class DB {
         cv.put(RECORD_COLUMN_SELECTED, 0);
 
         try {
-            if (mode == CONFIRM_SAVE) mDB.insert(RECORD_TABLE, null, cv);
-            else if (mode == CONFIRM_EDIT)
+            if (mode == CONFIRM_SAVE) {
+                mDB.insert(RECORD_TABLE, null, cv);
+//                Log.d(LOG_TAG, "ins id = " + ins_id);
+            }
+            else if (mode == CONFIRM_EDIT) {
                 mDB.update(RECORD_TABLE, cv, RECORD_COLUMN_ID + " = " + id, null);
+//                Log.d(LOG_TAG, "upd id = " + id);
+            }
         }
         catch (Exception ex) {
             Log.d(LOG_TAG, ex.getClass() + " error: " + ex.getMessage());
@@ -312,7 +317,19 @@ public class DB {
 
     // Удалить запись о транзакции
     void deleteTransaction(long id) {
-        mDB.delete(RECORD_TABLE, RECORD_COLUMN_ID + " = " + id, null);
+        Cursor cursor = mDB.rawQuery("select " + RECORD_COLUMN_OPERATION_TYPE + " from " + RECORD_TABLE
+                + " where " + RECORD_COLUMN_ID + " = " + id, null);
+        if (cursor.moveToFirst()) {
+            Log.d(LOG_TAG, "Operation has type " + cursor.getInt(cursor.getColumnIndex(RECORD_COLUMN_OPERATION_TYPE)) + " | id " + id);
+            int type = cursor.getInt(cursor.getColumnIndex(RECORD_COLUMN_OPERATION_TYPE));
+            mDB.delete(RECORD_TABLE, RECORD_COLUMN_ID + " = " + id, null);
+            if ((type == MOVE) || (type == CHANGE)) { // Также удаляем фейковые операции для корректного баланса
+                Log.d(LOG_TAG, "Also delete id's " + (id + 1) + " and " + (id + 2));
+                mDB.delete(RECORD_TABLE, RECORD_COLUMN_ID + " = " + (id + 1), null);
+                mDB.delete(RECORD_TABLE, RECORD_COLUMN_ID + " = " + (id + 2), null);
+            }
+        }
+        cursor.close();
     }
 
 
@@ -769,7 +786,6 @@ public class DB {
                 cv.clear();
                 cv.put(CATEGORY_COLUMN_ID, categoryGroupData[i]);
                 cv.put(CATEGORY_COLUMN_NAME, categoryData[i]);
-//                cv.put(CATEGORY_COLUMN_GROUP, categoryGroupData[i]);
                 cv.put(CATEGORY_COLUMN_PARENT, categoryParentData[i]);
                 if (categoryGroupData[i] % div_category_group != 0) {
                     cv.put(CATEGORY_COLUMN_IMAGE, R.mipmap.empty42);
@@ -780,7 +796,6 @@ public class DB {
                 cv.clear();
                 cv.put(CATEGORY_COLUMN_ID, sourcesGroupData[i] + div_category_gain);
                 cv.put(CATEGORY_COLUMN_NAME, sourcesData[i]);
-//                cv.put(CATEGORY_COLUMN_GROUP, sourcesGroupData[i]);
                 if (sourcesGroupData[i] % div_category_group != 0) {
                     cv.put(CATEGORY_COLUMN_IMAGE, R.mipmap.empty42);
                 }
