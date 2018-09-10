@@ -17,4 +17,5 @@
 
     <color name="positive">#008800</color>
     <color name="negative">#FF0000</color>
+    <color name="negativeProgress">#880000</color>
 </resources>

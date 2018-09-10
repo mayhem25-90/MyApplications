@@ -8,6 +8,7 @@ import android.app.TimePickerDialog;
 import android.content.DialogInterface;
 import android.database.Cursor;
 import android.graphics.Color;
+import android.graphics.PorterDuff;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.text.InputType;
@@ -601,9 +602,10 @@ public class MainActivity extends AppCompatActivity {
                 etSumDest.setText("");
                 etComment.setText("");
 
-                // А ещё обновим историю операций и баланс
+                // А ещё обновим историю операций, баланс и бюджет
                 loadDataForOperationHistory();
                 loadDataForBalance();
+                refreshPlanTab();
 
                 if (mode == db.CONFIRM_EDIT) {
                     tabHost.setCurrentTabByTag(getString(R.string.history_tab));
@@ -612,17 +614,6 @@ public class MainActivity extends AppCompatActivity {
                     btnEdit.setVisibility(View.GONE);
                     btnCancel.setVisibility(View.GONE);
                 }
-
-//                long last_record_category_group_id = db.div_category_group * ((int) (category_id / db.div_category_group));
-//                Log.d(LOG_TAG, "last_record_category_group_id: " + last_record_category_group_id);
-
-                String last_record_operation_month = dbBudgetDateFormat.format(operationDate.getTime());
-//                Log.d(LOG_TAG, "last_record_operation_date: " + last_record_operation_date);
-
-//                db.updateFactSumForCategory(last_record_operation_month, last_record_category_group_id);
-                db.refreshFactSumForAllCategories(last_record_operation_month);
-                loadDataForControlList();
-                loadDataForPlanList();
             }
         }
         else {
@@ -638,9 +629,10 @@ public class MainActivity extends AppCompatActivity {
                     db.deleteTransaction(history_item_selected_id);
                     Toast.makeText(MainActivity.this, R.string.record_deleted, Toast.LENGTH_SHORT).show();
 
-                    // А ещё обновим историю операций и баланс
+                    // А ещё обновим историю операций, баланс и бюджет
                     loadDataForOperationHistory();
                     loadDataForBalance();
+                    refreshPlanTab();
                     break;
 
                 case Dialog.BUTTON_NEUTRAL: // Нейтральная кнопка
@@ -1080,7 +1072,7 @@ public class MainActivity extends AppCompatActivity {
 
     RadioGroup rgPlanChoice;
     TextView textMonth, tvSumPlan, tvSumFact;
-    TextView tvLimitPlan, tvLRemainSum, tvLAlreadySpendSum;
+    TextView tvLimitPlanLabel, tvLimitPlan, tvLRemainSum, tvLAlreadySpendSum;
     ListView lvPlan, lvRemains;
     LinearLayout layControl, layPlan;
     LinearLayout lRemain, lAlreadySpend, lSpend, layPlanTitle;
@@ -1100,6 +1092,9 @@ public class MainActivity extends AppCompatActivity {
         layControl = (LinearLayout) findViewById(R.id.layControl);
 
         tvLimitPlan = (TextView) findViewById(R.id.tvLimitPlan);
+        tvLimitPlanLabel = (TextView) findViewById(R.id.tvLimitPlanLabel);
+        String limitPlanLabelText = getString(R.string.plan_limit) + " (" + planDateFormat.format(planDate.getTime()) + ")";
+        tvLimitPlanLabel.setText(limitPlanLabelText);
 
         pbLimit = (ProgressBar) findViewById(R.id.pbLimit);
         tvPbLimit = (TextView) findViewById(R.id.tvPbLimit);
@@ -1168,6 +1163,13 @@ public class MainActivity extends AppCompatActivity {
     }
 
 
+    private void refreshPlanTab() {
+        db.refreshFactSumForAllCategories(dbBudgetDateFormat.format(operationDate.getTime()));
+        loadDataForControlList();
+        loadDataForPlanList();
+    }
+
+
     int updatePlanSum(int columnType, TextView tvSum, Calendar date) {
         DecimalFormatSymbols sumFormatSymbols = new DecimalFormatSymbols();
         sumFormatSymbols.setGroupingSeparator(' ');
@@ -1199,6 +1201,12 @@ public class MainActivity extends AppCompatActivity {
         String percentLimitTxt = String.valueOf(percentLimit) + "%";
         pbLimit.setProgress(percentLimit);
         tvPbLimit.setText(percentLimitTxt);
+        if ((percentLimit < 0) || (percentLimit > 100)) {
+            pbLimit.getProgressDrawable().setColorFilter(getResources().getColor(R.color.negativeProgress), PorterDuff.Mode.SRC_IN);
+        }
+        else {
+            pbLimit.setProgressDrawable(getResources().getDrawable(R.drawable.progress_drawable));
+        }
 
         String currMonth = dbBudgetDateFormat.format(Calendar.getInstance().getTime());
         cursor = db.getRemainData(currMonth);

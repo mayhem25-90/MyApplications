@@ -45,6 +45,7 @@ public class PlanCursorAdapter extends SimpleCursorAdapter
                 if (!text.equals("")) {
                     int sum = Integer.parseInt(text);
                     if (sum < 0) v.setTextColor(Color.RED);
+                    else if (sum == 0) v.setTextColor(Color.GRAY);
                     else if (sum > 0) v.setTextColor(Color.rgb(0, 127, 0));
                     v.setText(sumFormat.format(sum));
                 }
