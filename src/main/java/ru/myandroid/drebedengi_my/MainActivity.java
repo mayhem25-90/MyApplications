@@ -92,6 +92,9 @@ public class MainActivity extends AppCompatActivity {
                 // Скрываем клавиатуру:
                 InputMethodManager inputMethodManager = (InputMethodManager) getSystemService(Activity.INPUT_METHOD_SERVICE);
                 inputMethodManager.hideSoftInputFromWindow(getCurrentFocus().getWindowToken(), 0);
+
+                // Обновляем дату, если последняя операция была сегодня
+                actualizeDate();
             }
         });
 
@@ -326,6 +329,14 @@ public class MainActivity extends AppCompatActivity {
             }
             else btnDateFormat = new SimpleDateFormat("dd MMM yyyy, EEE", Locale.US);
             return btnDateFormat.format(checkedDate);
+        }
+    }
+
+
+    void actualizeDate() {
+        if (dbDateFormat.format(operationDate.getTime()).equals(dbDateFormat.format(Calendar.getInstance().getTime()))) {
+            operationDate.setTime(Calendar.getInstance().getTime());
+            btnTime.setText(btnTimeFormat.format(operationDate.getTime()));
         }
     }
 
@@ -601,6 +612,9 @@ public class MainActivity extends AppCompatActivity {
                 etSum.setText("");
                 etSumDest.setText("");
                 etComment.setText("");
+
+                // Если операция была за сегодняшний день, ставим актуальное время для новой
+                actualizeDate();
 
                 // А ещё обновим историю операций, баланс и бюджет
                 loadDataForOperationHistory();
