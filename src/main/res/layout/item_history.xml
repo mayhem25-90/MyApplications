@@ -12,29 +12,49 @@
         android:baselineAligned="false"
         android:orientation="horizontal">
 
-        <TableLayout
+        <LinearLayout
+            android:baselineAligned="false"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
+            android:orientation="horizontal"
             android:layout_weight="4" >
 
-            <ImageView
-                android:id="@+id/ivImgFrom"
+            <TableLayout
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_gravity="center_horizontal"
-                android:layout_marginLeft="5sp"
-                android:layout_marginRight="5sp"
-                android:src="@mipmap/ic_launcher" />
+                android:layout_weight="1" >
+                <ImageView
+                    android:id="@+id/ivImgMove"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center_horizontal" />
+                    <!--android:src="@mipmap/arrow" />-->
+            </TableLayout>
 
-            <ImageView
-                android:id="@+id/ivImgTo"
+            <TableLayout
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_gravity="center_horizontal"
-                android:layout_marginLeft="5sp"
-                android:layout_marginRight="5sp"
-                android:src="@mipmap/ic_launcher" />
-        </TableLayout>
+                android:layout_weight="1" >
+
+                <ImageView
+                    android:id="@+id/ivImgFrom"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center_horizontal"
+                    android:layout_marginLeft="5sp"
+                    android:layout_marginRight="5sp"
+                    android:src="@mipmap/ic_launcher" />
+
+                <ImageView
+                    android:id="@+id/ivImgTo"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center_horizontal"
+                    android:layout_marginLeft="5sp"
+                    android:layout_marginRight="5sp"
+                    android:src="@mipmap/ic_launcher" />
+            </TableLayout>
+        </LinearLayout>
 
         <LinearLayout
             android:layout_width="match_parent"

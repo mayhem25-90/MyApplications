@@ -1,14 +1,15 @@
 <resources>
-    <string name="app_name">drebedengi_my</string>
+    <!--<string name="app_name">drebedengi_my</string>-->
+    <string name="app_name">Деньги</string>
     <string name="title_activity_main2">MainActivity2</string>
     <string name="title_home">Home</string>
     <string name="title_dashboard">Dashboard</string>
     <string name="title_notifications">Notifications</string>
 
     <string name="operations_tab">Ввод</string>
-    <string name="history_tab">Журнал</string>
-    <string name="balance_tab">Баланс</string>
-    <string name="edit_categories_tab">Катег.</string>
+    <string name="history_tab">Жур.</string>
+    <string name="balance_tab">Бал.</string>
+    <string name="edit_categories_tab">Кат.</string>
     <string name="plan_tab">План</string>
 
     <string name="radio_spend">Расходы</string>

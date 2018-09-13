@@ -844,12 +844,12 @@ public class MainActivity extends AppCompatActivity {
         cursor = db.getAllHistoryData();
 //        db.logCursor(cursor);
 
-        String[] from = { DB.TABLE_COLUMN_IMAGE_FROM, DB.TABLE_COLUMN_IMAGE_TO,
+        String[] from = { DB.TABLE_COLUMN_IMAGE_FROM, DB.TABLE_COLUMN_IMAGE_TO, DB.RECORD_COLUMN_OPERATION_TYPE,
                 DB.CATEGORY_COLUMN_NAME, DB.TABLE_COLUMN_NAME_FROM, DB.TABLE_COLUMN_NAME_TO, DB.RECORD_COLUMN_COMMENT,
                 DB.RECORD_COLUMN_SUM, DB.RECORD_COLUMN_SUM_MOVE, DB.TABLE_COLUMN_TITLE_FROM, DB.TABLE_COLUMN_TITLE_TO,
                 DB.RECORD_COLUMN_DATE, DB.RECORD_COLUMN_TIME, DB.RECORD_COLUMN_SELECTED, DB.RECORD_COLUMN_SELECTED };
 
-        int[] to = { R.id.ivImgFrom, R.id.ivImgTo,
+        int[] to = { R.id.ivImgFrom, R.id.ivImgTo, R.id.ivImgMove,
                 R.id.tvCategory, R.id.tvWalletFrom, R.id.tvWalletTo, R.id.tvComment,
                 R.id.tvSum, R.id.tvSumMove, R.id.tvCurrency, R.id.tvCurrencyMove,
                 R.id.tvDate, R.id.tvTime, R.id.tvDelete, R.id.tvEdit };

@@ -16,7 +16,7 @@ public class DB {
 
     private final String LOG_TAG = "myLogs";
 
-    final int SPENDING = 1, GAIN = 2, MOVE = 3, CHANGE = 4;
+    static final int SPENDING = 1, GAIN = 2, MOVE = 3, CHANGE = 4;
     final int AUTO_SELECT = -1, NOT_SELECTED = 0, SELECTED = 1;
     final int CONFIRM_SAVE = 0, CONFIRM_EDIT = 1;
 
@@ -90,14 +90,18 @@ public class DB {
             17, 17 };
     private String[] sourcesData = { "Работа (\"Агат\")", "Фриланс", "ООО \"Атлант+\"", "Альтернатива", "Родители", "Подарки", "Разное" };
     private final int[] sourcesGroupData = { 1000, 2000, 3000, 4000, 5000, 6000, 7000 };
-    private String[] walletData = { "Кошелёк", "Ящик домашний", "Карта \"Сбербанк\" (Visa)", "Карта \"Тинькофф\" (Visa)", "Яндекс.Деньги", "\"Детские деньги\"", "Счёт \"Сбербанк\"", "Счёт \"Совкомбанк\"",
-            "Карта \"Зенит\" (MasterCard)", "Карта \"Солид\" (MasterCard)", "Карта \"Кукуруза\" (MasterCard)", "Карта \"Альфа\" (MasterCard)",
+    private String[] walletData = { "Кошелёк", "Ящик домашний", "Карта \"Сбербанк\" (Visa)", "Карта \"Тинькофф\" (Visa)", "Яндекс.Деньги",
+            "\"Детские деньги\"", "Счёт \"Сбербанк\"", "Счёт \"Совкомбанк\"",
+            "Карта \"Зенит\" (MasterCard)", "Карта \"Солид\" (MasterCard)", "Карта \"Альфа\" (MasterCard)", "Карта \"Кукуруза\" (MasterCard)",
             "PerfectMoney", "AdvCash", "ePayments", "Blockchain", "MyEtherWallet",
-            "Мама", "Денис Тетерин", "Евгений", "Сбербанк", "Биржи", "Tirus", "Polybius", "GS Mining", "DEEX", "FBF" };
-    private final int imageWalletData[] = { R.mipmap.wallet42, 0, 0, R.mipmap.tcs42, R.mipmap.yandex42, 0, 0, 0,
-            0, 0, 0, 0,
-            0, R.mipmap.advcash42, 0, 0, 0,
-            0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
+            "Мама", "Денис Тетерин", "Евгений", "Сбербанк",
+            "Биржи", "Tirus", "Polybius", "GS Mining", "DEEX", "FBF" };
+    private final int imageWalletData[] = { R.mipmap.wallet42, R.mipmap.box42, R.mipmap.sber_visa42, R.mipmap.tcs42, R.mipmap.yandex42,
+            R.mipmap.folder42, R.mipmap.sber42, R.mipmap.sovcom42,
+            R.mipmap.zenit42, R.mipmap.solid42, R.mipmap.alfa42, R.mipmap.kyky42,
+            R.mipmap.pm42, R.mipmap.advcash42, R.mipmap.epayments42, R.mipmap.blockchain42, R.mipmap.myetherwallet42,
+            0, 0, 0, R.mipmap.sber42,
+            0, R.mipmap.tirus42, 0, R.mipmap.gs42, R.mipmap.deex42, R.mipmap.fbf42 };
 
 
     // База данных

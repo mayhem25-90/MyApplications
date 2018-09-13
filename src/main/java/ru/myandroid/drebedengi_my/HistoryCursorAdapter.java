@@ -5,6 +5,7 @@ import android.database.Cursor;
 import android.graphics.Color;
 import android.util.Log;
 import android.view.View;
+import android.widget.ImageView;
 import android.widget.SimpleCursorAdapter;
 import android.widget.TextView;
 
@@ -30,6 +31,25 @@ public class HistoryCursorAdapter extends SimpleCursorAdapter
         DecimalFormatSymbols sumFormatSymbols = new DecimalFormatSymbols();
         sumFormatSymbols.setGroupingSeparator(' ');
         sumFormat = new DecimalFormat("#,###", sumFormatSymbols); // отделяем тысячные разряды
+    }
+
+    @Override
+    public void setViewImage(ImageView v, String value) {
+//        super.setViewImage(v, value);
+
+        switch (v.getId()) {
+            case R.id.ivImgMove:
+                int operation_type = Integer.valueOf(value);
+                if ((operation_type == DB.MOVE) || (operation_type == DB.CHANGE)) {
+                    v.setImageResource(R.drawable.arrow);
+                }
+                else {
+                    v.setImageResource(0);
+                }
+                break;
+
+            default: super.setViewImage(v, value); break;
+        }
     }
 
     @Override
