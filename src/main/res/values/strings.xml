@@ -49,6 +49,7 @@
     <string name="edit_cat_new">Создать новую категорию</string>
     <string name="edit_cat_edit">Изменить категорию</string>
     <string name="edit_cat_hint">Категория</string>
+    <string name="edit_cat_remains">Начальная сумма:</string>
     <string name="message_edit_cat_new">Категория добавлена</string>
     <string name="message_edit_cat_edit">Категория изменена</string>
     <string name="message_edit_cat_edit_error">Введите имя категории!</string>

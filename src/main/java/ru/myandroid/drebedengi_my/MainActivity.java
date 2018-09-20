@@ -60,8 +60,16 @@ public class MainActivity extends AppCompatActivity {
     Calendar operationDate = Calendar.getInstance();
     Calendar planDate = Calendar.getInstance();
 
-    int[] tabName = {R.string.operations_tab, R.string.balance_tab, R.string.history_tab, R.string.plan_tab, R.string.edit_categories_tab};
-    int[] tabID = {R.id.operationsTab, R.id.balanceTab, R.id.historyTab, R.id.planTab, R.id.editCategoriesTab};
+    SimpleDateFormat btnDateFormat = new SimpleDateFormat("dd MMM, EEE", Locale.US);
+    SimpleDateFormat btnTimeFormat = new SimpleDateFormat("HH:mm", Locale.US);
+    SimpleDateFormat planDateFormat = new SimpleDateFormat("yyyy MMM", Locale.US);
+
+    // Формат вывода сумм - отделяем тысячные разряды
+    DecimalFormatSymbols sumFormatSymbols;
+    DecimalFormat sumFormat;
+
+    int[] tabName = {R.string.operations_tab, R.string.history_tab, R.string.balance_tab, R.string.plan_tab, R.string.edit_categories_tab};
+    int[] tabID = {R.id.operationsTab, R.id.historyTab, R.id.balanceTab, R.id.planTab, R.id.editCategoriesTab};
     TabHost tabHost;
 
     @Override
@@ -72,6 +80,11 @@ public class MainActivity extends AppCompatActivity {
         // Открываем подключение к БД
         db = new DB(this);
         db.open();
+
+        // Отделяем тысячные разряды пробелом
+        sumFormatSymbols = new DecimalFormatSymbols();
+        sumFormatSymbols.setGroupingSeparator(' ');
+        sumFormat = new DecimalFormat("#,###", sumFormatSymbols);
 
         // Проверка на существование данного месяца в таблице планирования бюджета в БД
         db.addColumnToBudgetTable(dbBudgetDateFormat.format(operationDate.getTime()));
@@ -127,6 +140,7 @@ public class MainActivity extends AppCompatActivity {
         spinEditCategoryBind.clear();
         spinEditSourceBind.clear();
         spinEditWalletBind.clear();
+//        spinCurrencyRemainBind.clear();
 
         loadDataForSpinner(DB.CURRENCY_TABLE, spinCurrency, spinCurrencyBind, R.string.currency, spin_currency);
         loadDataForSpinner(DB.CURRENCY_TABLE, spinCurrencyDest, spinCurrencyDestBind, R.string.currency, spin_currency_dest);
@@ -138,6 +152,7 @@ public class MainActivity extends AppCompatActivity {
         loadDataForSpinner(DB.CATEGORY_TABLE, spinEditCategory, spinEditCategoryBind, R.string.category, spin_edit_category);
         loadDataForSpinner(DB.CATEGORY_TABLE, spinEditSource, spinEditSourceBind, R.string.source, spin_edit_source);
         loadDataForSpinner(DB.WALLET_TABLE, spinEditWallet, spinEditWalletBind, R.string.wallet, spin_edit_wallet);
+//        loadDataForSpinner(DB.CURRENCY_TABLE, spinCurrencyRemain, spinCurrencyRemainBind, R.string.currency, spin_currency_remain);
     }
 
 
@@ -181,11 +196,11 @@ public class MainActivity extends AppCompatActivity {
     final int DIALOG_EDIT_PLAN = 4;
 
     public static final int spin_currency = 100,
-                            spin_currency_dest = 101,
-                            spin_wallet = 102,
-                            spin_wallet_dest = 103,
-                            spin_spending = 104,
-                            spin_source = 105;
+            spin_currency_dest = 101,
+            spin_wallet = 102,
+            spin_wallet_dest = 103,
+            spin_spending = 104,
+            spin_source = 105;
 
     int currentRadioButton = 0;
     int[] radioButtons = {R.id.rbSpend, R.id.rbGain, R.id.rbMove, R.id.rbChange};
@@ -197,10 +212,6 @@ public class MainActivity extends AppCompatActivity {
     Button btnDateLeft, btnDateRight, btnDate, btnTime, btnConfirm, btnEdit, btnCancel;
     Spinner spinCurrency, spinCurrencyDest, spinWallet, spinWalletDest, spinCategory, spinSource;
     RadioGroup rgOperationChoice;
-
-    SimpleDateFormat btnDateFormat = new SimpleDateFormat("dd MMM, EEE", Locale.US);
-    SimpleDateFormat btnTimeFormat = new SimpleDateFormat("HH:mm", Locale.US);
-    SimpleDateFormat planDateFormat = new SimpleDateFormat("yyyy MMM", Locale.US);
 
     Vector<Integer> spinCurrencyBind = new Vector<>();
     Vector<Integer> spinCurrencyDestBind = new Vector<>();
@@ -695,8 +706,13 @@ public class MainActivity extends AppCompatActivity {
                     case spin_edit_category: m_edit_category_id = id;     break;
                     case spin_edit_source:   m_edit_source_id = id;       break;
                     case spin_edit_wallet:   m_edit_wallet_id = id;       break;
+                    case spin_currency_remain: m_currency_remain_id = id; break;
 
                     default: break;
+                }
+
+                if ((type == spin_edit_wallet) || (type == spin_currency_remain)) { // Заполняем начальные суммы
+                    setWalletStartSum();
                 }
             }
 
@@ -913,9 +929,6 @@ public class MainActivity extends AppCompatActivity {
                         tvCurrency.setText(currency);
 
                         // Форматируем вывод, чтобы было красиво
-                        DecimalFormatSymbols sumFormatSymbols = new DecimalFormatSymbols();
-                        sumFormatSymbols.setGroupingSeparator(' ');
-                        DecimalFormat sumFormat = new DecimalFormat("#,###", sumFormatSymbols); // отделяем тысячные разряды
                         tvSum.setText(sumFormat.format(sum));
                         if (sum < 0) {
                             tvSum.setTextColor(Color.RED);
@@ -941,22 +954,26 @@ public class MainActivity extends AppCompatActivity {
 // == ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ====
 
     public static final int spin_edit_category = 400,
-                            spin_edit_source = 401,
-                            spin_edit_wallet = 402;
+            spin_edit_source = 401,
+            spin_edit_wallet = 402,
+            spin_currency_remain = 403;
 
     long m_edit_category_id = -1;
     long m_edit_source_id = -1;
     long m_edit_wallet_id = -1;
+    long m_currency_remain_id = -1;
 
     TextView textEditCategory;
     RadioGroup rgEditChoice;
-    Spinner spinEditCategory, spinEditSource, spinEditWallet;
+    Spinner spinEditCategory, spinEditSource, spinEditWallet, spinCurrencyRemain;
     CheckBox chkEditCategory;
-    EditText etCategory;
+    EditText etCategory, etEditRemain;
+    LinearLayout llEditRemain;
 
     Vector<Integer> spinEditCategoryBind = new Vector<>();
     Vector<Integer> spinEditSourceBind = new Vector<>();
     Vector<Integer> spinEditWalletBind = new Vector<>();
+    Vector<Integer> spinCurrencyRemainBind = new Vector<>();
 
     private void initEditCategoriesTabContent() {
         Log.d(LOG_TAG, "initEditCategoriesTabContent");
@@ -974,9 +991,16 @@ public class MainActivity extends AppCompatActivity {
         spinEditWallet = (Spinner) findViewById(R.id.spinEditWallet);
         loadDataForSpinner(DB.WALLET_TABLE, spinEditWallet, spinEditWalletBind, R.string.wallet, spin_edit_wallet);
 
+        spinCurrencyRemain = (Spinner) findViewById(R.id.spinCurrencyRemain);
+        loadDataForSpinner(DB.CURRENCY_TABLE, spinCurrencyRemain, spinCurrencyRemainBind, R.string.currency, spin_currency_remain);
+
         chkEditCategory = (CheckBox) findViewById(R.id.chkEditCategory);
 
         etCategory = (EditText) findViewById(R.id.etCategory);
+
+        llEditRemain = (LinearLayout) findViewById(R.id.llEditRemain);
+
+        etEditRemain = (EditText) findViewById(R.id.etEditRemain);
 
         // Выбираем конкретную категорию
         rgEditChoice.check(R.id.rbEditSpend);
@@ -990,6 +1014,7 @@ public class MainActivity extends AppCompatActivity {
         spinEditSource.setEnabled(true);
         spinEditWallet.setEnabled(true);
         chkEditCategory.setChecked(false);
+        etEditRemain.setText("");
         etCategory.setText("");
     }
 
@@ -1000,18 +1025,24 @@ public class MainActivity extends AppCompatActivity {
                 spinEditCategory.setVisibility(View.VISIBLE);
                 spinEditSource.setVisibility(View.GONE);
                 spinEditWallet.setVisibility(View.GONE);
+                llEditRemain.setVisibility(View.GONE);
+                chkEditCategory.setChecked(false);
                 break;
 
             case R.id.rbEditGain:
                 spinEditCategory.setVisibility(View.GONE);
                 spinEditSource.setVisibility(View.VISIBLE);
                 spinEditWallet.setVisibility(View.GONE);
+                llEditRemain.setVisibility(View.GONE);
+                chkEditCategory.setChecked(false);
                 break;
 
             case R.id.rbEditWallet:
                 spinEditCategory.setVisibility(View.GONE);
                 spinEditSource.setVisibility(View.GONE);
                 spinEditWallet.setVisibility(View.VISIBLE);
+                llEditRemain.setVisibility(View.VISIBLE);
+                chkEditCategory.setChecked(false);
                 break;
 
             case R.id.btnConfirm:
@@ -1019,6 +1050,7 @@ public class MainActivity extends AppCompatActivity {
                 // Выбираем то, что редактируем
                 int mode = -1;
                 long edit_id = -1;
+                double remain = -1.0;
                 switch (rgEditChoice.getCheckedRadioButtonId()) {
                     case R.id.rbEditSpend:
                         mode = db.EDIT_SPEND;
@@ -1033,25 +1065,31 @@ public class MainActivity extends AppCompatActivity {
                     case R.id.rbEditWallet:
                         mode = db.EDIT_WALLET;
                         edit_id = m_edit_wallet_id;
+                        String remainTxt = etEditRemain.getText().toString();
+                        if (remainTxt.equals("")) remain = Double.parseDouble(etEditRemain.getHint().toString());
+                        else remain = Double.parseDouble(remainTxt);
                         break;
 
                     default: break;
                 }
 
                 String newCategoryName = etCategory.getText().toString();
-                if (!newCategoryName.equals("")) {
+                if ((!newCategoryName.equals("")) || (mode == db.EDIT_WALLET)) {
                     if (chkEditCategory.isChecked()) { // Добавляем новую категорию
-//                    Log.d(LOG_TAG, "check: create new category");
-                        db.createNewCategory(mode, newCategoryName);
-                        Toast.makeText(MainActivity.this, R.string.message_edit_cat_new, Toast.LENGTH_SHORT).show();
+                        if (!newCategoryName.equals("")) {
+//                            Log.d(LOG_TAG, "check: create new category");
+                            db.createNewCategory(mode, newCategoryName, spinCurrencyRemainBind);
+                            Toast.makeText(MainActivity.this, R.string.message_edit_cat_new, Toast.LENGTH_SHORT).show();
+                        }
                     }
                     else { // Редактируем данную категорию
 //                    Log.d(LOG_TAG, "not check: edit this category");
-                        db.updateCategory(mode, edit_id, newCategoryName);
+                        db.updateCategory(mode, edit_id, newCategoryName, remain, m_currency_remain_id);
                         Toast.makeText(MainActivity.this, R.string.message_edit_cat_edit, Toast.LENGTH_SHORT).show();
                     }
                     updateSpinners();
                     resetEditCategoriesTab();
+                    loadDataForBalance();
                 }
                 else Toast.makeText(MainActivity.this, R.string.message_edit_cat_edit_error, Toast.LENGTH_SHORT).show();
 
@@ -1064,6 +1102,7 @@ public class MainActivity extends AppCompatActivity {
                     spinEditSource.setEnabled(false);
                     spinEditWallet.setEnabled(false);
                     textEditCategory.setText(getResources().getString(R.string.edit_cat_new));
+                    llEditRemain.setVisibility(View.GONE);
                 }
                 else {
 //                    Log.d(LOG_TAG, "not check!");
@@ -1071,6 +1110,9 @@ public class MainActivity extends AppCompatActivity {
                     spinEditSource.setEnabled(true);
                     spinEditWallet.setEnabled(true);
                     textEditCategory.setText(getResources().getString(R.string.edit_cat_edit));
+                    if (rgEditChoice.getCheckedRadioButtonId() == R.id.rbEditWallet) {
+                        llEditRemain.setVisibility(View.VISIBLE);
+                    }
                 }
                 break;
 
@@ -1079,6 +1121,14 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+
+    void setWalletStartSum() {
+        if ((m_edit_wallet_id == -1) || (m_currency_remain_id == -1)) return;
+
+        int remain = (int) db.getWalletStartSum(m_edit_wallet_id, m_currency_remain_id);
+        etEditRemain.setHint(sumFormat.format(remain));
+//        Log.d(LOG_TAG, "Set remain " + remain + ": wallet id " + m_edit_wallet_id + ", currency id " + m_currency_remain_id);
+    }
 
 // == ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ====
 // 5. Вкладка планирования
@@ -1101,7 +1151,7 @@ public class MainActivity extends AppCompatActivity {
         rgPlanChoice = (RadioGroup) findViewById(R.id.rgPlanChoice);
         rgPlanChoice.check(R.id.rbControl);
 
-    // === Контроль расходов    === ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ====
+        // === Контроль расходов    === ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ====
 
         layControl = (LinearLayout) findViewById(R.id.layControl);
 
@@ -1129,7 +1179,7 @@ public class MainActivity extends AppCompatActivity {
 
         loadDataForControlList();
 
-    // === Планирование бюджета     ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ====
+        // === Планирование бюджета     ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ====
 
         layPlan = (LinearLayout) findViewById(R.id.layPlan);
         layPlan.setVisibility(View.GONE);
@@ -1185,10 +1235,6 @@ public class MainActivity extends AppCompatActivity {
 
 
     int updatePlanSum(int columnType, TextView tvSum, Calendar date) {
-        DecimalFormatSymbols sumFormatSymbols = new DecimalFormatSymbols();
-        sumFormatSymbols.setGroupingSeparator(' ');
-        DecimalFormat sumFormat = new DecimalFormat("#,###", sumFormatSymbols); // отделяем тысячные разряды;
-
         cursor = db.getPlanAllSpendSum(columnType, dbBudgetDateFormat.format(date.getTime()));
 //        db.logCursor(cursor);
         if ((cursor != null) && (cursor.moveToFirst())) {

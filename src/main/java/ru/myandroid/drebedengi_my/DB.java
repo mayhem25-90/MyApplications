@@ -9,6 +9,7 @@ import android.util.Log;
 
 import java.text.SimpleDateFormat;
 import java.util.Locale;
+import java.util.Vector;
 
 import static java.lang.Math.abs;
 
@@ -16,7 +17,7 @@ public class DB {
 
     private final String LOG_TAG = "myLogs";
 
-    static final int SPENDING = 1, GAIN = 2, MOVE = 3, CHANGE = 4;
+    static final int START = 0, SPENDING = 1, GAIN = 2, MOVE = 3, CHANGE = 4;
     final int AUTO_SELECT = -1, NOT_SELECTED = 0, SELECTED = 1;
     final int CONFIRM_SAVE = 0, CONFIRM_EDIT = 1;
 
@@ -31,11 +32,11 @@ public class DB {
     // Данные для первоначального заполнения БД
     private String[] currencyData = { "руб", "USD", "EUR" };
     private String[] categoryData = { "[Без категории]",
-            "Еда", "Развлечения", "Подарки", "Проезд", "Счета", "Авто", "Учёба, курсы, тренинги", "Дом, семья", "Здоровье", "Гигиена", "Техника", "Одежда", "Спорт", "Путешествия", "Работа", "Разное", "Банковские операции",
+            "Еда", "Развлечения", "Подарки", "Благотворительность", "Проезд", "Счета", "Авто", "Учёба, курсы, тренинги", "Дом, семья", "Здоровье", "Гигиена", "Техника", "Одежда", "Спорт", "Путешествия", "Работа", "Разное", "Банковские операции",
 
             "Обеды, перекусы", "Продукты", "Спортивное питание",
             "Кафешки", "Встречи, сходки", "Кино", "Музеи, выставки", "Аттракционы", "Каток", "Вечеринки", "Концерты", "Аквапарк", "Разные развлечения",
-            "Цветы", "Благотворительность",
+            "Цветы",
             "Метро", "Электрички", "Наземный транспорт", "Такси", "Каршеринг",
             "Мобильный", "Банкинг", "Интернет",
             "Бензин", "Запчасти", "Мойка", "Обслуживание авто", "Штрафы",
@@ -51,43 +52,43 @@ public class DB {
             "Фотопечать", "Почта",
             "Комиссия за перевод", "Процент по займу" };
     private final int[] categoryGroupData = { 0,
-            div_category_group, 2000, 3000, 4000, 5000, 6000, 7000, 8000, 9000, 10000, 11000, 12000, 13000, 14000, 15000, 16000, 17000,
+            div_category_group, 2000, 3000, 4000, 5000, 6000, 7000, 8000, 9000, 10000, 11000, 12000, 13000, 14000, 15000, 16000, 17000, 18000,
 
             1001, 1002, 1003,
             2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010,
-            3001, 3002,
-            4001, 4002, 4003, 4004, 4005,
-            5001, 5002, 5003,
-            6001, 6002, 6003, 6004, 6005,
-            7001,
-            8001, 8002, 8003, 8004, 8005,
-            9001, 9002,
-            10001, 10002, 10003,
-            11001, 11002, 11003, 11004, 11005, 11006,
-            12001, 12002, 12003, 12004, 12005, 12006, 12007, 12008, 12009,
-            13001, 13002, 13003, 13004, 13005,
-            14001, 14002, 14003, 14004, 14005, 14006, 14007, 14008, 14009, 14010, 14011, 14012, 14013, 14014,
-            16001, 16002,
-            17001, 17002 };
+            3001,
+            5001, 5002, 5003, 5004, 5005,
+            6001, 6002, 6003,
+            7001, 7002, 7003, 7004, 7005,
+            8001,
+            9001, 9002, 9003, 9004, 9005,
+            10001, 10002,
+            11001, 11002, 11003,
+            12001, 12002, 12003, 12004, 12005, 12006,
+            13001, 13002, 13003, 13004, 13005, 13006, 13007, 13008, 13009,
+            14001, 14002, 14003, 14004, 14005,
+            15001, 15002, 15003, 15004, 15005, 15006, 15007, 15008, 15009, 15010, 15011, 15012, 15013, 15014,
+            17001, 17002,
+            18001, 18002 };
     private final int[] categoryParentData = { -1,
-            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
 
             1, 1, 1,
             2, 2, 2, 2, 2, 2, 2, 2, 2, 2,
-            3, 3,
-            4, 4, 4, 4, 4,
-            5, 5, 5,
-            6, 6, 6, 6, 6,
-            7,
-            8, 8, 8, 8, 8,
-            9, 9,
-            10, 10, 10,
-            11, 11, 11, 11, 11, 11,
-            12, 12, 12, 12, 12, 12, 12, 12, 12,
-            13, 13, 13, 13, 13,
-            14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14,
-            16, 16,
-            17, 17 };
+            3,
+            5, 5, 5, 5, 5,
+            6, 6, 6,
+            7, 7, 7, 7, 7,
+            8,
+            9, 9, 9, 9, 9,
+            10, 10,
+            11, 11, 11,
+            12, 12, 12, 12, 12, 12,
+            13, 13, 13, 13, 13, 13, 13, 13, 13,
+            14, 14, 14, 14, 14,
+            15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15,
+            17, 17,
+            18, 18 };
     private String[] sourcesData = { "Работа (\"Агат\")", "Фриланс", "ООО \"Атлант+\"", "Альтернатива", "Родители", "Подарки", "Разное" };
     private final int[] sourcesGroupData = { 1000, 2000, 3000, 4000, 5000, 6000, 7000 };
     private String[] walletData = { "Кошелёк", "Ящик домашний", "Карта \"Сбербанк\" (Visa)", "Карта \"Тинькофф\" (Visa)", "Яндекс.Деньги",
@@ -150,7 +151,7 @@ public class DB {
     static final String CATEGORY_COLUMN_ID = "_id";
     static final String CATEGORY_COLUMN_IMAGE = "image";
     static final String CATEGORY_COLUMN_NAME = "name";
-//    static final String CATEGORY_COLUMN_GROUP = "group_id";
+    //    static final String CATEGORY_COLUMN_GROUP = "group_id";
     static final String CATEGORY_COLUMN_PARENT = "parent_id";
 
     private static final String CATEGORY_TABLE_CREATE = "create table " + CATEGORY_TABLE + "(" +
@@ -518,7 +519,8 @@ public class DB {
                 + " = " + CURRENCY_TABLE + "." + CURRENCY_COLUMN_ID
                 + " where " + RECORD_TABLE + "." + RECORD_COLUMN_WALLET_ID + " = " + wallet
                 + " and " + RECORD_TABLE + "." + RECORD_COLUMN_CURRENCY_ID + " = " + currency
-                + " and (" + RECORD_TABLE + "." + RECORD_COLUMN_OPERATION_TYPE + " = " + SPENDING
+                + " and (" + RECORD_TABLE + "." + RECORD_COLUMN_OPERATION_TYPE + " = " + START
+                + " or " + RECORD_TABLE + "." + RECORD_COLUMN_OPERATION_TYPE + " = " + SPENDING
                 + " or " + RECORD_TABLE + "." + RECORD_COLUMN_OPERATION_TYPE + " = " + GAIN + ")";
 //        Log.d(LOG_TAG, sqlQuery);
         return mDB.rawQuery(sqlQuery, null);
@@ -530,7 +532,7 @@ public class DB {
 
     final int EDIT_SPEND = 0, EDIT_SOURCE = 1, EDIT_WALLET = 2;
 
-    void createNewCategory(int mode, String category) {
+    void createNewCategory(int mode, String category, Vector<Integer> currency) {
         ContentValues cv = new ContentValues();
 
         switch (mode) {
@@ -557,26 +559,62 @@ public class DB {
                 break;
 
             case EDIT_WALLET:
-                cv.put(CATEGORY_COLUMN_NAME, category);
-                mDB.insert(WALLET_TABLE, null, cv);
+                cv.put(WALLET_COLUMN_NAME, category);
+                long wallet_id = mDB.insert(WALLET_TABLE, null, cv);
+
+                for (int i = 0; i < currency.size(); ++i) {
+                    cv.clear();
+                    cv.put(RECORD_COLUMN_SUM, 0);
+                    cv.put(RECORD_COLUMN_WALLET_ID, wallet_id);
+                    cv.put(RECORD_COLUMN_CURRENCY_ID, currency.get(i));
+                    cv.put(RECORD_COLUMN_OPERATION_TYPE, START);
+                    mDB.insert(RECORD_TABLE, null, cv);
+                }
                 break;
         }
     }
 
 
-    void updateCategory(int mode, long id, String category) {
+    void updateCategory(int mode, long wallet_id, String category, double remain, long currency_id) {
         if (mode == EDIT_WALLET) {
+            Log.d(LOG_TAG, "update WALLET id " + wallet_id + ": category " + category + "; remain = " + remain);
+
             ContentValues cv = new ContentValues();
-            cv.put(WALLET_COLUMN_NAME, category);
-            Log.d(LOG_TAG, "update WALLET id: " + id);
-            mDB.update(WALLET_TABLE, cv, WALLET_COLUMN_ID + " = " + id, null);
+            if (!category.equals("")) {
+                cv.put(WALLET_COLUMN_NAME, category);
+                mDB.update(WALLET_TABLE, cv, WALLET_COLUMN_ID + " = " + wallet_id, null);
+            }
+
+            cv.clear();
+            cv.put(RECORD_COLUMN_SUM, remain);
+            String conditional = RECORD_COLUMN_WALLET_ID + " = " + wallet_id
+                    + " and " + RECORD_COLUMN_CURRENCY_ID + " = " + currency_id
+                    + " and " + RECORD_COLUMN_OPERATION_TYPE + " = " + START;
+            mDB.update(RECORD_TABLE, cv, conditional, null);
         }
         else {
             ContentValues cv = new ContentValues();
-            cv.put(CATEGORY_COLUMN_NAME, category);
-            Log.d(LOG_TAG, "update category id: " + id);
-            mDB.update(CATEGORY_TABLE, cv, CATEGORY_COLUMN_ID + " = " + id, null);
+            if (!category.equals("")) cv.put(CATEGORY_COLUMN_NAME, category);
+            Log.d(LOG_TAG, "update category id: " + wallet_id);
+            mDB.update(CATEGORY_TABLE, cv, CATEGORY_COLUMN_ID + " = " + wallet_id, null);
         }
+    }
+
+
+    double getWalletStartSum(long wallet_id, long currency_id) {
+        String[] col = { RECORD_COLUMN_SUM };
+        String conditional = RECORD_COLUMN_WALLET_ID + " = " + wallet_id
+                + " and " + RECORD_COLUMN_CURRENCY_ID + " = " + currency_id
+                + " and " + RECORD_COLUMN_OPERATION_TYPE + " = " + START;
+        Cursor cursor = mDB.query(RECORD_TABLE, col, conditional, null, null, null, null);
+        if (cursor != null) {
+            if (cursor.moveToFirst()) {
+                double remain = cursor.getDouble(cursor.getColumnIndex(DB.RECORD_COLUMN_SUM));
+                cursor.close();
+                return remain;
+            }
+        }
+        return 0.0;
     }
 
 // == ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ====
@@ -819,7 +857,18 @@ public class DB {
             }
 
 
+            // Начальные суммы
             db.execSQL(RECORD_TABLE_CREATE);
+            cv.clear();
+            for (int i = 0; i < walletData.length; i++) {
+                for (int j = 0; j < currencyData.length; j++) {
+                    cv.put(RECORD_COLUMN_SUM, 0);
+                    cv.put(RECORD_COLUMN_WALLET_ID, i);
+                    cv.put(RECORD_COLUMN_CURRENCY_ID, j);
+                    cv.put(RECORD_COLUMN_OPERATION_TYPE, START);
+                    db.insert(RECORD_TABLE, null, cv);
+                }
+            }
         }
 
         @Override

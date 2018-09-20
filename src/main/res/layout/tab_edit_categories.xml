@@ -99,6 +99,40 @@
                 android:spinnerMode="dialog" />
         </LinearLayout>
 
+        <LinearLayout
+            android:id="@+id/llEditRemain"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_marginLeft="10sp"
+            android:layout_marginRight="10sp">
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center_vertical"
+                android:layout_margin="5sp"
+                android:text="@string/edit_cat_remains"
+                android:layout_weight="9" />
+
+            <EditText
+                android:id="@+id/etEditRemain"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center_vertical"
+                android:layout_margin="5sp"
+                android:gravity="end"
+                android:layout_weight="8" />
+
+            <Spinner
+                android:id="@+id/spinCurrencyRemain"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center_vertical"
+                android:layout_margin="5sp"
+                android:layout_weight="8" />
+        </LinearLayout>
+
         <CheckBox
             android:id="@+id/chkEditCategory"
             android:layout_width="match_parent"
