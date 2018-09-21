@@ -31,6 +31,8 @@
     <string name="confirmButton">Сохранить</string>
     <string name="error_confirm_zero">Сумма должна быть больше 0</string>
 
+    <string name="summary">Итого</string>
+
     <string name="deleteButton">Удалить</string>
     <string name="delete_message">Вы действительно хотите удалить запись?</string>
     <string name="yes">Да</string>

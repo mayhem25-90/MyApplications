@@ -9,10 +9,12 @@ import android.content.DialogInterface;
 import android.database.Cursor;
 import android.graphics.Color;
 import android.graphics.PorterDuff;
+import android.graphics.Typeface;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.text.InputType;
 import android.util.Log;
+import android.util.TypedValue;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.WindowManager;
@@ -879,6 +881,7 @@ public class MainActivity extends AppCompatActivity {
 // == ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ====
 
     LinearLayout llBalanceList;
+    LayoutInflater ltInflater;
 
     private void initBalanceTabContent() {
         Log.d(LOG_TAG, "initBalanceTabContent");
@@ -889,7 +892,7 @@ public class MainActivity extends AppCompatActivity {
 
     public void loadDataForBalance() {
         llBalanceList.removeAllViews();
-        LayoutInflater ltInflater = getLayoutInflater();
+        ltInflater = getLayoutInflater();
 
         for (int i = 0; i < db.getNumberOfRecords(DB.WALLET_TABLE); i++) {
 //            Log.d(LOG_TAG, "walletData[" + i + "]: " + db.walletData[i]);
@@ -908,6 +911,7 @@ public class MainActivity extends AppCompatActivity {
                 tvCategory.setText(cursor.getString(cursor.getColumnIndex(DB.WALLET_COLUMN_NAME)));
             }
 
+            boolean isWalletNotEmpty = false;
             LinearLayout llWallet = (LinearLayout) balanceListItem.findViewById(R.id.llWallet);
             for (int j = 0; j < db.getNumberOfRecords(DB.CURRENCY_TABLE); j++) {
 //                Log.d(LOG_TAG, " - currencyData[" + j + "]: " + db.currencyData[j]);
@@ -923,28 +927,85 @@ public class MainActivity extends AppCompatActivity {
                         View balanceWalletListItem = ltInflater.inflate(R.layout.item_balance_wallet, llWallet, false);
 
                         TextView tvSum = (TextView) balanceWalletListItem.findViewById(R.id.tvSum);
-                        tvSum.setText(String.valueOf(sum));
-
                         TextView tvCurrency = (TextView) balanceWalletListItem.findViewById(R.id.tvCurrency);
-                        tvCurrency.setText(currency);
 
                         // Форматируем вывод, чтобы было красиво
-                        tvSum.setText(sumFormat.format(sum));
-                        if (sum < 0) {
-                            tvSum.setTextColor(Color.RED);
-                            tvCurrency.setTextColor(Color.RED);
-                        }
-                        else if (sum > 0) {
-                            tvSum.setTextColor(Color.rgb(0, 127, 0));
-                            tvCurrency.setTextColor(Color.rgb(0, 127, 0));
-                        }
+                        formatBalanceSum(sum, tvSum, currency, tvCurrency);
 
+                        isWalletNotEmpty = true;
                         llWallet.addView(balanceWalletListItem);
                     }
                 }
             }
 
-            llBalanceList.addView(balanceListItem);
+            if (isWalletNotEmpty) llBalanceList.addView(balanceListItem);
+        }
+
+        // И ещё добавляем view для итоговой суммы
+        loadDataForSummaryBalance();
+    }
+
+
+    void loadDataForSummaryBalance() {
+        View balanceListItem = ltInflater.inflate(R.layout.item_balance, llBalanceList, false);
+
+        TextView tvCategory = (TextView) balanceListItem.findViewById(R.id.tvCategory);
+        tvCategory.setText(getResources().getString(R.string.summary));
+        tvCategory.setTextColor(Color.BLACK);
+        tvCategory.setTextSize(TypedValue.COMPLEX_UNIT_PX, getResources().getDimension(R.dimen.text_size));
+        tvCategory.setTypeface(null, Typeface.BOLD);
+
+        boolean isSumNotNull = false;
+        for (int j = 0; j < db.getNumberOfRecords(DB.CURRENCY_TABLE); j++) {
+            int sum = 0;
+            String currency = "";
+            for (int i = 0; i < db.getNumberOfRecords(DB.WALLET_TABLE); i++) {
+                cursor = db.getBalanceData(i, j);
+//                db.logCursor(cursor);
+
+                if (cursor.moveToFirst()) {
+                    sum += cursor.getInt(cursor.getColumnIndex(DB.RECORD_COLUMN_SUM));
+                    currency = cursor.getString(cursor.getColumnIndex(DB.CURRENCY_COLUMN_TITLE));
+                }
+            }
+
+            // Выводим суммарный баланс и валюту
+            if (sum != 0) {
+                LinearLayout llWallet = (LinearLayout) balanceListItem.findViewById(R.id.llWallet);
+                View balanceWalletListItem = ltInflater.inflate(R.layout.item_balance_wallet, llWallet, false);
+
+                TextView tvSum = (TextView) balanceWalletListItem.findViewById(R.id.tvSum);
+                tvSum.setTypeface(null, Typeface.BOLD);
+
+                TextView tvCurrency = (TextView) balanceWalletListItem.findViewById(R.id.tvCurrency);
+                tvCurrency.setTypeface(null, Typeface.BOLD);
+
+                // Форматируем вывод, чтобы было красиво
+                formatBalanceSum(sum, tvSum, currency, tvCurrency);
+
+                isSumNotNull = true;
+                llWallet.addView(balanceWalletListItem);
+            }
+        }
+
+        if (isSumNotNull) llBalanceList.addView(balanceListItem);
+    }
+
+
+    void formatBalanceSum(int sum, TextView tvSum, String currency, TextView tvCurrency) {
+        tvSum.setText(sumFormat.format(sum));
+        tvSum.setTextSize(TypedValue.COMPLEX_UNIT_PX, getResources().getDimension(R.dimen.text_balance_sum_size));
+
+        tvCurrency.setText(currency);
+        tvCurrency.setTextSize(TypedValue.COMPLEX_UNIT_PX, getResources().getDimension(R.dimen.text_balance_size));
+
+        if (sum < 0) {
+            tvSum.setTextColor(Color.RED);
+            tvCurrency.setTextColor(Color.RED);
+        }
+        else if (sum > 0) {
+            tvSum.setTextColor(getResources().getColor(R.color.positive));
+            tvCurrency.setTextColor(getResources().getColor(R.color.positive));
         }
     }
 
