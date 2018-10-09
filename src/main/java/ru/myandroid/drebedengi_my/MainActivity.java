@@ -540,27 +540,27 @@ public class MainActivity extends AppCompatActivity {
             String confirmText = "";
             switch (rgOperationChoice.getCheckedRadioButtonId()) {
                 case R.id.rbSpend:
-                    operation_type = db.SPENDING;
+                    operation_type = DB.SPENDING;
                     confirmText = "Трата сохранена";
                     category_id = m_spending_category_id;
                     sum = -Double.parseDouble(etSum.getText().toString());
                     break;
 
                 case R.id.rbGain:
-                    operation_type = db.GAIN;
+                    operation_type = DB.GAIN;
                     confirmText = "Доход сохранён";
                     category_id = m_gain_category_id;
                     sum = Double.parseDouble(etSum.getText().toString());
                     break;
 
                 case R.id.rbMove:
-                    operation_type = db.MOVE;
+                    operation_type = DB.MOVE;
                     confirmText = "Перемещение сохранено";
                     sum = Double.parseDouble(etSum.getText().toString());
                     break;
 
                 case R.id.rbChange:
-                    operation_type = db.CHANGE;
+                    operation_type = DB.CHANGE;
                     confirmText = "Обмен валют сохранён";
                     sum = Double.parseDouble(etSum.getText().toString());
                     sumDest = Double.parseDouble(etSumDest.getText().toString());
@@ -569,6 +569,11 @@ public class MainActivity extends AppCompatActivity {
                 default:
                     break;
             }
+
+            // Очищаем поля
+            etSum.setText("");
+            etSumDest.setText("");
+            etComment.setText("");
 
             Log.d(LOG_TAG, "currentDate = " + currentDate);
             Log.d(LOG_TAG, "currentTime = " + currentTime);
@@ -585,34 +590,34 @@ public class MainActivity extends AppCompatActivity {
 
             // Добаляем запись в базу
             try {
-                if (operation_type == db.SPENDING || operation_type == db.GAIN) {
+                if (operation_type == DB.SPENDING || operation_type == DB.GAIN) {
                     db.addTransaction(mode, history_item_selected_id, operation_type, category_id,
                             sum, -1, currentDate, currentTime, comment,
                             m_currency_id, -1, m_wallet_id, -1);
                 }
-                else if (operation_type == db.MOVE) {
-                    db.addTransaction(mode, history_item_selected_id, db.MOVE, category_id,
+                else if (operation_type == DB.MOVE) {
+                    db.addTransaction(mode, history_item_selected_id, DB.MOVE, category_id,
                             sum, -1, currentDate, currentTime, comment,
                             -1, m_currency_id, m_wallet_id, m_wallet_id_dest);
 
                     // Для корректного подсчёта баланса дублируем операцию
-                    db.addTransaction(mode, history_item_selected_id + 1, db.SPENDING, category_id,
+                    db.addTransaction(mode, history_item_selected_id + 1, DB.SPENDING, category_id,
                             -sum, -1, currentDate, currentTime, comment,
                             m_currency_id, -1, m_wallet_id, -1);
-                    db.addTransaction(mode, history_item_selected_id + 2, db.GAIN, category_id,
+                    db.addTransaction(mode, history_item_selected_id + 2, DB.GAIN, category_id,
                             sum, -1, currentDate, currentTime, comment,
                             m_currency_id, -1, m_wallet_id_dest, -1);
                 }
-                else if (operation_type == db.CHANGE) {
-                    db.addTransaction(mode, history_item_selected_id, db.CHANGE, category_id,
+                else if (operation_type == DB.CHANGE) {
+                    db.addTransaction(mode, history_item_selected_id, DB.CHANGE, category_id,
                             -sum, sumDest, currentDate, currentTime, comment,
                             m_currency_id_dest, m_currency_id, m_wallet_id, m_wallet_id_dest);
 
                     // Для корректного подсчёта баланса дублируем операцию
-                    db.addTransaction(mode, history_item_selected_id + 1, db.SPENDING, category_id,
+                    db.addTransaction(mode, history_item_selected_id + 1, DB.SPENDING, category_id,
                             -sum, -1, currentDate, currentTime, comment,
                             m_currency_id, -1, m_wallet_id, -1);
-                    db.addTransaction(mode, history_item_selected_id + 2, db.GAIN, category_id,
+                    db.addTransaction(mode, history_item_selected_id + 2, DB.GAIN, category_id,
                             sumDest, -1, currentDate, currentTime, comment,
                             m_currency_id_dest, -1, m_wallet_id_dest, -1);
                 }
@@ -622,9 +627,6 @@ public class MainActivity extends AppCompatActivity {
             }
             finally {
                 Toast.makeText(this, confirmText, Toast.LENGTH_SHORT).show();
-                etSum.setText("");
-                etSumDest.setText("");
-                etComment.setText("");
 
                 // Если операция была за сегодняшний день, ставим актуальное время для новой
                 actualizeDate();
@@ -684,7 +686,7 @@ public class MainActivity extends AppCompatActivity {
         currentSpinner.setPrompt(getResources().getString(string_id));
 
         // связка индекса спиннера с id записи из базы
-        if (cursor.moveToFirst()) {
+        if ((cursor != null) && (cursor.moveToFirst())) {
             int column = cursor.getColumnIndex(DB.CATEGORY_COLUMN_ID);
 //            Log.d(LOG_TAG, "spinner: " + getResources().getString(string_id));
             do {
@@ -733,7 +735,7 @@ public class MainActivity extends AppCompatActivity {
         btnEdit.setVisibility(View.VISIBLE);
         btnCancel.setVisibility(View.VISIBLE);
 
-        if (cursor.moveToFirst()) {
+        if ((cursor != null) && (cursor.moveToFirst())) {
             int operationType = cursor.getInt(cursor.getColumnIndex(DB.RECORD_COLUMN_OPERATION_TYPE));
             int currencyID = cursor.getInt(cursor.getColumnIndex(DB.RECORD_COLUMN_CURRENCY_ID));
             int currencyIDDest = cursor.getInt(cursor.getColumnIndex(DB.RECORD_COLUMN_CURRENCY_ID_DEST));
@@ -757,12 +759,12 @@ public class MainActivity extends AppCompatActivity {
             rgOperationChoice.check(radioButtons[operationType - 1]);
             onButtonClick(findViewById(radioButtons[operationType - 1]));
 
-            if ((operationType == db.SPENDING) || (operationType == db.GAIN)) {
+            if ((operationType == DB.SPENDING) || (operationType == DB.GAIN)) {
                 etSum.setText(String.valueOf(abs(sum)));
                 spinCurrency.setSelection(getSpinnerIndexByID(currencyID, spinCurrencyBind));
                 spinCurrencyDest.setSelection(getSpinnerIndexByID(currencyIDDest, spinCurrencyDestBind));
             }
-            else if ((operationType == db.MOVE) || (operationType == db.CHANGE)) {
+            else if ((operationType == DB.MOVE) || (operationType == DB.CHANGE)) {
                 etSum.setText(String.valueOf(abs(sumMove)));
                 etSumDest.setText(String.valueOf(abs(sum)));
                 spinCurrency.setSelection(getSpinnerIndexByID(currencyIDDest, spinCurrencyBind));
@@ -891,6 +893,7 @@ public class MainActivity extends AppCompatActivity {
 
 
     public void loadDataForBalance() {
+//        Log.d(LOG_TAG, "loadDataForBalance()");
         llBalanceList.removeAllViews();
         ltInflater = getLayoutInflater();
 
@@ -898,7 +901,18 @@ public class MainActivity extends AppCompatActivity {
 //            Log.d(LOG_TAG, "walletData[" + i + "]: " + db.walletData[i]);
 
             View balanceListItem = ltInflater.inflate(R.layout.item_balance, llBalanceList, false);
+            balanceListItem.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View view) {
+                    TextView tvID = (TextView) view.findViewById(R.id.tvID);
+                    int id = Integer.valueOf(tvID.getText().toString());
+//                    Log.d(LOG_TAG, "### on item click! id " + id);
+                    db.setWalletHidden(id);
+                    loadDataForBalance();
+                }
+            });
 
+            TextView tvID = (TextView) balanceListItem.findViewById(R.id.tvID);
             ImageView ivImg = (ImageView) balanceListItem.findViewById(R.id.ivImg);
             TextView tvCategory = (TextView) balanceListItem.findViewById(R.id.tvCategory);
             tvCategory.setTextColor(Color.BLACK);
@@ -906,22 +920,38 @@ public class MainActivity extends AppCompatActivity {
             cursor = db.getWalletData(i);
 //            db.logCursor(cursor);
 
-            if (cursor.moveToFirst()) {
+//            Log.d(LOG_TAG, "get hidden");
+
+            int hidden = 0;
+            if ((cursor != null) && (cursor.moveToFirst())) {
+                tvID.setText(cursor.getString(cursor.getColumnIndex(DB.WALLET_COLUMN_ID)));
                 ivImg.setImageResource(cursor.getInt(cursor.getColumnIndex(DB.WALLET_COLUMN_IMAGE)));
                 tvCategory.setText(cursor.getString(cursor.getColumnIndex(DB.WALLET_COLUMN_NAME)));
+
+                hidden = cursor.getInt(cursor.getColumnIndex(DB.WALLET_COLUMN_HIDDEN));
             }
+
+//            Log.d(LOG_TAG, "wallet " + i + " hidden: " + hidden);
+//            if (hidden == 1) continue; // Если элемент скрыт - не отображаем баланс
 
             boolean isWalletNotEmpty = false;
             LinearLayout llWallet = (LinearLayout) balanceListItem.findViewById(R.id.llWallet);
             for (int j = 0; j < db.getNumberOfRecords(DB.CURRENCY_TABLE); j++) {
-//                Log.d(LOG_TAG, " - currencyData[" + j + "]: " + db.currencyData[j]);
+//                Log.d(LOG_TAG, " - currencyData[" + j + "]: "); // + db.currencyData[j]);
+
+                if (hidden == 1) { // Если элемент скрытый - не отображаем баланс
+                    isWalletNotEmpty = true;
+                    break;
+                }
 
                 cursor = db.getBalanceData(i, j);
 //                db.logCursor(cursor);
 
-                if (cursor.moveToFirst()) {
+                if ((cursor != null) && (cursor.moveToFirst())) {
                     int sum = cursor.getInt(cursor.getColumnIndex(DB.RECORD_COLUMN_SUM));
                     String currency = cursor.getString(cursor.getColumnIndex(DB.CURRENCY_COLUMN_TITLE));
+
+//                    Log.d(LOG_TAG, " - currencyData[" + j + "]: " + sum);
 
                     if (sum != 0) {
                         View balanceWalletListItem = ltInflater.inflate(R.layout.item_balance_wallet, llWallet, false);
@@ -947,6 +977,7 @@ public class MainActivity extends AppCompatActivity {
 
 
     void loadDataForSummaryBalance() {
+//        Log.d(LOG_TAG, "loadDataForSummaryBalance()");
         View balanceListItem = ltInflater.inflate(R.layout.item_balance, llBalanceList, false);
 
         TextView tvCategory = (TextView) balanceListItem.findViewById(R.id.tvCategory);
@@ -955,7 +986,7 @@ public class MainActivity extends AppCompatActivity {
         tvCategory.setTextSize(TypedValue.COMPLEX_UNIT_PX, getResources().getDimension(R.dimen.text_size));
         tvCategory.setTypeface(null, Typeface.BOLD);
 
-        boolean isSumNotNull = false;
+//        boolean isWalletsNotEmpty = false;
         for (int j = 0; j < db.getNumberOfRecords(DB.CURRENCY_TABLE); j++) {
             int sum = 0;
             String currency = "";
@@ -963,32 +994,31 @@ public class MainActivity extends AppCompatActivity {
                 cursor = db.getBalanceData(i, j);
 //                db.logCursor(cursor);
 
-                if (cursor.moveToFirst()) {
+                if ((cursor != null) && (cursor.moveToFirst())) {
                     sum += cursor.getInt(cursor.getColumnIndex(DB.RECORD_COLUMN_SUM));
                     currency = cursor.getString(cursor.getColumnIndex(DB.CURRENCY_COLUMN_TITLE));
+//                    if (sum != 0) isWalletsNotEmpty = true;
                 }
             }
 
             // Выводим суммарный баланс и валюту
-            if (sum != 0) {
-                LinearLayout llWallet = (LinearLayout) balanceListItem.findViewById(R.id.llWallet);
-                View balanceWalletListItem = ltInflater.inflate(R.layout.item_balance_wallet, llWallet, false);
+            LinearLayout llWallet = (LinearLayout) balanceListItem.findViewById(R.id.llWallet);
+            View balanceWalletListItem = ltInflater.inflate(R.layout.item_balance_wallet, llWallet, false);
 
-                TextView tvSum = (TextView) balanceWalletListItem.findViewById(R.id.tvSum);
-                tvSum.setTypeface(null, Typeface.BOLD);
+            TextView tvSum = (TextView) balanceWalletListItem.findViewById(R.id.tvSum);
+            tvSum.setTypeface(null, Typeface.BOLD);
 
-                TextView tvCurrency = (TextView) balanceWalletListItem.findViewById(R.id.tvCurrency);
-                tvCurrency.setTypeface(null, Typeface.BOLD);
+            TextView tvCurrency = (TextView) balanceWalletListItem.findViewById(R.id.tvCurrency);
+            tvCurrency.setTypeface(null, Typeface.BOLD);
 
-                // Форматируем вывод, чтобы было красиво
-                formatBalanceSum(sum, tvSum, currency, tvCurrency);
+            // Форматируем вывод, чтобы было красиво
+            formatBalanceSum(sum, tvSum, currency, tvCurrency);
 
-                isSumNotNull = true;
-                llWallet.addView(balanceWalletListItem);
-            }
+            llWallet.addView(balanceWalletListItem);
         }
 
-        if (isSumNotNull) llBalanceList.addView(balanceListItem);
+//        if (isWalletsNotEmpty)
+        llBalanceList.addView(balanceListItem);
     }
 
 
@@ -1331,7 +1361,7 @@ public class MainActivity extends AppCompatActivity {
 
         String currMonth = dbBudgetDateFormat.format(Calendar.getInstance().getTime());
         cursor = db.getRemainData(currMonth);
-        db.logCursor(cursor);
+//        db.logCursor(cursor);
 
         String[] from = { DB.CATEGORY_COLUMN_NAME, DB.RECORD_COLUMN_SUM };
         int[] to = { R.id.tvName, R.id.tvSumRemain };

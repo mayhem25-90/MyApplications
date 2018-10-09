@@ -140,10 +140,12 @@ public class DB {
     static final String WALLET_COLUMN_ID = "_id";
     static final String WALLET_COLUMN_IMAGE = "image";
     static final String WALLET_COLUMN_NAME = "name";
+    static final String WALLET_COLUMN_HIDDEN = "hidden";
 
     private static final String WALLET_TABLE_CREATE = "create table " + WALLET_TABLE + "(" +
             WALLET_COLUMN_ID + " integer primary key, " + WALLET_COLUMN_IMAGE + " integer, " +
-            WALLET_COLUMN_NAME + " text, " + TABLE_COLUMN_PARENT + " integer" + ");";
+            WALLET_COLUMN_NAME + " text, " + TABLE_COLUMN_PARENT + " integer, " +
+            WALLET_COLUMN_HIDDEN + " integer default 0" + ");";
 
 
     // Таблица с категориями затрат и доходов
@@ -253,7 +255,7 @@ public class DB {
         Cursor localCursor = mDB.query(TABLE_NAME, null, selection, selectionArgs, CATEGORY_COLUMN_ID, null, null);
 
         // Заодно считаем id, с которым надо записать категорию в таблицу
-        if (localCursor.moveToFirst()) {
+        if ((localCursor != null) && (localCursor.moveToFirst())) {
             int maxCategory = -1;
             do {
                 int id = localCursor.getInt(localCursor.getColumnIndex(CATEGORY_COLUMN_ID));
@@ -324,7 +326,7 @@ public class DB {
     void deleteTransaction(long id) {
         Cursor cursor = mDB.rawQuery("select " + RECORD_COLUMN_OPERATION_TYPE + " from " + RECORD_TABLE
                 + " where " + RECORD_COLUMN_ID + " = " + id, null);
-        if (cursor.moveToFirst()) {
+        if ((cursor != null) && (cursor.moveToFirst())) {
             Log.d(LOG_TAG, "Operation has type " + cursor.getInt(cursor.getColumnIndex(RECORD_COLUMN_OPERATION_TYPE)) + " | id " + id);
             int type = cursor.getInt(cursor.getColumnIndex(RECORD_COLUMN_OPERATION_TYPE));
             mDB.delete(RECORD_TABLE, RECORD_COLUMN_ID + " = " + id, null);
@@ -333,8 +335,8 @@ public class DB {
                 mDB.delete(RECORD_TABLE, RECORD_COLUMN_ID + " = " + (id + 1), null);
                 mDB.delete(RECORD_TABLE, RECORD_COLUMN_ID + " = " + (id + 2), null);
             }
+            cursor.close();
         }
-        cursor.close();
     }
 
 
@@ -488,7 +490,8 @@ public class DB {
         String sqlQuery = "select "
                 + WALLET_TABLE + "." + WALLET_COLUMN_ID + ", "
                 + WALLET_TABLE + "." + WALLET_COLUMN_IMAGE + ", "
-                + WALLET_TABLE + "." + WALLET_COLUMN_NAME
+                + WALLET_TABLE + "." + WALLET_COLUMN_NAME + ", "
+                + WALLET_TABLE + "." + WALLET_COLUMN_HIDDEN
                 + " from " + WALLET_TABLE
                 + " where " + WALLET_COLUMN_ID + " = " + wallet;
 //        Log.d(LOG_TAG, sqlQuery);
@@ -504,6 +507,18 @@ public class DB {
 
     // получить данные из таблицы для вывода баланса
     Cursor getBalanceData(int wallet, int currency) {
+        int hidden = 0;
+        String[] col = {WALLET_COLUMN_HIDDEN};
+        Cursor cursor = mDB.query(WALLET_TABLE, col, WALLET_COLUMN_ID + " = " + wallet, null, null, null, null);
+        if (cursor != null) {
+            if (cursor.moveToFirst()) {
+                hidden = cursor.getInt(cursor.getColumnIndex(DB.WALLET_COLUMN_HIDDEN));
+                cursor.close();
+            }
+        }
+
+        if (hidden == 1) return null;
+
         String sqlQuery = "select "
                 + WALLET_TABLE + "." + WALLET_COLUMN_ID + ", "
                 + WALLET_TABLE + "." + WALLET_COLUMN_IMAGE + ", "
@@ -524,6 +539,24 @@ public class DB {
                 + " or " + RECORD_TABLE + "." + RECORD_COLUMN_OPERATION_TYPE + " = " + GAIN + ")";
 //        Log.d(LOG_TAG, sqlQuery);
         return mDB.rawQuery(sqlQuery, null);
+    }
+
+
+    void setWalletHidden(int id) {
+        int setParameter = 0;
+
+        Cursor cursor = mDB.rawQuery("select " + WALLET_COLUMN_HIDDEN + " from " + WALLET_TABLE
+                    + " where " + WALLET_COLUMN_ID + " = " + id, null);
+//        logCursor(cursor);
+        if ((cursor != null) && (cursor.moveToFirst())) {
+            int dbParameter = cursor.getInt(cursor.getColumnIndex(WALLET_COLUMN_HIDDEN));
+            setParameter = (dbParameter == NOT_SELECTED) ? SELECTED : NOT_SELECTED;
+            cursor.close();
+        }
+
+        ContentValues cv = new ContentValues();
+        cv.put(WALLET_COLUMN_HIDDEN, setParameter);
+        mDB.update(WALLET_TABLE, cv, WALLET_COLUMN_ID + " = " + id, null);
     }
 
 // == ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ====
