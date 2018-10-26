@@ -18,7 +18,7 @@ public class DB {
     private final String LOG_TAG = "myLogs";
 
     static final int START = 0, SPENDING = 1, GAIN = 2, MOVE = 3, CHANGE = 4;
-    final int AUTO_SELECT = -1, NOT_SELECTED = 0, SELECTED = 1;
+    static final int AUTO_SELECT = -1, NOT_SELECTED = 0, SELECTED = 1;
     final int CONFIRM_SAVE = 0, CONFIRM_EDIT = 1;
 
     final int div_category_gain = 1000000;
@@ -323,12 +323,25 @@ public class DB {
 
 
     // Удалить запись о транзакции
-    void deleteTransaction(long id) {
-        Cursor cursor = mDB.rawQuery("select " + RECORD_COLUMN_OPERATION_TYPE + " from " + RECORD_TABLE
+    int[] deleteTransaction(long id) {
+        Cursor cursor = mDB.rawQuery("select "
+                + RECORD_COLUMN_OPERATION_TYPE + ","
+                + RECORD_COLUMN_WALLET_ID + ","
+                + RECORD_COLUMN_WALLET_ID_DEST + ","
+                + RECORD_COLUMN_CURRENCY_ID + ","
+                + RECORD_COLUMN_CURRENCY_ID_DEST
+                + " from " + RECORD_TABLE
                 + " where " + RECORD_COLUMN_ID + " = " + id, null);
+        int[] ids = new int[4]; for (int i = 0; i < 4; ++i) { ids[i] = 0; }
         if ((cursor != null) && (cursor.moveToFirst())) {
             Log.d(LOG_TAG, "Operation has type " + cursor.getInt(cursor.getColumnIndex(RECORD_COLUMN_OPERATION_TYPE)) + " | id " + id);
             int type = cursor.getInt(cursor.getColumnIndex(RECORD_COLUMN_OPERATION_TYPE));
+            ids[0] = cursor.getInt(cursor.getColumnIndex(RECORD_COLUMN_WALLET_ID));
+            ids[1] = cursor.getInt(cursor.getColumnIndex(RECORD_COLUMN_WALLET_ID_DEST));
+            ids[2] = cursor.getInt(cursor.getColumnIndex(RECORD_COLUMN_CURRENCY_ID_DEST));
+            ids[3] = cursor.getInt(cursor.getColumnIndex(RECORD_COLUMN_CURRENCY_ID));
+            if (type == MOVE) ids[3] = cursor.getInt(cursor.getColumnIndex(RECORD_COLUMN_CURRENCY_ID_DEST));
+
             mDB.delete(RECORD_TABLE, RECORD_COLUMN_ID + " = " + id, null);
             if ((type == MOVE) || (type == CHANGE)) { // Также удаляем фейковые операции для корректного баланса
                 Log.d(LOG_TAG, "Also delete id's " + (id + 1) + " and " + (id + 2));
@@ -337,6 +350,7 @@ public class DB {
             }
             cursor.close();
         }
+        return ids;
     }
 
 
@@ -507,22 +521,11 @@ public class DB {
 
     // получить данные из таблицы для вывода баланса
     Cursor getBalanceData(int wallet, int currency) {
-        int hidden = 0;
-        String[] col = {WALLET_COLUMN_HIDDEN};
-        Cursor cursor = mDB.query(WALLET_TABLE, col, WALLET_COLUMN_ID + " = " + wallet, null, null, null, null);
-        if (cursor != null) {
-            if (cursor.moveToFirst()) {
-                hidden = cursor.getInt(cursor.getColumnIndex(DB.WALLET_COLUMN_HIDDEN));
-                cursor.close();
-            }
-        }
-
-        if (hidden == 1) return null;
-
         String sqlQuery = "select "
                 + WALLET_TABLE + "." + WALLET_COLUMN_ID + ", "
                 + WALLET_TABLE + "." + WALLET_COLUMN_IMAGE + ", "
                 + WALLET_TABLE + "." + WALLET_COLUMN_NAME + ", "
+                + WALLET_TABLE + "." + WALLET_COLUMN_HIDDEN + ", "
                 + CURRENCY_TABLE + "." + CURRENCY_COLUMN_TITLE + ", "
                 + "sum(" + RECORD_TABLE + "." + RECORD_COLUMN_SUM + ") as " + RECORD_COLUMN_SUM
                 + " from " + RECORD_TABLE
@@ -557,6 +560,39 @@ public class DB {
         ContentValues cv = new ContentValues();
         cv.put(WALLET_COLUMN_HIDDEN, setParameter);
         mDB.update(WALLET_TABLE, cv, WALLET_COLUMN_ID + " = " + id, null);
+    }
+
+
+    BalanceStruct getBalanceData() {
+        // Получаем размеры нашего массива сумм
+        int walletsNumber = getNumberOfRecords(DB.WALLET_TABLE);
+        int currenciesNumber = getNumberOfRecords(DB.CURRENCY_TABLE);
+
+        int[] walletHiddenData = new int[walletsNumber];
+        int[][] balanceData = new int[walletsNumber][currenciesNumber];
+        String[] currencyData = new String[currenciesNumber];
+        for (int i = 0; i < walletsNumber; i++) {
+            for (int j = 0; j < currenciesNumber; j++) {
+                Cursor cursor = getBalanceData(i, j);
+//                db.logCursor(cursor);
+
+                if ((cursor != null) && (cursor.moveToFirst())) {
+                    walletHiddenData[i] = cursor.getInt(cursor.getColumnIndex(WALLET_COLUMN_HIDDEN));
+                    balanceData[i][j] = cursor.getInt(cursor.getColumnIndex(RECORD_COLUMN_SUM));
+                    currencyData[j] = cursor.getString(cursor.getColumnIndex(CURRENCY_COLUMN_TITLE));
+//                    Log.d(LOG_TAG, "balanceData[][]: " + balanceData[i][j]);
+//                    Log.d(LOG_TAG, "currencyData[]: " + currencyData[j]);
+//                    Log.d(LOG_TAG, "hiddenData[]: " + walletHiddenData[i]);
+                }
+                else {
+                    walletHiddenData[i] = 0;
+                    balanceData[i][j] = 0;
+                    currencyData[j] = "";
+                }
+            }
+        }
+
+        return new BalanceStruct(walletsNumber, currenciesNumber, walletHiddenData, balanceData, currencyData);
     }
 
 // == ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ====

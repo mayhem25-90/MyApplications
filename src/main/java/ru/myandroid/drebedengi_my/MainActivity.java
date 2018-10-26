@@ -42,6 +42,7 @@ import java.text.DecimalFormatSymbols;
 import java.util.Calendar;
 import java.util.Date;
 import java.text.SimpleDateFormat;
+import java.util.Iterator;
 import java.util.Locale;
 import java.util.Vector;
 
@@ -594,6 +595,8 @@ public class MainActivity extends AppCompatActivity {
                     db.addTransaction(mode, history_item_selected_id, operation_type, category_id,
                             sum, -1, currentDate, currentTime, comment,
                             m_currency_id, -1, m_wallet_id, -1);
+//                    Log.d(LOG_TAG, "Добавление транзакции - обновляем баланс для " + m_wallet_id + " " + m_currency_id);
+                    updateBalanceDataArray((int) m_wallet_id, (int) m_currency_id); // Здесь надо обновить только одно поле в массиве балансов
                 }
                 else if (operation_type == DB.MOVE) {
                     db.addTransaction(mode, history_item_selected_id, DB.MOVE, category_id,
@@ -607,6 +610,11 @@ public class MainActivity extends AppCompatActivity {
                     db.addTransaction(mode, history_item_selected_id + 2, DB.GAIN, category_id,
                             sum, -1, currentDate, currentTime, comment,
                             m_currency_id, -1, m_wallet_id_dest, -1);
+
+//                    Log.d(LOG_TAG, "Добавление транзакции - обновляем баланс для " + m_wallet_id + " " + m_currency_id);
+//                    Log.d(LOG_TAG, "Добавление транзакции - обновляем баланс для " + m_wallet_id_dest + " " + m_currency_id);
+                    updateBalanceDataArray((int) m_wallet_id, (int) m_currency_id);
+                    updateBalanceDataArray((int) m_wallet_id_dest, (int) m_currency_id);
                 }
                 else if (operation_type == DB.CHANGE) {
                     db.addTransaction(mode, history_item_selected_id, DB.CHANGE, category_id,
@@ -620,6 +628,11 @@ public class MainActivity extends AppCompatActivity {
                     db.addTransaction(mode, history_item_selected_id + 2, DB.GAIN, category_id,
                             sumDest, -1, currentDate, currentTime, comment,
                             m_currency_id_dest, -1, m_wallet_id_dest, -1);
+
+//                    Log.d(LOG_TAG, "Добавление транзакции - обновляем баланс для " + m_wallet_id + " " + m_currency_id);
+//                    Log.d(LOG_TAG, "Добавление транзакции - обновляем баланс для " + m_wallet_id_dest + " " + m_currency_id_dest);
+                    updateBalanceDataArray((int) m_wallet_id, (int) m_currency_id);
+                    updateBalanceDataArray((int) m_wallet_id_dest, (int) m_currency_id_dest);
                 }
             }
             catch (Exception ex) {
@@ -655,11 +668,15 @@ public class MainActivity extends AppCompatActivity {
         public void onClick(DialogInterface dialog, int which) {
             switch (which) {
                 case Dialog.BUTTON_POSITIVE: // Положительная кнопка
-                    db.deleteTransaction(history_item_selected_id);
+                    int[] ids = db.deleteTransaction(history_item_selected_id);
                     Toast.makeText(MainActivity.this, R.string.record_deleted, Toast.LENGTH_SHORT).show();
 
                     // А ещё обновим историю операций, баланс и бюджет
                     loadDataForOperationHistory();
+//                    Log.d(LOG_TAG, "Удаление транзакции - обновляем баланс для " + ids[0] + " " + ids[2]);
+//                    Log.d(LOG_TAG, "Удаление транзакции - обновляем баланс для " + ids[1] + " " + ids[3]);
+                    updateBalanceDataArray(ids[0], ids[2]); // Здесь надо обновить только одно поле в массиве балансов
+                    if (ids[3] != -1) updateBalanceDataArray(ids[1], ids[3]); // И ещё одно, если было перемещение или обмен
                     loadDataForBalance();
                     refreshPlanTab();
                     break;
@@ -846,9 +863,9 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
 //                Log.d(LOG_TAG, "itemClick: position = " + position + ", id = " + id);
-                db.setSelectedParameter(id, db.AUTO_SELECT);
+                db.setSelectedParameter(id, DB.AUTO_SELECT);
                 if (history_item_selected_id != id) { // Убираем меню со старого элемента
-                    db.setSelectedParameter(history_item_selected_id, db.NOT_SELECTED);
+                    db.setSelectedParameter(history_item_selected_id, DB.NOT_SELECTED);
                     history_item_selected_id = id;
                 }
 
@@ -885,29 +902,33 @@ public class MainActivity extends AppCompatActivity {
     LinearLayout llBalanceList;
     LayoutInflater ltInflater;
 
+    BalanceStruct balanceStruct;
+
     private void initBalanceTabContent() {
         Log.d(LOG_TAG, "initBalanceTabContent");
         llBalanceList = (LinearLayout) findViewById(R.id.llBalanceList);
+        updateBalanceDataArray();
         loadDataForBalance();
     }
 
 
-    public void loadDataForBalance() {
+    void loadDataForBalance() {
 //        Log.d(LOG_TAG, "loadDataForBalance()");
         llBalanceList.removeAllViews();
         ltInflater = getLayoutInflater();
 
-        for (int i = 0; i < db.getNumberOfRecords(DB.WALLET_TABLE); i++) {
+        for (int i = 0; i < balanceStruct.walletsNumber; i++) {
 //            Log.d(LOG_TAG, "walletData[" + i + "]: " + db.walletData[i]);
 
             View balanceListItem = ltInflater.inflate(R.layout.item_balance, llBalanceList, false);
             balanceListItem.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View view) {
+                    // Здесь обновляем только графику, массив балансов не трогаем
                     TextView tvID = (TextView) view.findViewById(R.id.tvID);
                     int id = Integer.valueOf(tvID.getText().toString());
 //                    Log.d(LOG_TAG, "### on item click! id " + id);
-                    db.setWalletHidden(id);
+                    setWalletHidden(id);
                     loadDataForBalance();
                 }
             });
@@ -920,51 +941,36 @@ public class MainActivity extends AppCompatActivity {
             cursor = db.getWalletData(i);
 //            db.logCursor(cursor);
 
-//            Log.d(LOG_TAG, "get hidden");
-
-            int hidden = 0;
             if ((cursor != null) && (cursor.moveToFirst())) {
                 tvID.setText(cursor.getString(cursor.getColumnIndex(DB.WALLET_COLUMN_ID)));
                 ivImg.setImageResource(cursor.getInt(cursor.getColumnIndex(DB.WALLET_COLUMN_IMAGE)));
                 tvCategory.setText(cursor.getString(cursor.getColumnIndex(DB.WALLET_COLUMN_NAME)));
-
-                hidden = cursor.getInt(cursor.getColumnIndex(DB.WALLET_COLUMN_HIDDEN));
             }
-
-//            Log.d(LOG_TAG, "wallet " + i + " hidden: " + hidden);
-//            if (hidden == 1) continue; // Если элемент скрыт - не отображаем баланс
 
             boolean isWalletNotEmpty = false;
             LinearLayout llWallet = (LinearLayout) balanceListItem.findViewById(R.id.llWallet);
-            for (int j = 0; j < db.getNumberOfRecords(DB.CURRENCY_TABLE); j++) {
+            for (int j = 0; j < balanceStruct.currenciesNumber; j++) {
 //                Log.d(LOG_TAG, " - currencyData[" + j + "]: "); // + db.currencyData[j]);
 
-                if (hidden == 1) { // Если элемент скрытый - не отображаем баланс
+                if (balanceStruct.walletHiddenData[i] == DB.SELECTED) { // Если элемент скрытый - не отображаем баланс
                     isWalletNotEmpty = true;
                     break;
                 }
 
-                cursor = db.getBalanceData(i, j);
-//                db.logCursor(cursor);
+                int sum = balanceStruct.balanceData[i][j];
+                String currency = balanceStruct.currencyData[j];
 
-                if ((cursor != null) && (cursor.moveToFirst())) {
-                    int sum = cursor.getInt(cursor.getColumnIndex(DB.RECORD_COLUMN_SUM));
-                    String currency = cursor.getString(cursor.getColumnIndex(DB.CURRENCY_COLUMN_TITLE));
+                if (sum != 0) {
+                    View balanceWalletListItem = ltInflater.inflate(R.layout.item_balance_wallet, llWallet, false);
 
-//                    Log.d(LOG_TAG, " - currencyData[" + j + "]: " + sum);
+                    TextView tvSum = (TextView) balanceWalletListItem.findViewById(R.id.tvSum);
+                    TextView tvCurrency = (TextView) balanceWalletListItem.findViewById(R.id.tvCurrency);
 
-                    if (sum != 0) {
-                        View balanceWalletListItem = ltInflater.inflate(R.layout.item_balance_wallet, llWallet, false);
+                    // Форматируем вывод, чтобы было красиво
+                    formatBalanceSum(sum, tvSum, currency, tvCurrency);
 
-                        TextView tvSum = (TextView) balanceWalletListItem.findViewById(R.id.tvSum);
-                        TextView tvCurrency = (TextView) balanceWalletListItem.findViewById(R.id.tvCurrency);
-
-                        // Форматируем вывод, чтобы было красиво
-                        formatBalanceSum(sum, tvSum, currency, tvCurrency);
-
-                        isWalletNotEmpty = true;
-                        llWallet.addView(balanceWalletListItem);
-                    }
+                    isWalletNotEmpty = true;
+                    llWallet.addView(balanceWalletListItem);
                 }
             }
 
@@ -986,18 +992,12 @@ public class MainActivity extends AppCompatActivity {
         tvCategory.setTextSize(TypedValue.COMPLEX_UNIT_PX, getResources().getDimension(R.dimen.text_size));
         tvCategory.setTypeface(null, Typeface.BOLD);
 
-//        boolean isWalletsNotEmpty = false;
-        for (int j = 0; j < db.getNumberOfRecords(DB.CURRENCY_TABLE); j++) {
+        for (int j = 0; j < balanceStruct.currenciesNumber; j++) {
+            String currency = balanceStruct.currencyData[j];
             int sum = 0;
-            String currency = "";
-            for (int i = 0; i < db.getNumberOfRecords(DB.WALLET_TABLE); i++) {
-                cursor = db.getBalanceData(i, j);
-//                db.logCursor(cursor);
-
-                if ((cursor != null) && (cursor.moveToFirst())) {
-                    sum += cursor.getInt(cursor.getColumnIndex(DB.RECORD_COLUMN_SUM));
-                    currency = cursor.getString(cursor.getColumnIndex(DB.CURRENCY_COLUMN_TITLE));
-//                    if (sum != 0) isWalletsNotEmpty = true;
+            for (int i = 0; i < balanceStruct.walletsNumber; i++) {
+                if (balanceStruct.walletHiddenData[i] != DB.SELECTED) {
+                    sum += balanceStruct.balanceData[i][j];
                 }
             }
 
@@ -1017,7 +1017,6 @@ public class MainActivity extends AppCompatActivity {
             llWallet.addView(balanceWalletListItem);
         }
 
-//        if (isWalletsNotEmpty)
         llBalanceList.addView(balanceListItem);
     }
 
@@ -1037,6 +1036,50 @@ public class MainActivity extends AppCompatActivity {
             tvSum.setTextColor(getResources().getColor(R.color.positive));
             tvCurrency.setTextColor(getResources().getColor(R.color.positive));
         }
+    }
+
+
+    void updateBalanceDataArray() {
+        Log.d(LOG_TAG, "fillBalanceDataArray()");
+//        balanceStruct.balanceData = db.getBalanceDataArray();
+        balanceStruct = db.getBalanceData();
+
+//        int walletsNumber = db.getNumberOfRecords(DB.WALLET_TABLE);
+//        int currenciesNumber = db.getNumberOfRecords(DB.CURRENCY_TABLE);
+//        for (int i = 0; i < balanceStruct.walletsNumber; i++) {
+//            Log.d(LOG_TAG, "balanceData[" + i + "] hidden: " + balanceStruct.walletHiddenData[i]);
+//            for (int j = 0; j < balanceStruct.currenciesNumber; j++) {
+//                Log.d(LOG_TAG, "balanceData[" + i + "][" + j + "]: " + balanceStruct.balanceData[i][j]
+//                        + " " + balanceStruct.currencyData[j]);
+//            }
+//        }
+    }
+
+
+    void updateBalanceDataArray(int wallet) {
+        for (int j = 0; j < balanceStruct.currenciesNumber; ++j) {
+            updateBalanceDataArray(wallet, j);
+        }
+    }
+
+
+    void updateBalanceDataArray(int wallet, int currency) {
+        Cursor cursor = db.getBalanceData(wallet, currency);
+//        db.logCursor(cursor);
+
+        if ((cursor != null) && (cursor.moveToFirst())) {
+            int sum = cursor.getInt(cursor.getColumnIndex(DB.RECORD_COLUMN_SUM));
+            Log.d(LOG_TAG, "previous balance: " + balanceStruct.balanceData[wallet][currency]);
+            balanceStruct.balanceData[wallet][currency] = sum;
+            Log.d(LOG_TAG, "new balance: " + balanceStruct.balanceData[wallet][currency]);
+        }
+    }
+
+
+    void setWalletHidden(int id) {
+        balanceStruct.walletHiddenData[id] =
+                (balanceStruct.walletHiddenData[id] == DB.NOT_SELECTED) ? DB.SELECTED : DB.NOT_SELECTED;
+        db.setWalletHidden(id);
     }
 
 
@@ -1180,6 +1223,7 @@ public class MainActivity extends AppCompatActivity {
                     }
                     updateSpinners();
                     resetEditCategoriesTab();
+                    updateBalanceDataArray((int) edit_id); // Здесь надо обновить только одно МЕСТО ХРАНЕНИЯ (а не поле) в массиве балансов
                     loadDataForBalance();
                 }
                 else Toast.makeText(MainActivity.this, R.string.message_edit_cat_edit_error, Toast.LENGTH_SHORT).show();
