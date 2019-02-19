@@ -496,11 +496,15 @@ public class MainActivity extends AppCompatActivity {
                         if (!textInput.getText().toString().equals("")) {
                             String currMonth = dbBudgetDateFormat.format(planDate.getTime());
                             db.updateLimitForCategory(currMonth, recordPlanTableID, Integer.parseInt(textInput.getText().toString()));
+
                             // А ещё обновим план:
                             loadDataForControlList();
                             loadDataForPlanList();
                             textInput.setText("");
                             Toast.makeText(MainActivity.this, R.string.edit_limit_message, Toast.LENGTH_SHORT).show();
+
+                            // ... и баланс (это для остатков)
+                            loadDataForBalance();
                         }
                     }
                 });
@@ -918,7 +922,7 @@ public class MainActivity extends AppCompatActivity {
         ltInflater = getLayoutInflater();
 
         for (int i = 0; i < balanceStruct.walletsNumber; i++) {
-//            Log.d(LOG_TAG, "walletData[" + i + "]: " + db.walletData[i]);
+//            Log.d(LOG_TAG, "walletData[" + i + "]: "); // + db.walletData[i]);
 
             View balanceListItem = ltInflater.inflate(R.layout.item_balance, llBalanceList, false);
             balanceListItem.setOnClickListener(new View.OnClickListener() {
@@ -957,6 +961,7 @@ public class MainActivity extends AppCompatActivity {
                     break;
                 }
 
+//                Log.d(LOG_TAG, " - balanceData[" + i + "][" + j + "]: " + balanceStruct.balanceData[i][j]);
                 int sum = balanceStruct.balanceData[i][j];
                 String currency = balanceStruct.currencyData[j];
 
@@ -1015,6 +1020,22 @@ public class MainActivity extends AppCompatActivity {
             formatBalanceSum(sum, tvSum, currency, tvCurrency);
 
             llWallet.addView(balanceWalletListItem);
+
+
+            // Отдельный баланс для меня - рублёвый остаток с учётом плана
+            if (j == 0) {
+                // Выводим суммарный баланс и валюту
+                balanceWalletListItem = ltInflater.inflate(R.layout.item_balance_wallet, llWallet, false);
+                tvSum = (TextView) balanceWalletListItem.findViewById(R.id.tvSum);
+                tvCurrency = (TextView) balanceWalletListItem.findViewById(R.id.tvCurrency);
+
+                int remain = sum - updatePlanSum(DB.REMAIN, tvSum, Calendar.getInstance());
+
+                // Форматируем вывод, чтобы было красиво
+                formatBalanceSum(remain, tvSum, currency, tvCurrency);
+
+                llWallet.addView(balanceWalletListItem);
+            }
         }
 
         llBalanceList.addView(balanceListItem);
@@ -1040,7 +1061,7 @@ public class MainActivity extends AppCompatActivity {
 
 
     void updateBalanceDataArray() {
-        Log.d(LOG_TAG, "fillBalanceDataArray()");
+        Log.d(LOG_TAG, "updateBalanceDataArray()");
 //        balanceStruct.balanceData = db.getBalanceDataArray();
         balanceStruct = db.getBalanceData();
 
@@ -1057,6 +1078,7 @@ public class MainActivity extends AppCompatActivity {
 
 
     void updateBalanceDataArray(int wallet) {
+        Log.d(LOG_TAG, "updateBalanceDataArray(int)");
         for (int j = 0; j < balanceStruct.currenciesNumber; ++j) {
             updateBalanceDataArray(wallet, j);
         }
@@ -1064,6 +1086,7 @@ public class MainActivity extends AppCompatActivity {
 
 
     void updateBalanceDataArray(int wallet, int currency) {
+        Log.d(LOG_TAG, "updateBalanceDataArray(int, int)");
         Cursor cursor = db.getBalanceData(wallet, currency);
 //        db.logCursor(cursor);
 

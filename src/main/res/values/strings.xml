@@ -64,7 +64,7 @@
     <string name="plan">План</string>
     <string name="fact">Факт</string>
     <string name="edit_limit_message">Лимит установлен</string>
-    <string name="plan_limit">Лимит по плану</string>
+    <string name="plan_limit">Лимит-план</string>
     <string name="plan_remain">Осталось потратить</string>
     <string name="plan_already_spend">Потрачено</string>
 
