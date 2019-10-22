@@ -944,4 +944,103 @@ public class DB {
         public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
         }
     }
+
+
+// == ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ====
+// Выгрузка БД
+// == ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ====
+
+    // Попробуем выписать данные таблиц
+    public String backupTables() {
+        Log.d(LOG_TAG, "unloadTables");
+
+        String summary = "";
+
+        String SQL_GET_ALL_TABLES = "SELECT name"
+                + " FROM sqlite_master WHERE type = 'table'"
+                + " AND name !='android_metadata' AND name !='sqlite_sequence'";
+//        Log.d(LOG_TAG, SQL_GET_ALL_TABLES);
+
+        Cursor cursor = mDB.rawQuery(SQL_GET_ALL_TABLES, null);
+
+//        try {
+//            cursor = mDB.rawQuery(SQL_GET_ALL_TABLES, null);
+//        }
+//        catch (Exception ex) {
+//            Log.d(LOG_TAG, ex.getClass() + " error: " + ex.getMessage());
+//        }
+//        logCursor(cursor);
+
+
+        // Этап 1 - получаем имена таблиц
+//        String[] tableName;
+        Vector<String> tableName = new Vector<>();
+        if (cursor != null) {
+            // пока сделаю так - не знаю, как лучше
+
+            // первый проход - тупо получаем количество таблиц
+            int count = 0;
+            if (cursor.moveToFirst()) {
+                do {
+                    ++count;
+                } while (cursor.moveToNext());
+            }
+            Log.d(LOG_TAG, "Кол-во таблиц: " + count);
+
+            // второй проход - записываем названия таблиц
+//            tableName = new String[count];
+            if (cursor.moveToFirst()) {
+                String str;
+                int i = 0;
+                do {
+                    str = "";
+                    for (String cn : cursor.getColumnNames()) {
+//                        str = str.concat(cn + " = " + cursor.getString(cursor.getColumnIndex(cn)) + "; ");
+                        str = cursor.getString(cursor.getColumnIndex(cn));
+                    }
+//                    Log.d(LOG_TAG, str);
+//                    tableName[i] = str;
+                    tableName.add(str);
+                    ++i;
+                } while (cursor.moveToNext());
+            }
+//            for (int i = 0; i < count; ++i) {
+//                Log.d(LOG_TAG, tableName[i]);
+//            }
+
+//            Log.d(LOG_TAG, "tableNames:");
+//            for (int i = 0; i < tableName.size(); ++i) {
+//                Log.d(LOG_TAG, i + ": " + tableName.get(i));
+//            }
+            cursor.close();
+        }
+
+
+        // Этап 2 - для каждой таблицы получаем имена столбцов и данные полей
+        for (int i = 0; i < tableName.size(); ++i) {
+//            Log.d(LOG_TAG, i + ": " + tableName.get(i));
+//            Log.d(LOG_TAG, "TABLE " + tableName.get(i));
+            summary += "TABLE " + tableName.get(i) + "\n";
+
+            String sqlQuery = "SELECT * FROM " + tableName.get(i);
+            cursor = mDB.rawQuery(sqlQuery, null);
+
+            if (cursor != null) {
+                if (cursor.moveToFirst()) {
+                    String str;
+                    do {
+                        str = ";";
+                        for (String cn : cursor.getColumnNames()) {
+                            str = str.concat(cn + "=" + cursor.getString(cursor.getColumnIndex(cn)) + ";");
+                        }
+//                        Log.d(LOG_TAG, str);
+                        summary += str + "\n";
+                    } while (cursor.moveToNext());
+                }
+            }
+        }
+
+//        Log.d(LOG_TAG, summary);
+        return summary;
+    }
 }

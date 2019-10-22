@@ -68,6 +68,8 @@
     <string name="plan_remain">Осталось потратить</string>
     <string name="plan_already_spend">Потрачено</string>
 
+    <string name="button_backup_table">Выгрузить БД</string>
+
     <!--<string name="currencies">Валюты</string>-->
     <!--<string name="wallets">Места хранения</string>-->
     <!--<string name="categories">Категории затрат</string>-->

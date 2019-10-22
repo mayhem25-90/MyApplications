@@ -6,10 +6,14 @@ import android.app.DatePickerDialog;
 import android.app.Dialog;
 import android.app.TimePickerDialog;
 import android.content.DialogInterface;
+import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.graphics.Color;
 import android.graphics.PorterDuff;
 import android.graphics.Typeface;
+import android.os.Environment;
+import android.support.v4.app.ActivityCompat;
+import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.text.InputType;
@@ -36,7 +40,12 @@ import android.widget.TableRow;
 import android.widget.TextView;
 import android.widget.TimePicker;
 import android.widget.Toast;
+import android.Manifest;
 
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.text.DecimalFormat;
 import java.text.DecimalFormatSymbols;
 import java.util.Calendar;
@@ -56,6 +65,8 @@ import static ru.myandroid.drebedengi_my.DB.dbBudgetDateFormat;
 public class MainActivity extends AppCompatActivity {
 
     final String LOG_TAG = "myLogs";
+    final String DIR_SD = "_tmp";
+    final String FILENAME_SD = "databaseBackup";
 
     DB db;
     Cursor cursor;
@@ -121,6 +132,13 @@ public class MainActivity extends AppCompatActivity {
         initBalanceTabContent();
         initEditCategoriesTabContent();
         initPlanTabContent();
+
+        // проверяем, можем ли писать на SD
+        // если нет - запрашиваем разрешение
+        if (!hasWriteSDPermission()) {
+            ActivityCompat.requestPermissions(MainActivity.this,
+                    new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE}, 112);
+        }
     }
 
 
@@ -194,7 +212,6 @@ public class MainActivity extends AppCompatActivity {
 
     final int DIALOG_DATE = 0;
     final int DIALOG_TIME = 1;
-    final int DIALOG_TAGS = 2;
     final int DIALOG_DELETE = 3;
     final int DIALOG_EDIT_PLAN = 4;
 
@@ -382,10 +399,6 @@ public class MainActivity extends AppCompatActivity {
 
             case R.id.btnTime:
                 showDialog(DIALOG_TIME);
-                break;
-
-            case R.id.btnTag:
-                showDialog(DIALOG_TAGS);
                 break;
 
             case R.id.btnConfirm:
@@ -1274,6 +1287,10 @@ public class MainActivity extends AppCompatActivity {
                 }
                 break;
 
+            case R.id.btnBackupDatabase:
+                writeFile(db.backupTables());
+                break;
+
             default:
                 break;
         }
@@ -1287,6 +1304,7 @@ public class MainActivity extends AppCompatActivity {
         etEditRemain.setHint(sumFormat.format(remain));
 //        Log.d(LOG_TAG, "Set remain " + remain + ": wallet id " + m_edit_wallet_id + ", currency id " + m_currency_remain_id);
     }
+
 
 // == ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ====
 // 5. Вкладка планирования
@@ -1472,6 +1490,50 @@ public class MainActivity extends AppCompatActivity {
 
             default:
                 break;
+        }
+    }
+
+
+// == ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ====
+// Выгрузка БД
+// == ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ====
+
+    boolean hasWriteSDPermission() {
+        boolean hasPermission = (ContextCompat.checkSelfPermission(MainActivity.this,
+                Manifest.permission.WRITE_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED);
+        Log.d(LOG_TAG, "Has permission? " + hasPermission);
+
+        return hasPermission;
+    }
+
+    void writeFile(String content) {
+        if (!hasWriteSDPermission()) {
+            Toast.makeText(MainActivity.this, "Нет прав для записи на SD", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        // проверяем доступность SD
+        if (!Environment.getExternalStorageState().equals(Environment.MEDIA_MOUNTED)) {
+            Log.d(LOG_TAG, "SD-карта не доступна: " + Environment.getExternalStorageState());
+            return;
+        }
+
+        File sdPath = Environment.getExternalStorageDirectory(); // получаем путь к SD
+        sdPath = new File(sdPath.getAbsolutePath() + "/" + DIR_SD); // добавляем свой каталог к пути
+//        Log.d(LOG_TAG, "SD-path: " + sdPath.getAbsolutePath());
+        sdPath.mkdirs(); // создаем каталог
+        File sdFile = new File(sdPath, FILENAME_SD); // формируем объект File, который содержит путь к файлу
+
+        try {
+            BufferedWriter bw = new BufferedWriter(new FileWriter(sdFile)); // открываем поток для записи
+//            bw.write("Содержимое файла на SD"); // пишем данные
+            bw.write(content); // пишем данные
+            bw.close(); // закрываем поток
+            Log.d(LOG_TAG, "Файл записан на SD: " + sdFile.getAbsolutePath());
+            Toast.makeText(MainActivity.this, "Файл записан на SD: " + sdFile.getAbsolutePath(), Toast.LENGTH_SHORT).show();
+        } catch (IOException e) {
+            e.printStackTrace();
+            Toast.makeText(MainActivity.this, "Возникла проблема с выгрузкой БД", Toast.LENGTH_SHORT).show();
         }
     }
 }
