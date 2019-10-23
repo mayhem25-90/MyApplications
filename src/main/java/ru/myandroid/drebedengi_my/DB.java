@@ -303,7 +303,12 @@ public class DB {
         }
         cv.put(RECORD_COLUMN_DATE, currentDate);
         cv.put(RECORD_COLUMN_TIME, currentTime);
-        cv.put(RECORD_COLUMN_COMMENT, comment);
+        if (comment.equals("")) {
+            cv.putNull(RECORD_COLUMN_COMMENT);
+        }
+        else {
+            cv.put(RECORD_COLUMN_COMMENT, comment);
+        }
         cv.put(RECORD_COLUMN_SELECTED, 0);
 
         try {
@@ -891,7 +896,6 @@ public class DB {
             db.execSQL(CATEGORY_TABLE_CREATE);
             cv.clear();
             cv.put(CATEGORY_COLUMN_ID, -1);
-            cv.put(CATEGORY_COLUMN_NAME, "");
             db.insert(CATEGORY_TABLE, null, cv);
             for (int i = 0; i < categoryData.length; i++) {
                 cv.clear();
@@ -1029,7 +1033,7 @@ public class DB {
                 if (cursor.moveToFirst()) {
                     String str;
                     do {
-                        str = ";";
+                        str = "";
                         for (String cn : cursor.getColumnNames()) {
                             str = str.concat(cn + "=" + cursor.getString(cursor.getColumnIndex(cn)) + ";");
                         }
@@ -1042,5 +1046,40 @@ public class DB {
 
 //        Log.d(LOG_TAG, summary);
         return summary;
+    }
+
+
+    // Пробуем заполнить таблицы из прочитанного файла
+    void reloadTable(String currentTable, String buffer) {
+        Log.d(LOG_TAG, currentTable + " -> " + buffer);
+
+        if (buffer.equals("TABLE " + currentTable)) {
+            try {
+                mDB.delete(currentTable, null, null);
+            }
+            catch (Exception ex) {
+                Log.d(LOG_TAG, ex.getClass() + " error: " + ex.getMessage());
+            }
+            return;
+        }
+
+
+        ContentValues cv = new ContentValues();
+        String[] array = buffer.split(";");
+
+        for (String field : array) {
+//            Log.d(LOG_TAG, "array: " + field);
+            String[] pair = field.split("=");
+            Log.d(LOG_TAG, pair[0] + "   " + pair[1]);
+
+            if (!pair[1].equals("null")) {
+                cv.put(pair[0], pair[1]);
+            }
+            else {
+                cv.putNull(pair[0]);
+            }
+        }
+
+        mDB.insert(currentTable, null, cv);
     }
 }

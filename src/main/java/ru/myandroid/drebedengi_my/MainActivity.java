@@ -42,8 +42,11 @@ import android.widget.TimePicker;
 import android.widget.Toast;
 import android.Manifest;
 
+import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.text.DecimalFormat;
@@ -1291,6 +1294,10 @@ public class MainActivity extends AppCompatActivity {
                 writeFile(db.backupTables());
                 break;
 
+            case R.id.btnReloadDatabase:
+                readFile();
+                break;
+
             default:
                 break;
         }
@@ -1501,10 +1508,11 @@ public class MainActivity extends AppCompatActivity {
     boolean hasWriteSDPermission() {
         boolean hasPermission = (ContextCompat.checkSelfPermission(MainActivity.this,
                 Manifest.permission.WRITE_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED);
-        Log.d(LOG_TAG, "Has permission? " + hasPermission);
+//        Log.d(LOG_TAG, "Has permission? " + hasPermission);
 
         return hasPermission;
     }
+
 
     void writeFile(String content) {
         if (!hasWriteSDPermission()) {
@@ -1534,6 +1542,47 @@ public class MainActivity extends AppCompatActivity {
         } catch (IOException e) {
             e.printStackTrace();
             Toast.makeText(MainActivity.this, "Возникла проблема с выгрузкой БД", Toast.LENGTH_SHORT).show();
+        }
+    }
+
+
+    void readFile() {
+        if (!hasWriteSDPermission()) {
+            Toast.makeText(MainActivity.this, "Нет прав на чтение с SD", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        // проверяем доступность SD
+        if (!Environment.getExternalStorageState().equals(Environment.MEDIA_MOUNTED)) {
+            Log.d(LOG_TAG, "SD-карта не доступна: " + Environment.getExternalStorageState());
+            return;
+        }
+
+        String currentTable = "";
+
+        File sdPath = Environment.getExternalStorageDirectory(); // получаем путь к SD
+        sdPath = new File(sdPath.getAbsolutePath() + "/" + DIR_SD); // добавляем свой каталог к пути
+//        Log.d(LOG_TAG, "SD-path: " + sdPath.getAbsolutePath());
+        File sdFile = new File(sdPath, FILENAME_SD); // формируем объект File, который содержит путь к файлу
+
+        try {
+            BufferedReader br = new BufferedReader(new FileReader(sdFile)); // открываем поток для записи
+            String buffer;
+            while ((buffer = br.readLine()) != null) {
+//                Log.d(LOG_TAG, buffer);
+
+                // проверяем - вдруг это название таблицы
+                if (buffer.startsWith("TABLE")) {
+                    currentTable = buffer.substring(6);
+                }
+
+                db.reloadTable(currentTable, buffer);
+            }
+
+            Toast.makeText(MainActivity.this, "БД импортирована из файла", Toast.LENGTH_SHORT).show();
+        } catch (IOException e) {
+            e.printStackTrace();
+            Toast.makeText(MainActivity.this, "Возникла проблема с импортом БД", Toast.LENGTH_SHORT).show();
         }
     }
 }
