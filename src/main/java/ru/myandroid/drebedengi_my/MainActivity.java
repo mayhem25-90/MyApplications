@@ -45,7 +45,6 @@ import android.Manifest;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
@@ -54,7 +53,6 @@ import java.text.DecimalFormatSymbols;
 import java.util.Calendar;
 import java.util.Date;
 import java.text.SimpleDateFormat;
-import java.util.Iterator;
 import java.util.Locale;
 import java.util.Vector;
 
@@ -85,8 +83,8 @@ public class MainActivity extends AppCompatActivity {
     DecimalFormatSymbols sumFormatSymbols;
     DecimalFormat sumFormat;
 
-    int[] tabName = {R.string.operations_tab, R.string.history_tab, R.string.balance_tab, R.string.plan_tab, R.string.edit_categories_tab};
-    int[] tabID = {R.id.operationsTab, R.id.historyTab, R.id.balanceTab, R.id.planTab, R.id.editCategoriesTab};
+    int[] tabName = {R.string.edit_categories_tab, R.string.plan_tab, R.string.operations_tab, R.string.balance_tab, R.string.history_tab};
+    int[] tabID = {R.id.editCategoriesTab, R.id.planTab, R.id.operationsTab, R.id.balanceTab, R.id.historyTab};
     TabHost tabHost;
 
     @Override
@@ -120,8 +118,7 @@ public class MainActivity extends AppCompatActivity {
             public void onTabChanged(String s) {
 //                Log.d(LOG_TAG, "onTabChanged: " + s);
                 // Скрываем клавиатуру:
-                InputMethodManager inputMethodManager = (InputMethodManager) getSystemService(Activity.INPUT_METHOD_SERVICE);
-                inputMethodManager.hideSoftInputFromWindow(getCurrentFocus().getWindowToken(), 0);
+                hideKeyboard();
 
                 // Обновляем дату, если последняя операция была сегодня
                 actualizeDate();
@@ -142,6 +139,15 @@ public class MainActivity extends AppCompatActivity {
             ActivityCompat.requestPermissions(MainActivity.this,
                     new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE}, 112);
         }
+
+        // По умолчанию - вкладка ввода операций
+        tabHost.setCurrentTabByTag(getString(R.string.operations_tab));
+    }
+
+
+    private void hideKeyboard() {
+        InputMethodManager inputMethodManager = (InputMethodManager) getSystemService(Activity.INPUT_METHOD_SERVICE);
+        inputMethodManager.hideSoftInputFromWindow(getCurrentFocus().getWindowToken(), 0);
     }
 
 
@@ -193,6 +199,9 @@ public class MainActivity extends AppCompatActivity {
     protected void onStart() {
         super.onStart();
         updateTime();
+
+        // Скрываем клавиатуру
+//        hideKeyboard();
     }
 
     @Override
@@ -200,6 +209,7 @@ public class MainActivity extends AppCompatActivity {
         super.onStop();
         db.setSelectedParameter(history_item_selected_id, db.NOT_SELECTED);
         loadDataForOperationHistory();
+        loadDataForSmallHistory();
     }
 
     @Override
@@ -219,14 +229,19 @@ public class MainActivity extends AppCompatActivity {
     final int DIALOG_EDIT_PLAN = 4;
 
     public static final int spin_currency = 100,
-            spin_currency_dest = 101,
-            spin_wallet = 102,
-            spin_wallet_dest = 103,
-            spin_spending = 104,
-            spin_source = 105;
+                            spin_currency_dest = 101,
+                            spin_wallet = 102,
+                            spin_wallet_dest = 103,
+                            spin_spending = 104,
+                            spin_source = 105;
 
-    int currentRadioButton = 0;
-    int[] radioButtons = {R.id.rbSpend, R.id.rbGain, R.id.rbMove, R.id.rbChange};
+    final int RB_SPEND = 1;
+    final int RB_GAIN = 2;
+    final int RB_MOVE = 0;
+    final int RB_CHANGE = 3;
+
+    int currentRadioButton = RB_SPEND;
+    int[] radioButtons = {R.id.rbMove, R.id.rbSpend, R.id.rbGain, R.id.rbChange};
 
     // виджеты 1-го блока
     LinearLayout operationsTab;
@@ -235,6 +250,7 @@ public class MainActivity extends AppCompatActivity {
     Button btnDateLeft, btnDateRight, btnDate, btnTime, btnConfirm, btnEdit, btnCancel;
     Spinner spinCurrency, spinCurrencyDest, spinWallet, spinWalletDest, spinCategory, spinSource;
     RadioGroup rgOperationChoice;
+    ListView lvSmallHistory;
 
     Vector<Integer> spinCurrencyBind = new Vector<>();
     Vector<Integer> spinCurrencyDestBind = new Vector<>();
@@ -322,6 +338,24 @@ public class MainActivity extends AppCompatActivity {
         rgOperationChoice = (RadioGroup) findViewById(R.id.rgOperationChoice);
         rgOperationChoice.check(radioButtons[currentRadioButton]);
 
+        lvSmallHistory = (ListView) findViewById(R.id.lvSmallHistory);
+        loadDataForSmallHistory();
+
+        lvSmallHistory.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+//                Log.d(LOG_TAG, "itemClick: position = " + position + ", id = " + id);
+                db.setSelectedParameter(id, DB.AUTO_SELECT);
+                if (history_item_selected_id != id) { // Убираем меню со старого элемента
+                    db.setSelectedParameter(history_item_selected_id, DB.NOT_SELECTED);
+                    history_item_selected_id = id;
+                }
+
+                // А ещё обновим историю операций (чтобы контекстное меню элемента отобразилось)
+                loadDataForSmallHistory();
+            }
+        });
+
 
 //        Log.d(LOG_TAG, "spinCurrencyBind:");
 //        for (int i = 0; i < spinCurrencyBind.size(); ++i) {
@@ -339,6 +373,25 @@ public class MainActivity extends AppCompatActivity {
 //        for (int i = 0; i < spinSourceBind.size(); ++i) {
 //            Log.d(LOG_TAG, i + ": " + spinSourceBind.get(i));
 //        }
+    }
+
+
+    // Загрузка истории операций из БД
+    public void loadDataForSmallHistory() {
+        cursor = db.getHistoryData(dbDateFormat.format(operationDate.getTime()));
+//        db.logCursor(cursor);
+
+        String[] from = { DB.TABLE_COLUMN_IMAGE_FROM, DB.TABLE_COLUMN_IMAGE_TO, DB.RECORD_COLUMN_OPERATION_TYPE,
+                DB.CATEGORY_COLUMN_NAME, DB.TABLE_COLUMN_NAME_FROM, DB.TABLE_COLUMN_NAME_TO, DB.RECORD_COLUMN_COMMENT,
+                DB.RECORD_COLUMN_SUM, DB.RECORD_COLUMN_SUM_MOVE, DB.TABLE_COLUMN_TITLE_FROM, DB.TABLE_COLUMN_TITLE_TO,
+                DB.RECORD_COLUMN_DATE, DB.RECORD_COLUMN_TIME, DB.RECORD_COLUMN_SELECTED, DB.RECORD_COLUMN_SELECTED };
+
+        int[] to = { R.id.ivImgFrom, R.id.ivImgTo, R.id.ivImgMove,
+                R.id.tvCategory, R.id.tvWalletFrom, R.id.tvWalletTo, R.id.tvComment,
+                R.id.tvSum, R.id.tvSumMove, R.id.tvCurrency, R.id.tvCurrencyMove,
+                R.id.tvDate, R.id.tvTime, R.id.tvDelete, R.id.tvEdit };
+
+        lvSmallHistory.setAdapter(new HistoryCursorAdapter(this, R.layout.item_history, cursor, from, to));
     }
 
 
@@ -380,11 +433,13 @@ public class MainActivity extends AppCompatActivity {
             case R.id.btnDateLeft:
                 operationDate.add(Calendar.DATE, -1);
                 btnDate.setText(checkDateForToday(operationDate.getTime()));
+                loadDataForSmallHistory();
                 break;
 
             case R.id.btnDateRight:
                 operationDate.add(Calendar.DATE, 1);
                 btnDate.setText(checkDateForToday(operationDate.getTime()));
+                loadDataForSmallHistory();
                 break;
 
             case R.id.tvDelete:
@@ -406,14 +461,17 @@ public class MainActivity extends AppCompatActivity {
 
             case R.id.btnConfirm:
                 onConfirmOperation(db.CONFIRM_SAVE);
+                hideKeyboard();
                 break;
 
             case R.id.btnEdit:
                 onConfirmOperation(db.CONFIRM_EDIT);
+                hideKeyboard();
                 break;
 
             case R.id.btnCancel:
                 onCancelEdit();
+                hideKeyboard();
                 break;
 
             case R.id.rbSpend:
@@ -423,7 +481,7 @@ public class MainActivity extends AppCompatActivity {
                 spinWalletDest.setVisibility(View.GONE);
                 spinCategory.setVisibility(View.VISIBLE);
                 spinSource.setVisibility(View.GONE);
-                currentRadioButton = 0;
+                currentRadioButton = RB_SPEND;
                 break;
 
             case R.id.rbGain:
@@ -432,7 +490,7 @@ public class MainActivity extends AppCompatActivity {
                 spinWalletDest.setVisibility(View.GONE);
                 spinCategory.setVisibility(View.GONE);
                 spinSource.setVisibility(View.VISIBLE);
-                currentRadioButton = 1;
+                currentRadioButton = RB_GAIN;
                 break;
 
             case R.id.rbMove:
@@ -441,7 +499,7 @@ public class MainActivity extends AppCompatActivity {
                 spinWalletDest.setVisibility(View.VISIBLE);
                 spinCategory.setVisibility(View.GONE);
                 spinSource.setVisibility(View.GONE);
-                currentRadioButton = 2;
+                currentRadioButton = RB_MOVE;
                 break;
 
             case R.id.rbChange:
@@ -450,7 +508,7 @@ public class MainActivity extends AppCompatActivity {
                 spinWalletDest.setVisibility(View.VISIBLE);
                 spinCategory.setVisibility(View.GONE);
                 spinSource.setVisibility(View.GONE);
-                currentRadioButton = 3;
+                currentRadioButton = RB_CHANGE;
                 break;
 
             default:
@@ -467,6 +525,9 @@ public class MainActivity extends AppCompatActivity {
             currentDate.setDate(dayOfMonth);
             operationDate.setTime(currentDate);
             btnDate.setText(checkDateForToday(operationDate.getTime()));
+
+            // и обновим операции этого дня
+            loadDataForSmallHistory();
         }
     };
 
@@ -666,6 +727,7 @@ public class MainActivity extends AppCompatActivity {
 
                 // А ещё обновим историю операций, баланс и бюджет
                 loadDataForOperationHistory();
+                loadDataForSmallHistory();
                 loadDataForBalance();
                 refreshPlanTab();
 
@@ -693,6 +755,7 @@ public class MainActivity extends AppCompatActivity {
 
                     // А ещё обновим историю операций, баланс и бюджет
                     loadDataForOperationHistory();
+                    loadDataForSmallHistory();
 //                    Log.d(LOG_TAG, "Удаление транзакции - обновляем баланс для " + ids[0] + " " + ids[2]);
 //                    Log.d(LOG_TAG, "Удаление транзакции - обновляем баланс для " + ids[1] + " " + ids[3]);
                     updateBalanceDataArray(ids[0], ids[2]); // Здесь надо обновить только одно поле в массиве балансов
@@ -763,6 +826,19 @@ public class MainActivity extends AppCompatActivity {
     }
 
 
+    // Получить номер радио-кнопки выбора типа операции
+    // в соответствии с типом операции в БД
+    int getRadioButtonByOperationType(int operationType) {
+        switch (operationType) {
+            case DB.SPENDING:   return RB_SPEND;
+            case DB.GAIN:       return RB_GAIN;
+            case DB.MOVE:       return RB_MOVE;
+            case DB.CHANGE:     return RB_CHANGE;
+            default:            return RB_SPEND;
+        }
+    }
+
+
     // Загрузка операции из БД для редактирования
     void loadOperationDataToOperationTab() {
         cursor = db.loadTransactionDataById(history_item_selected_id);
@@ -793,8 +869,8 @@ public class MainActivity extends AppCompatActivity {
 //            Log.d(LOG_TAG, "comment = " + comment);
 //            Log.d(LOG_TAG, "operationDate = " + operationDate);
 
-            rgOperationChoice.check(radioButtons[operationType - 1]);
-            onButtonClick(findViewById(radioButtons[operationType - 1]));
+            rgOperationChoice.check(radioButtons[getRadioButtonByOperationType(operationType)]);
+            onButtonClick(findViewById(radioButtons[getRadioButtonByOperationType(operationType)]));
 
             if ((operationType == DB.SPENDING) || (operationType == DB.GAIN)) {
                 etSum.setText(String.valueOf(abs(sum)));
@@ -898,7 +974,7 @@ public class MainActivity extends AppCompatActivity {
 
     // Загрузка истории операций из БД
     public void loadDataForOperationHistory() {
-        cursor = db.getAllHistoryData();
+        cursor = db.getHistoryData(db.ALL_HISTORY);
 //        db.logCursor(cursor);
 
         String[] from = { DB.TABLE_COLUMN_IMAGE_FROM, DB.TABLE_COLUMN_IMAGE_TO, DB.RECORD_COLUMN_OPERATION_TYPE,

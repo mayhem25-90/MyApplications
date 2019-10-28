@@ -10,21 +10,17 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent">
 
-        <LinearLayout
+        <RelativeLayout
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:orientation="vertical">
 
-            <TabWidget
-                android:id="@android:id/tabs"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:background="@color/colorPrimary"/>
-
             <FrameLayout
                 android:id="@android:id/tabcontent"
                 android:layout_width="match_parent"
-                android:layout_height="match_parent">
+                android:layout_height="match_parent"
+                android:layout_alignParentTop="true"
+                android:layout_above="@android:id/tabs" >
 
                 <include
                     layout="@layout/tab_operations_activity"
@@ -52,6 +48,14 @@
                     android:layout_height="match_parent" />
 
             </FrameLayout>
-        </LinearLayout>
+
+            <TabWidget
+                android:id="@android:id/tabs"
+                android:layout_width="match_parent"
+                android:layout_height="50sp"
+                android:layout_alignParentBottom="true"
+                android:background="@color/colorPrimary"/>
+
+        </RelativeLayout>
     </TabHost>
 </LinearLayout>

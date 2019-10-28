@@ -16,6 +16,7 @@ import static java.lang.Math.abs;
 public class DB {
 
     private final String LOG_TAG = "myLogs";
+    final String ALL_HISTORY = "all";
 
     static final int START = 0, SPENDING = 1, GAIN = 2, MOVE = 3, CHANGE = 4;
     static final int AUTO_SELECT = -1, NOT_SELECTED = 0, SELECTED = 1;
@@ -369,43 +370,17 @@ public class DB {
 // == ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ====
 
     // получить данные из таблицы для вывода истории операций
-    Cursor getAllHistoryData() {
-//        String sqlQueryBase = "select "
-//                + RECORD_TABLE + "." + RECORD_COLUMN_ID + ", "
-//                + RECORD_TABLE + "." + RECORD_COLUMN_DATE + ", "
-//                + RECORD_TABLE + "." + RECORD_COLUMN_TIME + ", "
-//                + RECORD_TABLE + "." + RECORD_COLUMN_SUM + ", "
-//                + RECORD_TABLE + "." + RECORD_COLUMN_COMMENT + ", "
-//                + RECORD_TABLE + "." + RECORD_COLUMN_SELECTED + ", "
-//                + RECORD_TABLE + "." + RECORD_COLUMN_OPERATION_TYPE + ", "
-//                + CATEGORY_TABLE + "." + CATEGORY_COLUMN_NAME + ", "
-//                + CURRENCY_TABLE + "." + CURRENCY_COLUMN_TITLE + ", "
-//                + WALLET_TABLE + "_to" + "." + WALLET_COLUMN_NAME + " as " + TABLE_COLUMN_NAME_TO + ", "
-//                + WALLET_TABLE + "_to" + "." + WALLET_COLUMN_IMAGE + " as " + TABLE_COLUMN_IMAGE_TO + ", "
-//                + WALLET_TABLE + "_from" + "." + WALLET_COLUMN_NAME + " as " + TABLE_COLUMN_NAME_FROM + ", "
-//                + WALLET_TABLE + "_from" + "." + WALLET_COLUMN_IMAGE + " as " + TABLE_COLUMN_IMAGE_FROM
-//                + " from " + RECORD_TABLE
-//
-//                + " inner join " + CATEGORY_TABLE
-//                + " on " + RECORD_TABLE + "." + RECORD_COLUMN_CATEGORY_ID
-//                + " = " + CATEGORY_TABLE + "." + CATEGORY_COLUMN_ID
-//
-//                + " inner join " + WALLET_TABLE + " as " + WALLET_TABLE + "_from"
-//                + " on " + RECORD_TABLE + "." + RECORD_COLUMN_WALLET_ID
-//                + " = " + WALLET_TABLE + "_from" + "." + WALLET_COLUMN_ID
-//
-//                + " left join " + WALLET_TABLE + " as " + WALLET_TABLE + "_to"
-//                + " on " + RECORD_TABLE + "." + RECORD_COLUMN_WALLET_ID_DEST
-//                + " = " + WALLET_TABLE + "_to" + "." + WALLET_COLUMN_ID
-//
-//                + " inner join " + CURRENCY_TABLE
-//                + " on " + RECORD_TABLE + "." + RECORD_COLUMN_CURRENCY_ID
-//                + " = " + CURRENCY_TABLE + "." + CURRENCY_COLUMN_ID;
+    Cursor getHistoryData(String period) {
 
-        String sqlQueryConditionSpendGain = " where "
+        String sqlQueryAuxConditionDate = "";
+        if (!period.equals(ALL_HISTORY)) {
+            sqlQueryAuxConditionDate = " and " + RECORD_COLUMN_DATE + " = '" + period + "'";
+        }
+
+        String sqlQueryBaseConditionSpendGain = " where "
                 + CATEGORY_TABLE + "." + CATEGORY_COLUMN_NAME + " != ''";
 
-        String sqlQueryConditionMoveChange = " where ("
+        String sqlQueryBaseConditionMoveChange = " where ("
                 + RECORD_COLUMN_OPERATION_TYPE + " = " + MOVE
                 + " or " + RECORD_COLUMN_OPERATION_TYPE + " = " + CHANGE + ")";
 
@@ -421,10 +396,12 @@ public class DB {
                 + RECORD_COLUMN_TIME + " desc";
 
         String sqlQuery = "select * from ("
-                + sqlQueryHistoryBase("_to") + sqlQueryConditionSpendGain // выборка расходов и доходов
+                + sqlQueryHistoryBase("_to")
+                + sqlQueryBaseConditionSpendGain + sqlQueryAuxConditionDate // выборка расходов и доходов
                 + " union "
-                + sqlQueryHistoryBase("_from") + sqlQueryConditionMoveChange // выборка перемещений и обменов
-                + ")" + sqlQueryOrder;
+                + sqlQueryHistoryBase("_from")
+                + sqlQueryBaseConditionMoveChange + sqlQueryAuxConditionDate // выборка перемещений и обменов
+                + ")" /*+ sqlQueryAuxConditionDate*/ + sqlQueryOrder;
 
 //        Log.d(LOG_TAG, sqlQuery);
         Cursor cursor = null;
