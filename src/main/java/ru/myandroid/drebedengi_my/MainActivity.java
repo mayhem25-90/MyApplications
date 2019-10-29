@@ -732,8 +732,6 @@ public class MainActivity extends AppCompatActivity {
                 refreshPlanTab();
 
                 if (mode == db.CONFIRM_EDIT) {
-                    tabHost.setCurrentTabByTag(getString(R.string.history_tab));
-
                     btnConfirm.setVisibility(View.VISIBLE);
                     btnEdit.setVisibility(View.GONE);
                     btnCancel.setVisibility(View.GONE);
@@ -753,15 +751,22 @@ public class MainActivity extends AppCompatActivity {
                     int[] ids = db.deleteTransaction(history_item_selected_id);
                     Toast.makeText(MainActivity.this, R.string.record_deleted, Toast.LENGTH_SHORT).show();
 
-                    // А ещё обновим историю операций, баланс и бюджет
+                    // А ещё обновим историю операций, ...
                     loadDataForOperationHistory();
                     loadDataForSmallHistory();
-//                    Log.d(LOG_TAG, "Удаление транзакции - обновляем баланс для " + ids[0] + " " + ids[2]);
-//                    Log.d(LOG_TAG, "Удаление транзакции - обновляем баланс для " + ids[1] + " " + ids[3]);
-                    updateBalanceDataArray(ids[0], ids[2]); // Здесь надо обновить только одно поле в массиве балансов
-                    if (ids[3] != -1) updateBalanceDataArray(ids[1], ids[3]); // И ещё одно, если было перемещение или обмен
+
+                    // ... баланс и бюджет
+                    if ((ids[0] != -1) && (ids[2] != -1)) {
+                        Log.d(LOG_TAG, "Удаление транзакции - обновляем баланс для " + ids[0] + " " + ids[2]);
+                        updateBalanceDataArray(ids[0], ids[2]); // Здесь надо обновить только одно поле в массиве балансов
+                    }
+                    if ((ids[1] != -1) && (ids[3] != -1)) {
+                        Log.d(LOG_TAG, "Удаление транзакции - обновляем баланс для " + ids[1] + " " + ids[3]);
+                        updateBalanceDataArray(ids[1], ids[3]); // И ещё одно, если было перемещение или обмен
+                    }
                     loadDataForBalance();
                     refreshPlanTab();
+
                     break;
 
                 case Dialog.BUTTON_NEUTRAL: // Нейтральная кнопка

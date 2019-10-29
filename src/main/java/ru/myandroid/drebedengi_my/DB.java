@@ -330,32 +330,45 @@ public class DB {
 
     // Удалить запись о транзакции
     int[] deleteTransaction(long id) {
-        Cursor cursor = mDB.rawQuery("select "
-                + RECORD_COLUMN_OPERATION_TYPE + ","
-                + RECORD_COLUMN_WALLET_ID + ","
-                + RECORD_COLUMN_WALLET_ID_DEST + ","
-                + RECORD_COLUMN_CURRENCY_ID + ","
-                + RECORD_COLUMN_CURRENCY_ID_DEST
-                + " from " + RECORD_TABLE
-                + " where " + RECORD_COLUMN_ID + " = " + id, null);
         int[] ids = new int[4]; for (int i = 0; i < 4; ++i) { ids[i] = 0; }
-        if ((cursor != null) && (cursor.moveToFirst())) {
-            Log.d(LOG_TAG, "Operation has type " + cursor.getInt(cursor.getColumnIndex(RECORD_COLUMN_OPERATION_TYPE)) + " | id " + id);
-            int type = cursor.getInt(cursor.getColumnIndex(RECORD_COLUMN_OPERATION_TYPE));
-            ids[0] = cursor.getInt(cursor.getColumnIndex(RECORD_COLUMN_WALLET_ID));
-            ids[1] = cursor.getInt(cursor.getColumnIndex(RECORD_COLUMN_WALLET_ID_DEST));
-            ids[2] = cursor.getInt(cursor.getColumnIndex(RECORD_COLUMN_CURRENCY_ID_DEST));
-            ids[3] = cursor.getInt(cursor.getColumnIndex(RECORD_COLUMN_CURRENCY_ID));
-            if (type == MOVE) ids[3] = cursor.getInt(cursor.getColumnIndex(RECORD_COLUMN_CURRENCY_ID_DEST));
 
-            mDB.delete(RECORD_TABLE, RECORD_COLUMN_ID + " = " + id, null);
-            if ((type == MOVE) || (type == CHANGE)) { // Также удаляем фейковые операции для корректного баланса
-                Log.d(LOG_TAG, "Also delete id's " + (id + 1) + " and " + (id + 2));
-                mDB.delete(RECORD_TABLE, RECORD_COLUMN_ID + " = " + (id + 1), null);
-                mDB.delete(RECORD_TABLE, RECORD_COLUMN_ID + " = " + (id + 2), null);
+        try {
+            Cursor cursor = mDB.rawQuery("select "
+                    + RECORD_COLUMN_OPERATION_TYPE + ","
+                    + RECORD_COLUMN_WALLET_ID + ","
+                    + RECORD_COLUMN_WALLET_ID_DEST + ","
+                    + RECORD_COLUMN_CURRENCY_ID + ","
+                    + RECORD_COLUMN_CURRENCY_ID_DEST
+                    + " from " + RECORD_TABLE
+                    + " where " + RECORD_COLUMN_ID + " = " + id, null);
+
+            if ((cursor != null) && (cursor.moveToFirst())) {
+                Log.d(LOG_TAG, "Operation has type " + cursor.getInt(cursor.getColumnIndex(RECORD_COLUMN_OPERATION_TYPE)) + " | id " + id);
+                int type = cursor.getInt(cursor.getColumnIndex(RECORD_COLUMN_OPERATION_TYPE));
+                ids[0] = cursor.getInt(cursor.getColumnIndex(RECORD_COLUMN_WALLET_ID));
+                ids[1] = cursor.getInt(cursor.getColumnIndex(RECORD_COLUMN_WALLET_ID_DEST));
+                ids[2] = cursor.getInt(cursor.getColumnIndex(RECORD_COLUMN_CURRENCY_ID));
+                ids[3] = cursor.getInt(cursor.getColumnIndex(RECORD_COLUMN_CURRENCY_ID_DEST));
+                if (type == MOVE) {
+                    ids[2] = cursor.getInt(cursor.getColumnIndex(RECORD_COLUMN_CURRENCY_ID_DEST));
+                }
+                else if (type == CHANGE) {
+                    ids[2] = cursor.getInt(cursor.getColumnIndex(RECORD_COLUMN_CURRENCY_ID_DEST));
+                    ids[3] = cursor.getInt(cursor.getColumnIndex(RECORD_COLUMN_CURRENCY_ID));
+                }
+
+                mDB.delete(RECORD_TABLE, RECORD_COLUMN_ID + " = " + id, null);
+                if ((type == MOVE) || (type == CHANGE)) { // Также удаляем фейковые операции для корректного баланса
+                    Log.d(LOG_TAG, "Also delete id's " + (id + 1) + " and " + (id + 2));
+                    mDB.delete(RECORD_TABLE, RECORD_COLUMN_ID + " = " + (id + 1), null);
+                    mDB.delete(RECORD_TABLE, RECORD_COLUMN_ID + " = " + (id + 2), null);
+                }
+                cursor.close();
             }
-            cursor.close();
+        } catch (Exception exception) {
+            Log.d(LOG_TAG, exception.toString());
         }
+
         return ids;
     }
 
