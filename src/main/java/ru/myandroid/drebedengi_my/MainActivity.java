@@ -1220,7 +1220,7 @@ public class MainActivity extends AppCompatActivity {
     TextView textEditCategory;
     RadioGroup rgEditChoice;
     Spinner spinEditCategory, spinEditSource, spinEditWallet, spinCurrencyRemain;
-    CheckBox chkEditCategory;
+    CheckBox chkNewCategory;
     EditText etCategory, etEditRemain;
     LinearLayout llEditRemain;
 
@@ -1248,7 +1248,7 @@ public class MainActivity extends AppCompatActivity {
         spinCurrencyRemain = (Spinner) findViewById(R.id.spinCurrencyRemain);
         loadDataForSpinner(DB.CURRENCY_TABLE, spinCurrencyRemain, spinCurrencyRemainBind, R.string.currency, spin_currency_remain);
 
-        chkEditCategory = (CheckBox) findViewById(R.id.chkEditCategory);
+        chkNewCategory = (CheckBox) findViewById(R.id.chkNewCategory);
 
         etCategory = (EditText) findViewById(R.id.etCategory);
 
@@ -1267,7 +1267,7 @@ public class MainActivity extends AppCompatActivity {
         spinEditCategory.setEnabled(true);
         spinEditSource.setEnabled(true);
         spinEditWallet.setEnabled(true);
-        chkEditCategory.setChecked(false);
+        chkNewCategory.setChecked(false);
         etEditRemain.setText("");
         etCategory.setText("");
     }
@@ -1280,7 +1280,7 @@ public class MainActivity extends AppCompatActivity {
                 spinEditSource.setVisibility(View.GONE);
                 spinEditWallet.setVisibility(View.GONE);
                 llEditRemain.setVisibility(View.GONE);
-                chkEditCategory.setChecked(false);
+                chkNewCategory.setChecked(false);
                 break;
 
             case R.id.rbEditGain:
@@ -1288,7 +1288,7 @@ public class MainActivity extends AppCompatActivity {
                 spinEditSource.setVisibility(View.VISIBLE);
                 spinEditWallet.setVisibility(View.GONE);
                 llEditRemain.setVisibility(View.GONE);
-                chkEditCategory.setChecked(false);
+                chkNewCategory.setChecked(false);
                 break;
 
             case R.id.rbEditWallet:
@@ -1296,11 +1296,11 @@ public class MainActivity extends AppCompatActivity {
                 spinEditSource.setVisibility(View.GONE);
                 spinEditWallet.setVisibility(View.VISIBLE);
                 llEditRemain.setVisibility(View.VISIBLE);
-                chkEditCategory.setChecked(false);
+                chkNewCategory.setChecked(false);
                 break;
 
             case R.id.btnConfirm:
-//                Log.d(LOG_TAG, "on save click");
+                Log.d(LOG_TAG, "on save click");
                 // Выбираем то, что редактируем
                 int mode = -1;
                 long edit_id = -1;
@@ -1319,9 +1319,12 @@ public class MainActivity extends AppCompatActivity {
                     case R.id.rbEditWallet:
                         mode = db.EDIT_WALLET;
                         edit_id = m_edit_wallet_id;
-                        String remainTxt = etEditRemain.getText().toString();
-                        if (remainTxt.equals("")) remain = Double.parseDouble(etEditRemain.getHint().toString());
-                        else remain = Double.parseDouble(remainTxt);
+                        if (! chkNewCategory.isChecked()) {
+                            String remainTxt = etEditRemain.getText().toString();
+                            if (remainTxt.equals(""))
+                                remain = Double.parseDouble(etEditRemain.getHint().toString());
+                            else remain = Double.parseDouble(remainTxt);
+                        }
                         break;
 
                     default: break;
@@ -1329,7 +1332,7 @@ public class MainActivity extends AppCompatActivity {
 
                 String newCategoryName = etCategory.getText().toString();
                 if ((!newCategoryName.equals("")) || (mode == db.EDIT_WALLET)) {
-                    if (chkEditCategory.isChecked()) { // Добавляем новую категорию
+                    if (chkNewCategory.isChecked()) { // Добавляем новую категорию
                         if (!newCategoryName.equals("")) {
 //                            Log.d(LOG_TAG, "check: create new category");
                             db.createNewCategory(mode, newCategoryName, spinCurrencyRemainBind);
@@ -1337,7 +1340,7 @@ public class MainActivity extends AppCompatActivity {
                         }
                     }
                     else { // Редактируем данную категорию
-//                    Log.d(LOG_TAG, "not check: edit this category");
+//                        Log.d(LOG_TAG, "not check: edit this category");
                         db.updateCategory(mode, edit_id, newCategoryName, remain, m_currency_remain_id);
                         Toast.makeText(MainActivity.this, R.string.message_edit_cat_edit, Toast.LENGTH_SHORT).show();
                     }
@@ -1350,8 +1353,8 @@ public class MainActivity extends AppCompatActivity {
 
                 break;
 
-            case R.id.chkEditCategory:
-                if (chkEditCategory.isChecked()) {
+            case R.id.chkNewCategory:
+                if (chkNewCategory.isChecked()) {
 //                    Log.d(LOG_TAG, "check!");
                     spinEditCategory.setEnabled(false);
                     spinEditSource.setEnabled(false);
