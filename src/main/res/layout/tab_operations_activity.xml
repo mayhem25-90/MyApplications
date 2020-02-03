@@ -47,36 +47,37 @@
     <!-- Заполнение полей    === === === === === === === === === === === === -->
     <!--android:focusableInTouchMode="true"   - если надо будет убрать фокус -->
     <TableLayout
-        android:id="@+id/linearLayout1"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content">
+        android:layout_height="wrap_content"
+        android:focusableInTouchMode="true">
 
         <TableRow
             android:id="@+id/etSumRow"
             android:layout_marginLeft="10dp"
             android:layout_marginRight="10dp" >
+
             <EditText
                 android:id="@+id/etSum"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:layout_marginLeft="5dp"
+                android:layout_marginRight="5dp"
                 android:layout_weight="1"
-                android:text=""
                 android:hint="@string/sum_hint"
                 android:textSize="@dimen/number_size"
-                android:textColor="@color/colorPrimaryDark"
-                android:textColorHint="@color/colorHint"
                 android:inputType="numberDecimal"
-                android:layout_marginLeft="5dp"
-                android:layout_marginRight="5dp" />
+                android:text=""
+                android:textColor="@color/colorPrimaryDark"
+                android:textColorHint="@color/colorHint" />
 
             <Spinner
                 android:id="@+id/spinCurrency"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:layout_marginBottom="10dp"
                 android:layout_marginLeft="15dp"
                 android:layout_marginRight="15dp"
                 android:layout_marginTop="10dp"
-                android:layout_marginBottom="10dp"
                 android:spinnerMode="dialog" />
         </TableRow>
 
@@ -84,28 +85,29 @@
             android:id="@+id/etSumDestRow"
             android:layout_marginLeft="10dp"
             android:layout_marginRight="10dp" >
+
             <EditText
                 android:id="@+id/etSumDest"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:layout_marginLeft="5dp"
+                android:layout_marginRight="5dp"
                 android:layout_weight="1"
-                android:text=""
                 android:hint="@string/buy_hint"
-                android:textSize="@dimen/number_size"
+                android:inputType="numberDecimal"
+                android:text=""
                 android:textColor="@color/colorPrimaryDark"
                 android:textColorHint="@color/colorHint"
-                android:inputType="numberDecimal"
-                android:layout_marginLeft="5dp"
-                android:layout_marginRight="5dp" />
+                android:textSize="@dimen/number_size" />
 
             <Spinner
                 android:id="@+id/spinCurrencyDest"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:layout_marginBottom="10dp"
                 android:layout_marginLeft="15dp"
                 android:layout_marginRight="15dp"
                 android:layout_marginTop="10dp"
-                android:layout_marginBottom="10dp"
                 android:spinnerMode="dialog" />
         </TableRow>
 
@@ -113,63 +115,65 @@
             android:id="@+id/spinWallet"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:layout_marginBottom="5dp"
             android:layout_marginLeft="20dp"
             android:layout_marginRight="20dp"
             android:layout_marginTop="5dp"
-            android:layout_marginBottom="5dp"
             android:spinnerMode="dialog" />
 
         <Spinner
             android:id="@+id/spinWalletDest"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:layout_marginBottom="5dp"
             android:layout_marginLeft="20dp"
             android:layout_marginRight="20dp"
             android:layout_marginTop="5dp"
-            android:layout_marginBottom="5dp"
             android:spinnerMode="dialog" />
 
         <Spinner
             android:id="@+id/spinCategory"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:layout_marginBottom="5dp"
             android:layout_marginLeft="20dp"
             android:layout_marginRight="20dp"
             android:layout_marginTop="5dp"
-            android:layout_marginBottom="5dp"
             android:spinnerMode="dialog" />
 
         <Spinner
             android:id="@+id/spinSource"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:layout_marginBottom="5dp"
             android:layout_marginLeft="20dp"
             android:layout_marginRight="20dp"
             android:layout_marginTop="5dp"
-            android:layout_marginBottom="5dp"
             android:spinnerMode="dialog" />
 
         <TableRow>
-            <EditText android:id="@+id/etComment"
+
+            <EditText
+                android:id="@+id/etComment"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:text=""
-                android:hint="@string/comment_hint"
-                android:textColor="@color/colorPrimaryDark"
-                android:textColorHint="@color/colorHint"
                 android:layout_marginLeft="15dp"
-                android:layout_marginRight="15dp" />
+                android:layout_marginRight="15dp"
+                android:layout_weight="1"
+                android:hint="@string/comment_hint"
+                android:text=""
+                android:textColor="@color/colorPrimaryDark"
+                android:textColorHint="@color/colorHint" />
 
             <Button
                 android:id="@+id/btnConfirm"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="@string/confirmButton"
-                android:textAllCaps="false"
                 android:layout_marginLeft="15dp"
                 android:layout_marginRight="15dp"
-                android:onClick="onButtonClick" />
+                android:onClick="onButtonClick"
+                android:text="@string/confirmButton"
+                android:textAllCaps="false" />
         </TableRow>
 
     </TableLayout>
@@ -177,7 +181,8 @@
     <!-- Кнопки редактирования транзакции    === === === === === === === === -->
     <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="wrap_content">
+        android:layout_height="wrap_content"
+        android:baselineAligned="false" >
 
         <TableLayout
             android:layout_width="match_parent"

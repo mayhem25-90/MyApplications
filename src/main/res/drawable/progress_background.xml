@@ -2,7 +2,7 @@
 <layer-list xmlns:android="http://schemas.android.com/apk/res/android">
     <item android:id="@android:id/background">
         <shape>
-            <solid android:color="@color/transparentProgress" />
+            <solid android:color="@color/backgroundProgress" />
             <size
                 android:height="15sp"
                 android:width="15sp" />
@@ -23,7 +23,7 @@
                     android:top="2sp"
                     android:bottom="2sp">
                     <shape>
-                        <solid android:color="@color/positive" />
+                        <solid android:color="@color/positiveProgress" />
                         <corners android:radius="7sp" />
                     </shape>
                 </item>

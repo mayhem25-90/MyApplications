@@ -83,6 +83,16 @@
             android:layout_height="wrap_content">
 
             <ProgressBar
+                android:id="@+id/pbBackPlan"
+                style="@android:style/Widget.ProgressBar.Horizontal"
+                android:progressDrawable="@drawable/progress_background"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_margin="10sp"
+                android:max="100" >
+            </ProgressBar>
+
+            <ProgressBar
                 android:id="@+id/pbLimit"
                 style="@android:style/Widget.ProgressBar.Horizontal"
                 android:progressDrawable="@drawable/progress_drawable"

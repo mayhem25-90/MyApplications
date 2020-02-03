@@ -14,6 +14,7 @@ import android.graphics.Typeface;
 import android.os.Environment;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
+import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.text.InputType;
@@ -21,6 +22,7 @@ import android.util.Log;
 import android.util.TypedValue;
 import android.view.LayoutInflater;
 import android.view.View;
+import android.view.Window;
 import android.view.WindowManager;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.AdapterView;
@@ -125,7 +127,8 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-        getSupportActionBar().hide();
+        ActionBar actionBar = getSupportActionBar();
+        if (actionBar != null) actionBar.hide();
 
         initOperationsTabContent();
         initHistoryTabContent();
@@ -588,7 +591,8 @@ public class MainActivity extends AppCompatActivity {
                 adb.setNeutralButton(R.string.cancelButton, null);
 
                 Dialog dialog = adb.create();
-                dialog.getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_VISIBLE);
+                Window w = dialog.getWindow();
+                if (w != null) w.setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_VISIBLE);
                 return dialog;
 
             default:
@@ -1407,7 +1411,7 @@ public class MainActivity extends AppCompatActivity {
     ListView lvPlan, lvRemains;
     LinearLayout layControl, layPlan;
     LinearLayout lRemain, lAlreadySpend, lSpend, layPlanTitle;
-    ProgressBar pbLimit;
+    ProgressBar pbLimit, pbBackPlan;
     TextView tvPbLimit;
 
     long recordPlanTableID = -1;
@@ -1428,6 +1432,7 @@ public class MainActivity extends AppCompatActivity {
         tvLimitPlanLabel.setText(limitPlanLabelText);
 
         pbLimit = (ProgressBar) findViewById(R.id.pbLimit);
+        pbBackPlan = (ProgressBar) findViewById(R.id.pbBackPlan);
         tvPbLimit = (TextView) findViewById(R.id.tvPbLimit);
 
         lRemain = (LinearLayout) findViewById(R.id.lRemain);
@@ -1520,9 +1525,14 @@ public class MainActivity extends AppCompatActivity {
 
 
     void loadDataForControlList() {
-        double totalLimit   = updatePlanSum(DB.PLAN, tvLimitPlan, Calendar.getInstance());
-        double alreadySpend = updatePlanSum(DB.FACT, tvLAlreadySpendSum, Calendar.getInstance());
-        updatePlanSum(DB.REMAIN, tvLRemainSum, Calendar.getInstance());
+        Calendar currentTime = Calendar.getInstance();
+
+        double totalLimit   = updatePlanSum(DB.PLAN, tvLimitPlan, currentTime);
+        double alreadySpend = updatePlanSum(DB.FACT, tvLAlreadySpendSum, currentTime);
+        updatePlanSum(DB.REMAIN, tvLRemainSum, currentTime);
+
+//        Log.d(LOG_TAG, "# current day of month: " + currentTime.getTime().getDate());
+        pbBackPlan.setProgress((int) (currentTime.getTime().getDate() / 31.0 * 100));
 
         int percentLimit = (int) round(alreadySpend / totalLimit * 100);
         String percentLimitTxt = String.valueOf(percentLimit) + "%";
@@ -1535,7 +1545,7 @@ public class MainActivity extends AppCompatActivity {
             pbLimit.setProgressDrawable(getResources().getDrawable(R.drawable.progress_drawable));
         }
 
-        String currMonth = dbBudgetDateFormat.format(Calendar.getInstance().getTime());
+        String currMonth = dbBudgetDateFormat.format(currentTime.getTime());
         cursor = db.getRemainData(currMonth);
 //        db.logCursor(cursor);
 

@@ -18,5 +18,9 @@
 
     <color name="positive">#008800</color>
     <color name="negative">#FF0000</color>
-    <color name="negativeProgress">#880000</color>
+
+    <color name="positiveProgress">#44008800</color>
+    <color name="negativeProgress">#FF880000</color>
+    <color name="backgroundProgress">#FFAAAAAA</color>
+    <color name="transparentProgress">#00FFFFFF</color>
 </resources>
